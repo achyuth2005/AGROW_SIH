@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'coming_soon_screen.dart';
 
 class CoordinateEntryScreen extends StatefulWidget {
   @override
@@ -192,8 +193,10 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              // You can log or process the coordinates here.
-                              // print("${_latControllers[0].text} ${_latDirections[0]}, ${_lonControllers[0].text} ${_lonDirections[0]}");
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ComingSoonScreen()),
+                              );
                             },
                             style: ButtonStyle(
                               backgroundColor: MaterialStateProperty.all(Color(0xFF0D986A)),
@@ -207,9 +210,9 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                             child: const Text(
                               "Proceed",
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontSize: 18
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 18,
                               ),
                             ),
                           ),

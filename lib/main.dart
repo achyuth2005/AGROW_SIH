@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'splash_screen.dart';
-import 'main_menu_screen.dart';
-import 'coordinate_entry_screen.dart';
+import 'screens/splash_screen.dart';
+import 'screens/main_menu_screen.dart';
+import 'screens/coordinate_entry_screen.dart';
 
 void main() => runApp(MyApp());
 

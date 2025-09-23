@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'mapped_report_page.dart'; // Replace with your actual next page import
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'mapped_report_page.dart';
 
 class CoordinateEntryScreen extends StatefulWidget {
   @override
@@ -10,6 +12,7 @@ class CoordinateEntryScreen extends StatefulWidget {
 
 class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   final MapController _mapController = MapController();
+  final _sb = Supabase.instance.client;
 
   final List<TextEditingController> latControllers =
   List.generate(4, (_) => TextEditingController());
@@ -31,6 +34,43 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
     return parsed.abs();
   }
 
+  Future<void> _insertFourPointRow(List<LatLng> pts) async {
+    if (pts.length != 4) return;
+    try {
+      await _sb.from('coordinates_quad').insert({
+        'lat1': pts[0].latitude,
+        'lon1': pts[0].longitude,
+        'lat2': pts[1].latitude,
+        'lon2': pts[1].longitude,
+        'lat3': pts[2].latitude,
+        'lon3': pts[2].longitude,
+        'lat4': pts[3].latitude,
+        'lon4': pts[3].longitude,
+        // inserted_at defaults to now() by DB
+      });
+    } on Exception catch (e) {
+      debugPrint('Insert failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Insert failed: $e')),
+      );
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchLatest() async {
+    try {
+      final rows = await _sb
+          .from('coordinates_quad')
+          .select()
+          .order('inserted_at', ascending: false)
+          .limit(10);
+      return List<Map<String, dynamic>>.from(rows);
+    } on Exception catch (e) {
+      debugPrint('Fetch failed: $e');
+      return [];
+    }
+  }
+
   void updatePointsFromInput() {
     final newPoints = <LatLng>[];
     for (int i = 0; i < 4; i++) {
@@ -48,7 +88,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
       }
     }
     setState(() {
-      points = newPoints;
+      points = newPoints.take(4).toList();
       if (points.isNotEmpty) {
         center = points.last;
         _mapController.move(center, zoom);
@@ -66,16 +106,13 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
 
     setState(() {
       points = [...points, precisePoint];
-      latControllers[points.length - 1].text =
-          precisePoint.latitude.toStringAsFixed(6);
-      lonControllers[points.length - 1].text =
-          precisePoint.longitude.toStringAsFixed(6);
-
-      latDirections[points.length - 1] =
-      precisePoint.latitude >= 0 ? 'N' : 'S';
-      lonDirections[points.length - 1] =
-      precisePoint.longitude >= 0 ? 'E' : 'W';
-
+      final idx = points.length - 1;
+      if (idx < 4) {
+        latControllers[idx].text = precisePoint.latitude.toStringAsFixed(6);
+        lonControllers[idx].text = precisePoint.longitude.toStringAsFixed(6);
+        latDirections[idx] = precisePoint.latitude >= 0 ? 'N' : 'S';
+        lonDirections[idx] = precisePoint.longitude >= 0 ? 'E' : 'W';
+      }
       center = precisePoint;
       _mapController.move(center, zoom);
     });
@@ -93,6 +130,10 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
       points = [];
       for (final c in latControllers) c.clear();
       for (final c in lonControllers) c.clear();
+      for (int i = 0; i < 4; i++) {
+        latDirections[i] = 'N';
+        lonDirections[i] = 'E';
+      }
       center = LatLng(26.18, 91.0);
       _mapController.move(center, zoom);
     });
@@ -108,7 +149,6 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Offset the pin so its tip is at the point
           Transform.translate(
             offset: const Offset(0, -8),
             child: const Icon(
@@ -117,7 +157,6 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
               color: Colors.redAccent,
             ),
           ),
-          // Exact coordinate dot
           Container(
             width: 4,
             height: 4,
@@ -146,6 +185,8 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final canProceed = points.length == 4;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -154,6 +195,18 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
         ),
         backgroundColor: const Color(0xFF167339),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () async {
+              final rows = await _fetchLatest();
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Latest stored rows: ${rows.length}')),
+              );
+            },
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -377,7 +430,10 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: canProceed
+                              ? () async {
+                            await _insertFourPointRow(points);
+                            if (!mounted) return;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -388,7 +444,8 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                                 ),
                               ),
                             );
-                          },
+                          }
+                              : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF167339),
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -442,7 +499,8 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                 // Map
                 Container(
                   height: 300,
-                  margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  margin:
+                  const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: Colors.green.shade900, width: 2),
@@ -456,8 +514,6 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                         initialZoom: zoom,
                         minZoom: 5,
                         maxZoom: 18,
-                        // Use interactiveFlags to support v5/v6
-
                         onTap: onTapMap,
                       ),
                       children: [

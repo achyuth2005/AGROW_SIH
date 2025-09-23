@@ -37,6 +37,7 @@ dependencies:
   google_maps_flutter: ^2.13.1
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
+  supabase_flutter: ^2.10.1
 
 dev_dependencies:
   flutter_test:

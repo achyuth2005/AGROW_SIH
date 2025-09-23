@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'coming_soon_screen.dart'; // Adjust import appropriately
+import 'mapped_report_page.dart'; // Replace with your actual next page import
 
 class CoordinateEntryScreen extends StatefulWidget {
   @override
@@ -27,9 +27,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   double? parseCoordinate(String value, String direction) {
     final parsed = double.tryParse(value);
     if (parsed == null) return null;
-    if (direction == 'S' || direction == 'W') {
-      return -parsed.abs();
-    }
+    if (direction == 'S' || direction == 'W') return -parsed.abs();
     return parsed.abs();
   }
 
@@ -42,10 +40,9 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
       final lat = parseCoordinate(latText, latDirections[i]);
       final lon = parseCoordinate(lonText, lonDirections[i]);
       if (lat != null && lon != null) {
-        // Ensure precision consistency
         final precisePoint = LatLng(
-            double.parse(lat.toStringAsFixed(6)),
-            double.parse(lon.toStringAsFixed(6))
+          double.parse(lat.toStringAsFixed(6)),
+          double.parse(lon.toStringAsFixed(6)),
         );
         newPoints.add(precisePoint);
       }
@@ -62,20 +59,22 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   void onTapMap(TapPosition pos, LatLng point) {
     if (points.length >= 4) return;
 
-    // Round coordinates to 6 decimal places for precision
     final precisePoint = LatLng(
-        double.parse(point.latitude.toStringAsFixed(6)),
-        double.parse(point.longitude.toStringAsFixed(6))
+      double.parse(point.latitude.toStringAsFixed(6)),
+      double.parse(point.longitude.toStringAsFixed(6)),
     );
 
     setState(() {
       points = [...points, precisePoint];
-      latControllers[points.length - 1].text = precisePoint.latitude.toStringAsFixed(6);
-      lonControllers[points.length - 1].text = precisePoint.longitude.toStringAsFixed(6);
+      latControllers[points.length - 1].text =
+          precisePoint.latitude.toStringAsFixed(6);
+      lonControllers[points.length - 1].text =
+          precisePoint.longitude.toStringAsFixed(6);
 
-      // Update direction based on coordinate values
-      latDirections[points.length - 1] = precisePoint.latitude >= 0 ? 'N' : 'S';
-      lonDirections[points.length - 1] = precisePoint.longitude >= 0 ? 'E' : 'W';
+      latDirections[points.length - 1] =
+      precisePoint.latitude >= 0 ? 'N' : 'S';
+      lonDirections[points.length - 1] =
+      precisePoint.longitude >= 0 ? 'E' : 'W';
 
       center = precisePoint;
       _mapController.move(center, zoom);
@@ -100,45 +99,48 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   }
 
   List<Marker> get markers => points
-      .map((p) => Marker(
-    point: p,
-    width: 30,
-    height: 30,
-    alignment: Alignment.center, // Center alignment for precise positioning
-    child: Stack(
+      .map(
+        (p) => Marker(
+      point: p,
+      width: 30,
+      height: 30,
       alignment: Alignment.center,
-      children: [
-        // Pin icon slightly offset upward
-        Transform.translate(
-          offset: const Offset(0, -8),
-          child: const Icon(
-            Icons.location_on,
-            size: 30,
-            color: Colors.redAccent,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Offset the pin so its tip is at the point
+          Transform.translate(
+            offset: const Offset(0, -8),
+            child: const Icon(
+              Icons.location_on,
+              size: 30,
+              color: Colors.redAccent,
+            ),
           ),
-        ),
-        // Small dot at the exact coordinate point
-        Container(
-          width: 4,
-          height: 4,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.redAccent, width: 1),
+          // Exact coordinate dot
+          Container(
+            width: 4,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.redAccent, width: 1),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
-  ))
+  )
       .toList();
 
   List<Polygon> get polygons => points.length >= 3
       ? [
     Polygon(
-        points: points,
-        color: Colors.green.withOpacity(0.15),
-        borderStrokeWidth: 3,
-        borderColor: Colors.green.shade700),
+      points: points,
+      color: Colors.green.withOpacity(0.15),
+      borderStrokeWidth: 3,
+      borderColor: Colors.green.shade700,
+    ),
   ]
       : [];
 
@@ -156,177 +158,219 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-              colors: [Color(0xFF0D986A), Color(0xFF167339)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter),
+            colors: [Color(0xFF0D986A), Color(0xFF167339)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
             child: Column(
               children: [
+                // Header
                 Padding(
                   padding: const EdgeInsets.all(18),
                   child: Row(
                     children: [
-                      CircleAvatar(
+                      const CircleAvatar(
                         backgroundColor: Colors.white,
-                        child: Icon(Icons.person, color: const Color(0xFF167339)),
+                        child: Icon(Icons.person, color: Color(0xFF167339)),
                       ),
                       const SizedBox(width: 18),
                       Expanded(
                         child: Container(
-                            height: 40,
-                            decoration: BoxDecoration(
-                                color: Colors.green.shade300,
-                                borderRadius: BorderRadius.circular(25)),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(children: const [
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade300,
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: const Row(
+                            children: [
                               Icon(Icons.search, color: Color(0xFF167339)),
                               SizedBox(width: 8),
-                              Text(
-                                'Search',
-                                style: TextStyle(color: Color(0xFF167339)),
-                              )
-                            ])),
-                      )
+                              Text('Search',
+                                  style: TextStyle(color: Color(0xFF167339))),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 const Text(
                   'Enter Co-ordinates',
                   style: TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
+
+                // Coordinate Inputs
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  margin:
+                  const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(25),
-                      gradient: const LinearGradient(
-                          colors: [Colors.black, Colors.transparent],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter)),
-                  child: Column(children: [
-                    for (var i = 0; i < 4; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              flex: 9,
-                              child: Container(
-                                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    gradient: const LinearGradient(
+                      colors: [Colors.black, Colors.transparent],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < 4; i++)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Lat
+                              Expanded(
+                                flex: 9,
+                                child: Container(
+                                  decoration: BoxDecoration(
                                     color: Colors.green[100],
-                                    borderRadius: BorderRadius.circular(14)),
-                                child: TextField(
-                                  controller: latControllers[i],
-                                  keyboardType:
-                                  const TextInputType.numberWithOptions(decimal: true),
-                                  textAlignVertical: TextAlignVertical.center,
-                                  decoration: InputDecoration(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: TextField(
+                                    controller: latControllers[i],
+                                    keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                    textAlignVertical: TextAlignVertical.center,
+                                    decoration: InputDecoration(
                                       hintText: 'Lat ${i + 1}',
                                       border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(
+                                      contentPadding:
+                                      const EdgeInsets.symmetric(
                                           horizontal: 14, vertical: 12),
                                       hintStyle: const TextStyle(
-                                          color: Color(0xFF167339),
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14)),
-                                  style: const TextStyle(
+                                        color: Color(0xFF167339),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                      color: Colors.black),
-                                  onChanged: (_) => updatePointsFromInput(),
+                                      color: Colors.black,
+                                    ),
+                                    onChanged: (_) => updatePointsFromInput(),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              width: 60,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 6),
-                              alignment: Alignment.center,
-                              child: DropdownButton<String>(
-                                value: latDirections[i],
-                                isExpanded: true,
-                                underline: const SizedBox.shrink(),
-                                onChanged: (val) {
-                                  setState(() {
-                                    latDirections[i] = val!;
-                                  });
-                                  updatePointsFromInput();
-                                },
-                                items: const [
-                                  DropdownMenuItem(child: Center(child: Text('N')), value: 'N'),
-                                  DropdownMenuItem(child: Center(child: Text('S')), value: 'S'),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              flex: 9,
-                              child: Container(
+                              const SizedBox(width: 6),
+                              // N/S
+                              Container(
+                                width: 60,
+                                height: 40,
                                 decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding:
+                                const EdgeInsets.symmetric(horizontal: 6),
+                                alignment: Alignment.center,
+                                child: DropdownButton<String>(
+                                  value: latDirections[i],
+                                  isExpanded: true,
+                                  underline: const SizedBox.shrink(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      latDirections[i] = val!;
+                                    });
+                                    updatePointsFromInput();
+                                  },
+                                  items: const [
+                                    DropdownMenuItem(
+                                        child: Center(child: Text('N')),
+                                        value: 'N'),
+                                    DropdownMenuItem(
+                                        child: Center(child: Text('S')),
+                                        value: 'S'),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Lon
+                              Expanded(
+                                flex: 9,
+                                child: Container(
+                                  decoration: BoxDecoration(
                                     color: Colors.green[100],
-                                    borderRadius: BorderRadius.circular(14)),
-                                child: TextField(
-                                  controller: lonControllers[i],
-                                  keyboardType:
-                                  const TextInputType.numberWithOptions(decimal: true),
-                                  textAlignVertical: TextAlignVertical.center,
-                                  decoration: InputDecoration(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: TextField(
+                                    controller: lonControllers[i],
+                                    keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                    textAlignVertical: TextAlignVertical.center,
+                                    decoration: InputDecoration(
                                       hintText: 'Lon ${i + 1}',
                                       border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(
+                                      contentPadding:
+                                      const EdgeInsets.symmetric(
                                           horizontal: 14, vertical: 12),
                                       hintStyle: const TextStyle(
-                                          color: Color(0xFF167339),
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14)),
-                                  style: const TextStyle(
+                                        color: Color(0xFF167339),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                      color: Colors.black),
-                                  onChanged: (_) => updatePointsFromInput(),
+                                      color: Colors.black,
+                                    ),
+                                    onChanged: (_) => updatePointsFromInput(),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              width: 60,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
+                              const SizedBox(width: 6),
+                              // E/W
+                              Container(
+                                width: 60,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding:
+                                const EdgeInsets.symmetric(horizontal: 6),
+                                alignment: Alignment.center,
+                                child: DropdownButton<String>(
+                                  value: lonDirections[i],
+                                  isExpanded: true,
+                                  underline: const SizedBox.shrink(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      lonDirections[i] = val!;
+                                    });
+                                    updatePointsFromInput();
+                                  },
+                                  items: const [
+                                    DropdownMenuItem(
+                                        child: Center(child: Text('E')),
+                                        value: 'E'),
+                                    DropdownMenuItem(
+                                        child: Center(child: Text('W')),
+                                        value: 'W'),
+                                  ],
+                                ),
                               ),
-                              padding: const EdgeInsets.symmetric(horizontal: 6),
-                              alignment: Alignment.center,
-                              child: DropdownButton<String>(
-                                value: lonDirections[i],
-                                isExpanded: true,
-                                underline: const SizedBox.shrink(),
-                                onChanged: (val) {
-                                  setState(() {
-                                    lonDirections[i] = val!;
-                                  });
-                                  updatePointsFromInput();
-                                },
-                                items: const [
-                                  DropdownMenuItem(child: Center(child: Text('E')), value: 'E'),
-                                  DropdownMenuItem(child: Center(child: Text('W')), value: 'W'),
-                                ],
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      )
-                  ]),
+                    ],
+                  ),
                 ),
+
+                // Actions
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 18),
                   child: Row(
@@ -336,7 +380,13 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => ComingSoonScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => MappedReportAnalysisScreen(
+                                  points: points,
+                                  center: center,
+                                  zoom: zoom,
+                                ),
+                              ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -346,7 +396,14 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Text('Proceed', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                          child: const Text(
+                            'Proceed',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -354,18 +411,35 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                         onPressed: points.isEmpty ? null : clearPoints,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent,
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 16, horizontal: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Text('Clear Pins', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        child: const Text(
+                          'Clear Pins',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 20),
-                const Text('Select Points on Map', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Select Points on Map',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600),
+                ),
+
+                // Map
                 Container(
                   height: 300,
                   margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
@@ -382,20 +456,14 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                         initialZoom: zoom,
                         minZoom: 5,
                         maxZoom: 18,
-                        // Fixed InteractiveFlag usage - use specific flags or remove entirely for default behavior
-                        interactionOptions: InteractionOptions(
-                          flags: InteractiveFlag.doubleTapZoom |
-                          InteractiveFlag.drag |
-                          InteractiveFlag.flingAnimation |
-                          InteractiveFlag.pinchMove |
-                          InteractiveFlag.pinchZoom |
-                          InteractiveFlag.scrollWheelZoom,
-                        ),
+                        // Use interactiveFlags to support v5/v6
+
                         onTap: onTapMap,
                       ),
                       children: [
                         TileLayer(
-                          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          urlTemplate:
+                          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                           subdomains: const ['a', 'b', 'c'],
                         ),
                         PolygonLayer(polygons: polygons),
@@ -404,11 +472,15 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                     ),
                   ),
                 ),
+
+                // Zoom slider
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
                   child: Row(
                     children: [
-                      Text('Zoom: ${zoom.toStringAsFixed(1)}', style: const TextStyle(color: Colors.white)),
+                      Text('Zoom: ${zoom.toStringAsFixed(1)}',
+                          style: const TextStyle(color: Colors.white)),
                       Expanded(
                         child: Slider(
                           min: 5,
@@ -423,6 +495,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 20),
               ],
             ),
@@ -433,9 +506,9 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   }
 }
 
+// Optional bottom nav reused
 class BottomNavBar extends StatelessWidget {
   const BottomNavBar({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -445,11 +518,7 @@ class BottomNavBar extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       child: const Center(
-        child: Icon(
-          Icons.home,
-          color: Colors.white,
-          size: 40,
-        ),
+        child: Icon(Icons.home, color: Colors.white, size: 40),
       ),
     );
   }

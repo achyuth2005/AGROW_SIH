@@ -24,7 +24,7 @@ class MainMenuScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     backgroundColor: Colors.white,
-                    child: Icon(Icons.person, color: Color(0xFF0D986A)),
+                    child: Icon(Icons.person, color: const Color(0xFF0D986A)),
                   ),
                   const SizedBox(width: 18),
                   Expanded(
@@ -35,11 +35,11 @@ class MainMenuScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(25),
                       ),
                       child: Row(
-                        children: [
-                          const SizedBox(width: 12),
+                        children: const [
+                          SizedBox(width: 12),
                           Icon(Icons.search, color: Color(0xFF167339)),
-                          const SizedBox(width: 8),
-                          const Text("Search", style: TextStyle(color: Color(0xFF167339))),
+                          SizedBox(width: 8),
+                          Text("Search", style: TextStyle(color: Color(0xFF167339))),
                         ],
                       ),
                     ),
@@ -81,12 +81,14 @@ class MainMenuScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15),
                       child: ListTile(
                         dense: true,
-                        title: Text(item,
-                            style: const TextStyle(
-                              color: Color(0xFF167339),
-                              fontWeight: FontWeight.w400,
-                              fontSize: 15,
-                            )),
+                        title: Text(
+                          item,
+                          style: const TextStyle(
+                            color: Color(0xFF167339),
+                            fontWeight: FontWeight.w400,
+                            fontSize: 15,
+                          ),
+                        ),
                         trailing: item == "Settings" ? const Icon(Icons.arrow_drop_down) : null,
                         onTap: () {
                           if (item == "View Map") {
@@ -139,6 +141,26 @@ class MainMenuScreen extends StatelessWidget {
                           WidgetButton(
                             icon: Icons.bar_chart,
                             label: "View Previous Analytics",
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ComingSoonScreen()),
+                              );
+                            },
+                          ),
+                          WidgetButton(
+                            icon: Icons.chat_bubble_outline,
+                            label: "AI Chatbot",
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ComingSoonScreen()),
+                              );
+                            },
+                          ),
+                          WidgetButton(
+                            icon: Icons.insights,
+                            label: "Predicted Analytics & Data",
                             onPressed: () {
                               Navigator.push(
                                 context,

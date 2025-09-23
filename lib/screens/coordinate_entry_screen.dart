@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'coming_soon_screen.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'coming_soon_screen.dart'; // Update with your actual import
 
 class CoordinateEntryScreen extends StatefulWidget {
   @override
@@ -12,17 +14,59 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   final List<String> _latDirections = List.generate(4, (_) => 'N');
   final List<String> _lonDirections = List.generate(4, (_) => 'E');
 
+  List<LatLng> _points = [];
+
+  void _onTap(TapPosition tapPosition, LatLng point) {
+    if (_points.length < 4) {
+      setState(() {
+        _points.add(point);
+        _latControllers[_points.length - 1].text = point.latitude.toStringAsFixed(6);
+        _lonControllers[_points.length - 1].text = point.longitude.toStringAsFixed(6);
+      });
+    }
+  }
+
+  void _clearPoints() {
+    setState(() {
+      _points.clear();
+    });
+    for (var c in _latControllers) c.clear();
+    for (var c in _lonControllers) c.clear();
+  }
+
+  List<Marker> get _markers => _points.asMap().entries.map((entry) {
+    return Marker(
+      point: entry.value,
+      width: 40,
+      height: 40,
+      alignment: Alignment.bottomCenter,
+      child: const Icon(Icons.location_on, color: Colors.redAccent, size: 38),
+    );
+  }).toList();
+
+  List<Polygon> get _polygons {
+    if (_points.length == 4) {
+      return [
+        Polygon(
+          points: _points,
+          color: Colors.green.withOpacity(0.3),
+          borderColor: Colors.green,
+          borderStrokeWidth: 3,
+        )
+      ];
+    }
+    return [];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
+            colors: [Color(0xFF0D986A), Color(0xFF167339)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0D986A), Color(0xFF167339)],
           ),
         ),
         child: SafeArea(
@@ -30,14 +74,14 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
             child: Column(
               children: [
                 Padding(
-                  padding: EdgeInsets.all(18.0),
+                  padding: const EdgeInsets.all(18),
                   child: Row(
                     children: [
                       CircleAvatar(
                         backgroundColor: Colors.white,
-                        child: Icon(Icons.person, color: Color(0xFF0D986A)),
+                        child: Icon(Icons.person, color: const Color(0xFF0D986A)),
                       ),
-                      SizedBox(width: 18),
+                      const SizedBox(width: 18),
                       Expanded(
                         child: Container(
                           height: 40,
@@ -46,14 +90,11 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                             borderRadius: BorderRadius.circular(25),
                           ),
                           child: Row(
-                            children: [
+                            children: const [
                               SizedBox(width: 12),
                               Icon(Icons.search, color: Color(0xFF167339)),
                               SizedBox(width: 8),
-                              Text(
-                                "Search",
-                                style: TextStyle(color: Color(0xFF167339)),
-                              ),
+                              Text("Search", style: TextStyle(color: Color(0xFF167339))),
                             ],
                           ),
                         ),
@@ -61,201 +102,245 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                     ],
                   ),
                 ),
-                SizedBox(height: 4),
-                Text(
+                const SizedBox(height: 4),
+                const Text(
                   "Enter Coordinates",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                    fontSize: 22,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w500),
                 ),
                 Container(
-                  padding: EdgeInsets.all(18),
-                  margin: EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(0xFF000000), // Solid black
-                        Color(0x00000000)  // Transparent black
-                      ],
+                    borderRadius: BorderRadius.circular(25),
+                    gradient: const LinearGradient(
+                      colors: [Colors.black, Colors.transparent],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
-                    borderRadius: BorderRadius.circular(25),
                   ),
                   child: Column(
-                    children: List.generate(4, (i) => Padding(
-                      padding: EdgeInsets.only(bottom: 10),
-                      child: Row(
-                        children: [
-                          // Latitude
-                          Expanded(
-                            flex: 10,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.green[100],
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: TextField(
-                                controller: _latControllers[i],
-                                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                                decoration: InputDecoration(
-                                  border: InputBorder.none,
-                                  hintText: "Lat ${i + 1} (e.g. 26.18)",
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  hintStyle: TextStyle(
-                                    color: Color(0xFF167339),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                    children: List.generate(4, (i) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 10,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.green[100],
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: TextField(
+                                  controller: _latControllers[i],
+                                  keyboardType:
+                                  const TextInputType.numberWithOptions(decimal: true),
+                                  decoration: InputDecoration(
+                                    hintText: 'Lat ${i + 1} (e.g., 26.18)',
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 12),
+                                    hintStyle: const TextStyle(
+                                        color: Color(0xFF167339),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14),
                                   ),
+                                  style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16),
                                 ),
-                                style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                             ),
-                          ),
-                          SizedBox(width: 6),
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: DropdownButton<String>(
-                              value: _latDirections[i],
-                              items: ['N', 'S'].map((dir) => DropdownMenuItem(
-                                value: dir,
-                                child: Text(dir, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              )).toList(),
-                              underline: SizedBox.shrink(),
-                              onChanged: (val) {
-                                setState(() {
-                                  _latDirections[i] = val!;
-                                });
-                              },
-                              isDense: true,
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          // Longitude
-                          Expanded(
-                            flex: 10,
-                            child: Container(
+                            const SizedBox(width: 6),
+                            Container(
                               decoration: BoxDecoration(
-                                color: Colors.green[100],
-                                borderRadius: BorderRadius.circular(14),
+                                  color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: DropdownButton<String>(
+                                value: _latDirections[i],
+                                items: const [
+                                  DropdownMenuItem(value: 'N', child: Text('N')),
+                                  DropdownMenuItem(value: 'S', child: Text('S')),
+                                ],
+                                onChanged: (val) {
+                                  setState(() {
+                                    _latDirections[i] = val!;
+                                  });
+                                },
+                                underline: const SizedBox.shrink(),
+                                isDense: true,
                               ),
-                              child: TextField(
-                                controller: _lonControllers[i],
-                                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                                decoration: InputDecoration(
-                                  border: InputBorder.none,
-                                  hintText: "Lon ${i + 1} (e.g. 91.73)",
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  hintStyle: TextStyle(
-                                    color: Color(0xFF167339),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 10,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.green[100],
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: TextField(
+                                  controller: _lonControllers[i],
+                                  keyboardType:
+                                  const TextInputType.numberWithOptions(decimal: true),
+                                  decoration: InputDecoration(
+                                    hintText: 'Lon ${i + 1} (e.g., 91.73)',
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 12),
+                                    hintStyle: const TextStyle(
+                                        color: Color(0xFF167339),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14),
                                   ),
-                                ),
-                                style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 6),
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: DropdownButton<String>(
-                              value: _lonDirections[i],
-                              items: ['E', 'W'].map((dir) => DropdownMenuItem(
-                                value: dir,
-                                child: Text(dir, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              )).toList(),
-                              underline: SizedBox.shrink(),
-                              onChanged: (val) {
-                                setState(() {
-                                  _lonDirections[i] = val!;
-                                });
-                              },
-                              isDense: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )) + [
-                      Padding(
-                        padding: EdgeInsets.only(top: 10.0),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => ComingSoonScreen()),
-                              );
-                            },
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all(Color(0xFF0D986A)),
-                              padding: MaterialStateProperty.all(EdgeInsets.symmetric(vertical: 16)),
-                              shape: MaterialStateProperty.all(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                                  style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16),
                                 ),
                               ),
                             ),
-                            child: const Text(
-                              "Proceed",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: 18,
+                            const SizedBox(width: 6),
+                            Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: DropdownButton<String>(
+                                value: _lonDirections[i],
+                                items: const [
+                                  DropdownMenuItem(value: 'E', child: Text('E')),
+                                  DropdownMenuItem(value: 'W', child: Text('W')),
+                                ],
+                                onChanged: (val) {
+                                  setState(() {
+                                    _lonDirections[i] = val!;
+                                  });
+                                },
+                                underline: const SizedBox.shrink(),
+                                isDense: true,
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ),
-                    ],
+                      );
+                    }) +
+                        [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) => ComingSoonScreen()));
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF167339),
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "Proceed",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                if (_points.isNotEmpty)
+                                  ElevatedButton(
+                                    onPressed: _clearPoints,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.redAccent,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 16, horizontal: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "Clear Pins",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          )
+                        ],
                   ),
                 ),
-                SizedBox(height: 10),
-                Text(
-                  "Select on map",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 22)
+                const SizedBox(height: 10),
+                const Text(
+                  "Select Points On Map",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20),
                 ),
                 Container(
-                  margin: EdgeInsets.symmetric(horizontal: 26, vertical: 10),
+                  height: 300,
+                  margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.green.shade900, width: 2)),
-                  height: 180,
-                  child: Center(
-                      child: Text("Map preview here", style: TextStyle(color: Colors.white70))),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.green.shade900, width: 2),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: FlutterMap(
+                      options: MapOptions(
+                        //center: LatLng(26.18, 91.73),
+                        //zoom: 13,
+                        onTap: _onTap,
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          subdomains: const ['a', 'b', 'c'],
+                        ),
+                        PolygonLayer(
+                          polygons: _polygons,
+                        ),
+                        MarkerLayer(
+                          markers: _markers,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
               ],
             ),
           ),
         ),
       ),
-      bottomNavigationBar: _HomeNavBar(),
+      bottomNavigationBar: const _HomeBar(),
     );
   }
 }
 
-class _HomeNavBar extends StatelessWidget {
+class _HomeBar extends StatelessWidget {
+  const _HomeBar({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 60,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Color(0xFF167339),
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
-      child: Center(
+      child: const Center(
         child: Icon(Icons.home, color: Colors.white, size: 40),
       ),
     );

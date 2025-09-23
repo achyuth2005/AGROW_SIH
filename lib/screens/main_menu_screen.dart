@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'coming_soon_screen.dart';
 
@@ -103,64 +105,58 @@ class MainMenuScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            // Widgets area
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 1.15,
-                  children: [
-                    WidgetButton(
-                        icon: Icons.chat,
-                        label: "AI Chatbot",
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => ComingSoonScreen()),
-                          );
-                        }
+            // Widgets area with dynamic bottom padding considering nav bar and system UI
+            Flexible(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  double diPad = MediaQuery.of(context).viewPadding.bottom;
+                  double diInset = MediaQuery.of(context).viewInsets.bottom;
+                  double bottomPad = max(diPad, diInset) + 10;
+                  double maxHeight = constraints.maxHeight - bottomPad;
+
+                  return Padding(
+                    padding: EdgeInsets.only(left: 18, right: 18, top: 10, bottom: bottomPad),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: maxHeight > 0 ? maxHeight : 0,
+                      ),
+                      child: GridView.count(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: 1,
+                        children: [
+                          WidgetButton(
+                            icon: Icons.newspaper,
+                            label: "News",
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ComingSoonScreen()),
+                              );
+                            },
+                          ),
+                          WidgetButton(
+                            icon: Icons.bar_chart,
+                            label: "View Previous Analytics",
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ComingSoonScreen()),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    WidgetButton(
-                        icon: Icons.show_chart,
-                        label: "Predicted Analytics & Data",
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => ComingSoonScreen()),
-                          );
-                        }
-                    ),
-                    WidgetButton(
-                        icon: Icons.newspaper,
-                        label: "News",
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => ComingSoonScreen()),
-                          );
-                        }
-                    ),
-                    WidgetButton(
-                        icon: Icons.bar_chart,
-                        label: "View Previous Analytics",
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => ComingSoonScreen()),
-                          );
-                        }
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
-            )
+            ),
           ],
         ),
       ),
-      bottomNavigationBar: HomeNavBar(),
+      bottomNavigationBar: const HomeNavBar(),
     );
   }
 }
@@ -168,11 +164,13 @@ class MainMenuScreen extends StatelessWidget {
 class WidgetButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
-  WidgetButton({
-    required this.icon, required this.label, required this.onTap
-  });
-
+  final VoidCallback onPressed;
+  const WidgetButton({
+    Key? key,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  }) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -180,7 +178,7 @@ class WidgetButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
+        onTap: onPressed,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -208,6 +206,7 @@ class WidgetButton extends StatelessWidget {
 }
 
 class HomeNavBar extends StatelessWidget {
+  const HomeNavBar({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Container(

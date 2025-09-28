@@ -72,7 +72,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icons/app_icon.png
-    - assets/videos/splash.mp4
+    - assets/videos/splash.mov
 
   # To add assets to your application, add an assets section, like this:
   # assets:

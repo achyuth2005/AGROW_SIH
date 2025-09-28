@@ -1,14 +1,19 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'coming_soon_screen.dart';
+import 'settings_screen.dart';
+import 'full_screen_map_page.dart';
+import 'infographics_screen.dart';
+import 'coordinate_entry_screen.dart';
 
 class MainMenuScreen extends StatelessWidget {
-  final List<String> menuItems = [
+  final List<String> menuItems = const [
     "Analytics Page", "Mapped Analytics", "Infographics",
     "Export Analytic Report", "Download Raw Data",
     "View Map", "Settings"
   ];
+
+  const MainMenuScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +27,9 @@ class MainMenuScreen extends StatelessWidget {
               padding: const EdgeInsets.all(18.0),
               child: Row(
                 children: [
-                  CircleAvatar(
+                  const CircleAvatar(
                     backgroundColor: Colors.white,
-                    child: Icon(Icons.person, color: const Color(0xFF0D986A)),
+                    child: Icon(Icons.person, color: Color(0xFF0D986A)),
                   ),
                   const SizedBox(width: 18),
                   Expanded(
@@ -34,8 +39,8 @@ class MainMenuScreen extends StatelessWidget {
                         color: Colors.green.shade300,
                         borderRadius: BorderRadius.circular(25),
                       ),
-                      child: Row(
-                        children: const [
+                      child: const Row(
+                        children: [
                           SizedBox(width: 12),
                           Icon(Icons.search, color: Color(0xFF167339)),
                           SizedBox(width: 8),
@@ -47,16 +52,14 @@ class MainMenuScreen extends StatelessWidget {
                 ],
               ),
             ),
-            // Main menu
+
+            // Main menu list
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 26),
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 14),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF000000),
-                    Color(0x00000000),
-                  ],
+                  colors: [Color(0xFF000000), Color(0x00000000)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -89,14 +92,41 @@ class MainMenuScreen extends StatelessWidget {
                             fontSize: 15,
                           ),
                         ),
-                        trailing: item == "Settings" ? const Icon(Icons.arrow_drop_down) : null,
+                        trailing: item == "Settings"
+                            ? const Icon(Icons.settings, color: Color(0xFF167339))
+                            : null,
                         onTap: () {
-                          if (item == "View Map") {
+                          if (item == "Mapped Analytics") {
                             Navigator.pushNamed(context, '/coordinate-entry');
+                          } else if (item == "Settings") {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SettingsScreen(),
+                              ),
+                            );
+                          }
+                          else if (item == "View Map") {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const FullScreenMapPage(),
+                              ),
+                            );
+                          }
+                          else if (item == "Infographics") {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const InfographicsScreen(),
+                              ),
+                            );
                           } else {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => ComingSoonScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const ComingSoonScreen(),
+                              ),
                             );
                           }
                         },
@@ -106,18 +136,21 @@ class MainMenuScreen extends StatelessWidget {
                 ],
               ),
             ),
+
             const SizedBox(height: 18),
-            // Widgets area with dynamic bottom padding considering nav bar and system UI
+
+            // Widgets grid
             Flexible(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  double diPad = MediaQuery.of(context).viewPadding.bottom;
-                  double diInset = MediaQuery.of(context).viewInsets.bottom;
-                  double bottomPad = max(diPad, diInset) + 10;
-                  double maxHeight = constraints.maxHeight - bottomPad;
+                  final diPad = MediaQuery.of(context).viewPadding.bottom;
+                  final diInset = MediaQuery.of(context).viewInsets.bottom;
+                  final bottomPad = max(diPad, diInset) + 10;
+                  final maxHeight = constraints.maxHeight - bottomPad;
 
                   return Padding(
-                    padding: EdgeInsets.only(left: 18, right: 18, top: 10, bottom: bottomPad),
+                    padding: EdgeInsets.only(
+                        left: 18, right: 18, top: 10, bottom: bottomPad),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
                         maxHeight: maxHeight > 0 ? maxHeight : 0,
@@ -134,7 +167,9 @@ class MainMenuScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => ComingSoonScreen()),
+                                MaterialPageRoute(
+                                  builder: (_) => const ComingSoonScreen(),
+                                ),
                               );
                             },
                           ),
@@ -144,7 +179,9 @@ class MainMenuScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => ComingSoonScreen()),
+                                MaterialPageRoute(
+                                  builder: (_) => const ComingSoonScreen(),
+                                ),
                               );
                             },
                           ),
@@ -154,7 +191,9 @@ class MainMenuScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => ComingSoonScreen()),
+                                MaterialPageRoute(
+                                  builder: (_) => const ComingSoonScreen(),
+                                ),
                               );
                             },
                           ),
@@ -164,7 +203,9 @@ class MainMenuScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => ComingSoonScreen()),
+                                MaterialPageRoute(
+                                  builder: (_) => const ComingSoonScreen(),
+                                ),
                               );
                             },
                           ),
@@ -188,11 +229,11 @@ class WidgetButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
   const WidgetButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.label,
     required this.onPressed,
-  }) : super(key: key);
+  });
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -228,14 +269,14 @@ class WidgetButton extends StatelessWidget {
 }
 
 class HomeNavBar extends StatelessWidget {
-  const HomeNavBar({Key? key}) : super(key: key);
+  const HomeNavBar({super.key});
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 60,
-      decoration: BoxDecoration(
-        color: const Color(0xFF167339),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+      decoration: const BoxDecoration(
+        color: Color(0xFF167339),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       child: const Center(
         child: Icon(Icons.home, color: Colors.white, size: 40),

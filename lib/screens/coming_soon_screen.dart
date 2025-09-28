@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ComingSoonScreen extends StatefulWidget {
+  const ComingSoonScreen({super.key});
+
   @override
   State<ComingSoonScreen> createState() => _ComingSoonScreenState();
 }

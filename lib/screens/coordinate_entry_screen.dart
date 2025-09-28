@@ -1,3 +1,4 @@
+import 'dart:math' as Math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -27,11 +28,32 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   double zoom = 13.0;
   LatLng center = LatLng(26.18, 91.0);
 
+  @override
+  void dispose() {
+    for (final c in latControllers) c.dispose();
+    for (final c in lonControllers) c.dispose();
+    super.dispose();
+  }
+
   double? parseCoordinate(String value, String direction) {
     final parsed = double.tryParse(value);
     if (parsed == null) return null;
     if (direction == 'S' || direction == 'W') return -parsed.abs();
     return parsed.abs();
+  }
+
+  // Order points around centroid to avoid self-intersections and triangle collapse
+  List<LatLng> orderAsPolygon(List<LatLng> pts) {
+    if (pts.length <= 2) return List.of(pts);
+    final cx = pts.fold<double>(0, (s, p) => s + p.latitude) / pts.length;
+    final cy = pts.fold<double>(0, (s, p) => s + p.longitude) / pts.length;
+    final sorted = List<LatLng>.from(pts)
+      ..sort((a, b) {
+        final angA = Math.atan2(a.longitude - cy, a.latitude - cx);
+        final angB = Math.atan2(b.longitude - cy, b.latitude - cx);
+        return angA.compareTo(angB);
+      });
+    return sorted;
   }
 
   Future<void> _insertFourPointRow(List<LatLng> pts) async {
@@ -46,7 +68,6 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
         'lon3': pts[2].longitude,
         'lat4': pts[3].latitude,
         'lon4': pts[3].longitude,
-        // inserted_at defaults to now() by DB
       });
     } on Exception catch (e) {
       debugPrint('Insert failed: $e');
@@ -88,10 +109,10 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
       }
     }
     setState(() {
-      points = newPoints.take(4).toList();
+      points = orderAsPolygon(newPoints.take(4).toList());
       if (points.isNotEmpty) {
-        center = points.last;
-        _mapController.move(center, zoom);
+        // Don’t override center/zoom unless intentional; just ensure controller is consistent.
+        _mapController.move(_mapController.camera.center, _mapController.camera.zoom);
       }
     });
   }
@@ -105,14 +126,18 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
     );
 
     setState(() {
-      points = [...points, precisePoint];
-      final idx = points.length - 1;
+      final appended = [...points, precisePoint];
+      // Keep form fields synced to the raw tap order
+      final idx = appended.length - 1;
       if (idx < 4) {
         latControllers[idx].text = precisePoint.latitude.toStringAsFixed(6);
         lonControllers[idx].text = precisePoint.longitude.toStringAsFixed(6);
         latDirections[idx] = precisePoint.latitude >= 0 ? 'N' : 'S';
         lonDirections[idx] = precisePoint.longitude >= 0 ? 'E' : 'W';
       }
+      // Order for rendering stability
+      points = orderAsPolygon(appended);
+      // Move camera to the new point but preserve zoom
       center = precisePoint;
       _mapController.move(center, zoom);
     });
@@ -121,7 +146,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   void onZoomChange(double val) {
     setState(() {
       zoom = val;
-      _mapController.move(center, zoom);
+      _mapController.move(_mapController.camera.center, zoom);
     });
   }
 
@@ -134,6 +159,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
         latDirections[i] = 'N';
         lonDirections[i] = 'E';
       }
+      // Keep current zoom, recenter to default, but do not force rebuild resets
       center = LatLng(26.18, 91.0);
       _mapController.move(center, zoom);
     });
@@ -172,16 +198,18 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   )
       .toList();
 
-  List<Polygon> get polygons => points.length >= 3
-      ? [
-    Polygon(
-      points: points,
-      color: Colors.green.withOpacity(0.15),
-      borderStrokeWidth: 3,
-      borderColor: Colors.green.shade700,
-    ),
-  ]
-      : [];
+  List<Polygon> get polygons {
+    if (points.length < 3) return [];
+    final ordered = orderAsPolygon(points);
+    return [
+      Polygon(
+        points: ordered,
+        color: Colors.green.withOpacity(0.15),
+        borderStrokeWidth: 3,
+        borderColor: Colors.green.shade700,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -514,6 +542,13 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                         initialZoom: zoom,
                         minZoom: 5,
                         maxZoom: 18,
+                        keepAlive: true, // keep camera stable across rebuilds
+                        onPositionChanged: (pos, hasGesture) {
+                          // Sync app state to current camera when user moves/zooms
+                          final cam = _mapController.camera;
+                          center = cam.center;
+                          zoom = cam.zoom;
+                        },
                         onTap: onTapMap,
                       ),
                       children: [

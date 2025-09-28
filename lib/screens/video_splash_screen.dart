@@ -4,13 +4,13 @@ import 'package:video_player/video_player.dart';
 
 class VideoSplashScreen extends StatefulWidget {
   const VideoSplashScreen({super.key});
+
   @override
   State<VideoSplashScreen> createState() => _VideoSplashScreenState();
 }
 
 class _VideoSplashScreenState extends State<VideoSplashScreen> {
   late VideoPlayerController _controller;
-  Timer? _timer;
 
   @override
   void initState() {
@@ -19,29 +19,18 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> {
       ..initialize().then((_) {
         setState(() {});
         _controller.play();
+      })
+      ..addListener(() {
+        // When the video ends, move to the next screen
+        if (_controller.value.position >= _controller.value.duration) {
+          Navigator.pushReplacementNamed(context, '/main-menu');
+        }
       });
-
-    // Option 1: Auto navigate after duration (e.g., 3 sec)
-    _timer = Timer(const Duration(seconds: 3), _navigateToNext);
-
-    // Option 2: Or listen to video end
-    // _controller.addListener(() {
-    //   if (_controller.value.position >= _controller.value.duration) {
-    //     _navigateToNext();
-    //   }
-    // });
-  }
-
-  void _navigateToNext() {
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/main-menu');
-    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _timer?.cancel();
     super.dispose();
   }
 

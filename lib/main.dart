@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => SplashScreen(),
+        '/': (context) => VideoSplashScreen(),
         '/main-menu': (context) => MainMenuScreen(),
         '/coordinate-entry': (context) => CoordinateEntryScreen(),
       },

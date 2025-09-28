@@ -5,6 +5,7 @@ import 'settings_screen.dart';
 import 'full_screen_map_page.dart';
 import 'infographics_screen.dart';
 import 'coordinate_entry_screen.dart';
+import 'notification_page.dart';
 
 class MainMenuScreen extends StatelessWidget {
   final List<String> menuItems = const [
@@ -22,14 +23,16 @@ class MainMenuScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Top profile + search
+            // Top profile + search + notification (perfectly matched)
             Padding(
               padding: const EdgeInsets.all(18.0),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const CircleAvatar(
+                    radius: 22,
                     backgroundColor: Colors.white,
-                    child: Icon(Icons.person, color: Color(0xFF0D986A)),
+                    child: Icon(Icons.person, color: Color(0xFF0D986A), size: 28),
                   ),
                   const SizedBox(width: 18),
                   Expanded(
@@ -46,6 +49,24 @@ class MainMenuScreen extends StatelessWidget {
                           SizedBox(width: 8),
                           Text("Search", style: TextStyle(color: Color(0xFF167339))),
                         ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const NotificationPage()),
+                      );
+                    },
+                    child: CircleAvatar(
+                      radius: 22,
+                      backgroundColor: Colors.green[100],
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Color(0xFF167339),
+                        size: 28,
                       ),
                     ),
                   ),
@@ -105,16 +126,14 @@ class MainMenuScreen extends StatelessWidget {
                                 builder: (_) => const SettingsScreen(),
                               ),
                             );
-                          }
-                          else if (item == "View Map") {
+                          } else if (item == "View Map") {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const FullScreenMapPage(),
                               ),
                             );
-                          }
-                          else if (item == "Infographics") {
+                          } else if (item == "Infographics") {
                             Navigator.push(
                               context,
                               MaterialPageRoute(

@@ -2,6 +2,7 @@ import 'dart:math' as Math;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'mapped_report_page.dart';
 
@@ -250,7 +251,8 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                       ),
                     ],
                   ),
-                ),
+                ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.5, end: 0, curve: Curves.easeOutQuad),
+                
                 const Text(
                   'Enter Co-ordinates',
                   style: TextStyle(
@@ -258,7 +260,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
-                ),
+                ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2, end: 0),
 
                 // Coordinate Inputs
                 Container(
@@ -418,10 +420,10 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                               ),
                             ],
                           ),
-                        ),
+                        ).animate().fadeIn(delay: (300 + i * 100).ms).slideX(begin: -0.1, end: 0),
                     ],
                   ),
-                ),
+                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutQuad),
 
                 // Actions
                 Padding(
@@ -486,7 +488,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                       ),
                     ],
                   ),
-                ),
+                ).animate().fadeIn(delay: 700.ms).scale(curve: Curves.easeOutBack),
 
                 const SizedBox(height: 20),
                 const Text(
@@ -495,7 +497,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.w600),
-                ),
+                ).animate().fadeIn(delay: 800.ms),
 
                 // Map
                 Container(
@@ -521,7 +523,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                       myLocationButtonEnabled: false,
                     ),
                   ),
-                ),
+                ).animate().fadeIn(delay: 900.ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
 
                 const SizedBox(height: 20),
               ],

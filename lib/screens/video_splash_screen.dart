@@ -19,10 +19,16 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> {
       ..initialize().then((_) {
         setState(() {});
         _controller.play();
+      }).catchError((error) {
+        debugPrint("Video player error: $error");
+        // Fallback to main menu if video fails
+        Navigator.pushReplacementNamed(context, '/main-menu');
       })
       ..addListener(() {
         // When the video ends, move to the next screen
-        if (_controller.value.position >= _controller.value.duration) {
+        if (_controller.value.isInitialized && 
+            !_controller.value.isPlaying && 
+            _controller.value.position >= _controller.value.duration) {
           Navigator.pushReplacementNamed(context, '/main-menu');
         }
       });

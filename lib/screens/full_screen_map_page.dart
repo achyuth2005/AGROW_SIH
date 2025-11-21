@@ -1,7 +1,6 @@
 // screens/full_screen_map_page.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class FullScreenMapPage extends StatefulWidget {
   const FullScreenMapPage({super.key});
@@ -11,9 +10,9 @@ class FullScreenMapPage extends StatefulWidget {
 }
 
 class _FullScreenMapPageState extends State<FullScreenMapPage> {
-  final MapController _controller = MapController();
-  LatLng center = const LatLng(26.18, 91.0);
-  double zoom = 13;
+  late GoogleMapController _controller;
+  static const LatLng _initialCenter = LatLng(26.18, 91.0);
+  static const double _initialZoom = 13;
 
   @override
   Widget build(BuildContext context) {
@@ -24,25 +23,16 @@ class _FullScreenMapPageState extends State<FullScreenMapPage> {
         backgroundColor: const Color(0xFF167339),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: FlutterMap(
-        mapController: _controller,
-        options: MapOptions(
-          initialCenter: center,
-          initialZoom: zoom,
-          minZoom: 3,
-          maxZoom: 19,
-          keepAlive: true,
-          onPositionChanged: (pos, gesture) {
-            center = _controller.camera.center;
-            zoom = _controller.camera.zoom;
-          },
+      body: GoogleMap(
+        initialCameraPosition: const CameraPosition(
+          target: _initialCenter,
+          zoom: _initialZoom,
         ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            subdomains: const ['a', 'b', 'c'],
-          ),
-        ],
+        onMapCreated: (controller) {
+          _controller = controller;
+        },
+        zoomControlsEnabled: true,
+        myLocationButtonEnabled: false,
       ),
     );
   }

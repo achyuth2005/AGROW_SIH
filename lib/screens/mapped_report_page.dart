@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MappedReportAnalysisScreen extends StatefulWidget {
   final List<LatLng> points;
@@ -15,11 +14,13 @@ class MappedReportAnalysisScreen extends StatefulWidget {
   });
 
   @override
-  State<MappedReportAnalysisScreen> createState() => _MappedReportAnalysisScreenState();
+  State<MappedReportAnalysisScreen> createState() =>
+      _MappedReportAnalysisScreenState();
 }
 
-class _MappedReportAnalysisScreenState extends State<MappedReportAnalysisScreen> {
-  late final MapController _mapController;
+class _MappedReportAnalysisScreenState
+    extends State<MappedReportAnalysisScreen> {
+  late GoogleMapController _mapController;
   late List<LatLng> _points;
   late LatLng _center;
   late double _zoom;
@@ -30,18 +31,9 @@ class _MappedReportAnalysisScreenState extends State<MappedReportAnalysisScreen>
   @override
   void initState() {
     super.initState();
-    _mapController = MapController();
     _points = _sanitizePoints(widget.points);
     _center = widget.center;
     _zoom = widget.zoom;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_points.length >= 3) {
-        _fitToPolygon(_points);
-      } else {
-        _mapController.move(_center, _zoom);
-      }
-    });
   }
 
   @override
@@ -64,6 +56,13 @@ class _MappedReportAnalysisScreenState extends State<MappedReportAnalysisScreen>
     return out;
   }
 
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+    if (_points.length >= 3) {
+      _fitToPolygon(_points);
+    }
+  }
+
   void _fitToPolygon(List<LatLng> pts) {
     if (pts.isEmpty) return;
     double minLat = pts.first.latitude, maxLat = pts.first.latitude;
@@ -74,62 +73,40 @@ class _MappedReportAnalysisScreenState extends State<MappedReportAnalysisScreen>
       if (p.longitude < minLon) minLon = p.longitude;
       if (p.longitude > maxLon) maxLon = p.longitude;
     }
-    final sw = LatLng(minLat, minLon);
-    final ne = LatLng(maxLat, maxLon);
-    try {
-      _mapController.fitCamera(
-        CameraFit.bounds(
-          bounds: LatLngBounds(sw, ne),
-          padding: const EdgeInsets.all(32),
-          maxZoom: 20,
-          minZoom: 5,
-        ),
-      );
-      _center = LatLng((minLat + maxLat) / 2.0, (minLon + maxLon) / 2.0);
-    } catch (_) {
-      _center = LatLng((minLat + maxLat) / 2.0, (minLon + maxLon) / 2.0);
-      _mapController.move(_center, 14);
-    }
+    final bounds = LatLngBounds(
+      southwest: LatLng(minLat, minLon),
+      northeast: LatLng(maxLat, maxLon),
+    );
+    
+    Future.delayed(const Duration(milliseconds: 200), () {
+      try {
+        _mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 32));
+      } catch (e) {
+        debugPrint("Camera update failed: $e");
+      }
+    });
   }
 
-  List<Marker> get _markers => _points
+  Set<Marker> get _markers => _points
       .map((pt) => Marker(
-    point: pt,
-    width: 24,
-    height: 24,
-    alignment: Alignment.center,
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.redAccent,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 3,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: const Icon(
-        Icons.place,
-        size: 16,
-        color: Colors.white,
-      ),
-    ),
-  ))
-      .toList();
+            markerId: MarkerId(pt.toString()),
+            position: pt,
+            icon:
+                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+          ))
+      .toSet();
 
-  List<Polygon> get _polygons => _points.length >= 3
-      ? [
-    Polygon(
-      points: _points,
-      color: Colors.green.withOpacity(0.25),
-      borderColor: Colors.green,
-      borderStrokeWidth: 2.0,
-    ),
-  ]
-      : [];
+  Set<Polygon> get _polygons => _points.length >= 3
+      ? {
+          Polygon(
+            polygonId: const PolygonId('report_polygon'),
+            points: _points,
+            fillColor: Colors.green.withOpacity(0.25),
+            strokeColor: Colors.green,
+            strokeWidth: 2,
+          ),
+        }
+      : {};
 
   void _showExpandedMap() {
     Navigator.of(context).push(
@@ -150,7 +127,8 @@ class _MappedReportAnalysisScreenState extends State<MappedReportAnalysisScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ExtendedAnalyticsSheet(currentMetric: _currentPage),
+      builder: (context) =>
+          _ExtendedAnalyticsSheet(currentMetric: _currentPage),
     );
   }
 
@@ -172,22 +150,19 @@ class _MappedReportAnalysisScreenState extends State<MappedReportAnalysisScreen>
         children: [
           SizedBox(
             height: 220,
-            child: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: _center,
-                initialZoom: _zoom,
-                minZoom: 5,
-                maxZoom: 20,
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: _center,
+                zoom: _zoom,
               ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  subdomains: const ['a', 'b', 'c'],
-                ),
-                if (_points.length >= 3) PolygonLayer(polygons: _polygons),
-                if (_markers.isNotEmpty) MarkerLayer(markers: _markers),
-              ],
+              markers: _markers,
+              polygons: _polygons,
+              onMapCreated: _onMapCreated,
+              zoomControlsEnabled: true,
+              zoomGesturesEnabled: true,
+              scrollGesturesEnabled: true,
+              myLocationButtonEnabled: false,
+              liteModeEnabled: false, // Use full map for interaction if needed
             ),
           ),
           Positioned(
@@ -196,7 +171,8 @@ class _MappedReportAnalysisScreenState extends State<MappedReportAnalysisScreen>
             child: GestureDetector(
               onTap: _showExpandedMap,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.green.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(20),
@@ -222,27 +198,32 @@ class _MappedReportAnalysisScreenState extends State<MappedReportAnalysisScreen>
       {
         'title': 'METRIC - 1',
         'heading': 'Crop Health Analysis',
-        'description': 'NDVI: 0.75 (Healthy)\nStress Detection: Minimal\nGrowth Stage: Flowering\nRecommendation: Continue current irrigation',
+        'description':
+            'NDVI: 0.75 (Healthy)\nStress Detection: Minimal\nGrowth Stage: Flowering\nRecommendation: Continue current irrigation',
       },
       {
         'title': 'METRIC - 2',
         'heading': 'Soil Condition',
-        'description': 'Moisture: 22%\nPH Level: 6.8 (Optimal)\nNutrient Status: Good\nOrganic Matter: 3.2%',
+        'description':
+            'Moisture: 22%\nPH Level: 6.8 (Optimal)\nNutrient Status: Good\nOrganic Matter: 3.2%',
       },
       {
         'title': 'METRIC - 3',
         'heading': 'Weather Impact',
-        'description': 'Temperature: 28°C\nHumidity: 65%\nWind Speed: 12 km/h\nRainfall (7 days): 45mm',
+        'description':
+            'Temperature: 28°C\nHumidity: 65%\nWind Speed: 12 km/h\nRainfall (7 days): 45mm',
       },
       {
         'title': 'METRIC - 4',
         'heading': 'Yield Prediction',
-        'description': 'Projected Yield: 3.8 tons/hectare\nMarket Price: ₹2,800/quintal\nRevenue: ₹1,06,400\nProfit: 28%',
+        'description':
+            'Projected Yield: 3.8 tons/hectare\nMarket Price: ₹2,800/quintal\nRevenue: ₹1,06,400\nProfit: 28%',
       },
       {
         'title': 'METRIC - 5',
         'heading': 'Risk Assessment',
-        'description': 'Pest Risk: Low\nDisease Risk: Very Low\nWeather Risk: Moderate\nMarket Risk: Low',
+        'description':
+            'Pest Risk: Low\nDisease Risk: Very Low\nWeather Risk: Moderate\nMarket Risk: Low',
       },
     ];
 
@@ -334,7 +315,8 @@ class _MappedReportAnalysisScreenState extends State<MappedReportAnalysisScreen>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25),
                         ),
@@ -490,8 +472,8 @@ class _ExpandedMapView extends StatelessWidget {
   final List<LatLng> points;
   final LatLng center;
   final double zoom;
-  final List<Marker> markers;
-  final List<Polygon> polygons;
+  final Set<Marker> markers;
+  final Set<Polygon> polygons;
 
   const _ExpandedMapView({
     required this.points,
@@ -514,21 +496,15 @@ class _ExpandedMapView extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: FlutterMap(
-        options: MapOptions(
-          initialCenter: center,
-          initialZoom: zoom,
-          minZoom: 5,
-          maxZoom: 20,
+      body: GoogleMap(
+        initialCameraPosition: CameraPosition(
+          target: center,
+          zoom: zoom,
         ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            subdomains: const ['a', 'b', 'c'],
-          ),
-          if (polygons.isNotEmpty) PolygonLayer(polygons: polygons),
-          if (markers.isNotEmpty) MarkerLayer(markers: markers),
-        ],
+        markers: markers,
+        polygons: polygons,
+        zoomControlsEnabled: true,
+        myLocationButtonEnabled: false,
       ),
     );
   }
@@ -549,19 +525,23 @@ class _ExtendedAnalyticsSheet extends StatelessWidget {
         'sections': [
           {
             'heading': 'NDVI Analysis',
-            'data': 'Current NDVI: 0.75\nHistorical Average: 0.68\nTrend: ↑ Improving\nVariability: Low (0.05 std dev)'
+            'data':
+                'Current NDVI: 0.75\nHistorical Average: 0.68\nTrend: ↑ Improving\nVariability: Low (0.05 std dev)'
           },
           {
             'heading': 'Chlorophyll Content',
-            'data': 'Content Level: High (45.2 SPAD)\nOptimal Range: 40-50 SPAD\nDeficiency Risk: Very Low\nSeasonal Comparison: Above average'
+            'data':
+                'Content Level: High (45.2 SPAD)\nOptimal Range: 40-50 SPAD\nDeficiency Risk: Very Low\nSeasonal Comparison: Above average'
           },
           {
             'heading': 'Growth Metrics',
-            'data': 'Plant Height: 85cm (Target: 80-90cm)\nLeaf Area Index: 4.2\nBiomass: 2.1 tons/hectare\nGrowth Rate: 2.3cm/week'
+            'data':
+                'Plant Height: 85cm (Target: 80-90cm)\nLeaf Area Index: 4.2\nBiomass: 2.1 tons/hectare\nGrowth Rate: 2.3cm/week'
           },
           {
             'heading': 'Stress Indicators',
-            'data': 'Water Stress: Minimal\nNutrient Stress: None detected\nDisease Pressure: Very Low\nPest Activity: Below threshold'
+            'data':
+                'Water Stress: Minimal\nNutrient Stress: None detected\nDisease Pressure: Very Low\nPest Activity: Below threshold'
           }
         ]
       },
@@ -571,19 +551,23 @@ class _ExtendedAnalyticsSheet extends StatelessWidget {
         'sections': [
           {
             'heading': 'Physical Properties',
-            'data': 'Texture: Loamy Clay\nBulk Density: 1.35 g/cm³\nPorosity: 48%\nPenetration Resistance: 1.8 MPa'
+            'data':
+                'Texture: Loamy Clay\nBulk Density: 1.35 g/cm³\nPorosity: 48%\nPenetration Resistance: 1.8 MPa'
           },
           {
             'heading': 'Chemical Analysis',
-            'data': 'pH: 6.8 (Slightly Acidic)\nEC: 0.85 dS/m\nCEC: 18.5 cmol/kg\nBase Saturation: 78%'
+            'data':
+                'pH: 6.8 (Slightly Acidic)\nEC: 0.85 dS/m\nCEC: 18.5 cmol/kg\nBase Saturation: 78%'
           },
           {
             'heading': 'Nutrient Profile',
-            'data': 'Nitrogen: 45 ppm (Adequate)\nPhosphorus: 12 ppm (Low - needs attention)\nPotassium: 180 ppm (High)\nSulfur: 15 ppm (Adequate)'
+            'data':
+                'Nitrogen: 45 ppm (Adequate)\nPhosphorus: 12 ppm (Low - needs attention)\nPotassium: 180 ppm (High)\nSulfur: 15 ppm (Adequate)'
           },
           {
             'heading': 'Micronutrients',
-            'data': 'Iron: 4.2 ppm (Good)\nZinc: 1.8 ppm (Marginal)\nManganese: 12 ppm (Adequate)\nBoron: 0.8 ppm (Good)'
+            'data':
+                'Iron: 4.2 ppm (Good)\nZinc: 1.8 ppm (Marginal)\nManganese: 12 ppm (Adequate)\nBoron: 0.8 ppm (Good)'
           }
         ]
       },
@@ -593,19 +577,23 @@ class _ExtendedAnalyticsSheet extends StatelessWidget {
         'sections': [
           {
             'heading': 'Current Conditions',
-            'data': 'Temperature: 28°C (Min: 22°C, Max: 34°C)\nHumidity: 65% (Optimal range)\nWind: 12 km/h NW\nPressure: 1013.2 hPa'
+            'data':
+                'Temperature: 28°C (Min: 22°C, Max: 34°C)\nHumidity: 65% (Optimal range)\nWind: 12 km/h NW\nPressure: 1013.2 hPa'
           },
           {
             'heading': '7-Day Forecast',
-            'data': 'Rainfall Expected: 15mm (Days 3-4)\nTemperature Range: 24-36°C\nHumidity: 55-75%\nWind Patterns: Variable, mostly light'
+            'data':
+                'Rainfall Expected: 15mm (Days 3-4)\nTemperature Range: 24-36°C\nHumidity: 55-75%\nWind Patterns: Variable, mostly light'
           },
           {
             'heading': 'Growing Degree Days',
-            'data': 'Accumulated GDD: 1,245°C\nDaily GDD: 18.5°C\nSeasonal Target: 1,400°C\nDays to Maturity: 42 days'
+            'data':
+                'Accumulated GDD: 1,245°C\nDaily GDD: 18.5°C\nSeasonal Target: 1,400°C\nDays to Maturity: 42 days'
           },
           {
             'heading': 'Stress Factors',
-            'data': 'Heat Stress Risk: Low\nDrought Stress: None\nExcess Moisture: None\nFrost Risk: Zero (seasonal)'
+            'data':
+                'Heat Stress Risk: Low\nDrought Stress: None\nExcess Moisture: None\nFrost Risk: Zero (seasonal)'
           }
         ]
       },
@@ -615,19 +603,23 @@ class _ExtendedAnalyticsSheet extends StatelessWidget {
         'sections': [
           {
             'heading': 'Yield Components',
-            'data': 'Plants/m²: 22\nHeads/plant: 1.2\nGrains/head: 485\nThousand grain weight: 38.5g'
+            'data':
+                'Plants/m²: 22\nHeads/plant: 1.2\nGrains/head: 485\nThousand grain weight: 38.5g'
           },
           {
             'heading': 'Quality Parameters',
-            'data': 'Protein Content: 12.8%\nMoisture: 13.5%\nTest Weight: 78.2 kg/hl\nFalling Number: 285 seconds'
+            'data':
+                'Protein Content: 12.8%\nMoisture: 13.5%\nTest Weight: 78.2 kg/hl\nFalling Number: 285 seconds'
           },
           {
             'heading': 'Economic Analysis',
-            'data': 'Cost of Production: ₹75,600/hectare\nBreakeven Yield: 2.7 tons/hectare\nProjected Profit: ₹30,800/hectare\nROI: 40.7%'
+            'data':
+                'Cost of Production: ₹75,600/hectare\nBreakeven Yield: 2.7 tons/hectare\nProjected Profit: ₹30,800/hectare\nROI: 40.7%'
           },
           {
             'heading': 'Market Intelligence',
-            'data': 'Current Price: ₹2,800/quintal\nPrice Trend: Stable (+2% from last month)\nDemand: High\nSupply Forecast: Moderate'
+            'data':
+                'Current Price: ₹2,800/quintal\nPrice Trend: Stable (+2% from last month)\nDemand: High\nSupply Forecast: Moderate'
           }
         ]
       },
@@ -637,19 +629,23 @@ class _ExtendedAnalyticsSheet extends StatelessWidget {
         'sections': [
           {
             'heading': 'Pest & Disease Risk',
-            'data': 'Aphid Pressure: Low (2% threshold)\nFungal Disease: Very Low\nNematode Activity: None detected\nBird Damage Risk: Moderate (harvest time)'
+            'data':
+                'Aphid Pressure: Low (2% threshold)\nFungal Disease: Very Low\nNematode Activity: None detected\nBird Damage Risk: Moderate (harvest time)'
           },
           {
             'heading': 'Weather Risks',
-            'data': 'Hail Risk: Low (5% probability)\nDrought Risk: Very Low\nFlood Risk: None\nWind Damage: Low'
+            'data':
+                'Hail Risk: Low (5% probability)\nDrought Risk: Very Low\nFlood Risk: None\nWind Damage: Low'
           },
           {
             'heading': 'Market Risks',
-            'data': 'Price Volatility: Low\nDemand Uncertainty: Low\nSupply Chain: Stable\nStorage Costs: ₹85/quintal/month'
+            'data':
+                'Price Volatility: Low\nDemand Uncertainty: Low\nSupply Chain: Stable\nStorage Costs: ₹85/quintal/month'
           },
           {
             'heading': 'Mitigation Strategies',
-            'data': 'Insurance Coverage: 85% of input costs\nStorage Facilities: Available\nAlternate Markets: 3 identified\nEmergency Protocols: Active'
+            'data':
+                'Insurance Coverage: 85% of input costs\nStorage Facilities: Available\nAlternate Markets: 3 identified\nEmergency Protocols: Active'
           }
         ]
       },
@@ -686,7 +682,8 @@ class _ExtendedAnalyticsSheet extends StatelessWidget {
 
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -708,7 +705,8 @@ class _ExtendedAnalyticsSheet extends StatelessWidget {
 
               // AI Note
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.orange.withOpacity(0.2),

@@ -1,32 +1,38 @@
 import 'dart:math' as Math;
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'mapped_report_page.dart';
 
 class CoordinateEntryScreen extends StatefulWidget {
+  const CoordinateEntryScreen({super.key});
+
   @override
   _CoordinateEntryScreenState createState() => _CoordinateEntryScreenState();
 }
 
 class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
-  final MapController _mapController = MapController();
+  late GoogleMapController _mapController;
   final _sb = Supabase.instance.client;
 
   final List<TextEditingController> latControllers =
-  List.generate(4, (_) => TextEditingController());
+      List.generate(4, (_) => TextEditingController());
   final List<TextEditingController> lonControllers =
-  List.generate(4, (_) => TextEditingController());
+      List.generate(4, (_) => TextEditingController());
 
   final List<String> latDirections = List.generate(4, (_) => 'N');
   final List<String> lonDirections = List.generate(4, (_) => 'E');
 
   List<LatLng> points = [];
 
-  double zoom = 13.0;
-  LatLng center = LatLng(26.18, 91.0);
+  // Default center (Guwahati approx)
+  static const CameraPosition _initialCameraPosition = CameraPosition(
+    target: LatLng(26.18, 91.0),
+    zoom: 13.0,
+  );
+
+  LatLng center = const LatLng(26.18, 91.0);
 
   @override
   void dispose() {
@@ -42,7 +48,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
     return parsed.abs();
   }
 
-  // Order points around centroid to avoid self-intersections and triangle collapse
+  // Order points around centroid to avoid self-intersections
   List<LatLng> orderAsPolygon(List<LatLng> pts) {
     if (pts.length <= 2) return List.of(pts);
     final cx = pts.fold<double>(0, (s, p) => s + p.latitude) / pts.length;
@@ -111,13 +117,12 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
     setState(() {
       points = orderAsPolygon(newPoints.take(4).toList());
       if (points.isNotEmpty) {
-        // Don’t override center/zoom unless intentional; just ensure controller is consistent.
-        _mapController.move(_mapController.camera.center, _mapController.camera.zoom);
+        _mapController.animateCamera(CameraUpdate.newLatLng(points.last));
       }
     });
   }
 
-  void onTapMap(TapPosition pos, LatLng point) {
+  void onTapMap(LatLng point) {
     if (points.length >= 4) return;
 
     final precisePoint = LatLng(
@@ -137,16 +142,6 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
       }
       // Order for rendering stability
       points = orderAsPolygon(appended);
-      // Move camera to the new point but preserve zoom
-      center = precisePoint;
-      _mapController.move(center, zoom);
-    });
-  }
-
-  void onZoomChange(double val) {
-    setState(() {
-      zoom = val;
-      _mapController.move(_mapController.camera.center, zoom);
     });
   }
 
@@ -159,56 +154,33 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
         latDirections[i] = 'N';
         lonDirections[i] = 'E';
       }
-      // Keep current zoom, recenter to default, but do not force rebuild resets
-      center = LatLng(26.18, 91.0);
-      _mapController.move(center, zoom);
+      _mapController.animateCamera(
+          CameraUpdate.newCameraPosition(_initialCameraPosition));
     });
   }
 
-  List<Marker> get markers => points
+  Set<Marker> get markers => points
       .map(
         (p) => Marker(
-      point: p,
-      width: 30,
-      height: 30,
-      alignment: Alignment.center,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Transform.translate(
-            offset: const Offset(0, -8),
-            child: const Icon(
-              Icons.location_on,
-              size: 30,
-              color: Colors.redAccent,
-            ),
-          ),
-          Container(
-            width: 4,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.redAccent, width: 1),
-            ),
-          ),
-        ],
-      ),
-    ),
-  )
-      .toList();
+          markerId: MarkerId(p.toString()),
+          position: p,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        ),
+      )
+      .toSet();
 
-  List<Polygon> get polygons {
-    if (points.length < 3) return [];
+  Set<Polygon> get polygons {
+    if (points.length < 3) return {};
     final ordered = orderAsPolygon(points);
-    return [
+    return {
       Polygon(
+        polygonId: const PolygonId('field_polygon'),
         points: ordered,
-        color: Colors.green.withOpacity(0.15),
-        borderStrokeWidth: 3,
-        borderColor: Colors.green.shade700,
+        fillColor: Colors.green.withOpacity(0.15),
+        strokeColor: Colors.green.shade700,
+        strokeWidth: 3,
       ),
-    ];
+    };
   }
 
   @override
@@ -291,7 +263,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                 // Coordinate Inputs
                 Container(
                   margin:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(25),
@@ -320,15 +292,15 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                                   child: TextField(
                                     controller: latControllers[i],
                                     keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true),
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
                                     textAlignVertical: TextAlignVertical.center,
                                     decoration: InputDecoration(
                                       hintText: 'Lat ${i + 1}',
                                       border: InputBorder.none,
                                       contentPadding:
-                                      const EdgeInsets.symmetric(
-                                          horizontal: 14, vertical: 12),
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 14, vertical: 12),
                                       hintStyle: const TextStyle(
                                         color: Color(0xFF167339),
                                         fontWeight: FontWeight.w600,
@@ -354,7 +326,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 padding:
-                                const EdgeInsets.symmetric(horizontal: 6),
+                                    const EdgeInsets.symmetric(horizontal: 6),
                                 alignment: Alignment.center,
                                 child: DropdownButton<String>(
                                   value: latDirections[i],
@@ -388,15 +360,15 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                                   child: TextField(
                                     controller: lonControllers[i],
                                     keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true),
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
                                     textAlignVertical: TextAlignVertical.center,
                                     decoration: InputDecoration(
                                       hintText: 'Lon ${i + 1}',
                                       border: InputBorder.none,
                                       contentPadding:
-                                      const EdgeInsets.symmetric(
-                                          horizontal: 14, vertical: 12),
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 14, vertical: 12),
                                       hintStyle: const TextStyle(
                                         color: Color(0xFF167339),
                                         fontWeight: FontWeight.w600,
@@ -422,7 +394,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 padding:
-                                const EdgeInsets.symmetric(horizontal: 6),
+                                    const EdgeInsets.symmetric(horizontal: 6),
                                 alignment: Alignment.center,
                                 child: DropdownButton<String>(
                                   value: lonDirections[i],
@@ -460,19 +432,20 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                         child: ElevatedButton(
                           onPressed: canProceed
                               ? () async {
-                            await _insertFourPointRow(points);
-                            if (!mounted) return;
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => MappedReportAnalysisScreen(
-                                  points: points,
-                                  center: center,
-                                  zoom: zoom,
-                                ),
-                              ),
-                            );
-                          }
+                                  await _insertFourPointRow(points);
+                                  if (!mounted) return;
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          MappedReportAnalysisScreen(
+                                        points: points,
+                                        center: center,
+                                        zoom: 14.0, // Default zoom for next screen
+                                      ),
+                                    ),
+                                  );
+                                }
                               : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF167339),
@@ -528,62 +501,25 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                 Container(
                   height: 300,
                   margin:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: Colors.green.shade900, width: 2),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(18),
-                    child: FlutterMap(
-                      mapController: _mapController,
-                      options: MapOptions(
-                        initialCenter: center,
-                        initialZoom: zoom,
-                        minZoom: 5,
-                        maxZoom: 18,
-                        keepAlive: true, // keep camera stable across rebuilds
-                        onPositionChanged: (pos, hasGesture) {
-                          // Sync app state to current camera when user moves/zooms
-                          final cam = _mapController.camera;
-                          center = cam.center;
-                          zoom = cam.zoom;
-                        },
-                        onTap: onTapMap,
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          subdomains: const ['a', 'b', 'c'],
-                        ),
-                        PolygonLayer(polygons: polygons),
-                        MarkerLayer(markers: markers),
-                      ],
+                    child: GoogleMap(
+                      initialCameraPosition: _initialCameraPosition,
+                      mapType: MapType.normal,
+                      markers: markers,
+                      polygons: polygons,
+                      onMapCreated: (controller) {
+                        _mapController = controller;
+                      },
+                      onTap: onTapMap,
+                      zoomControlsEnabled: true,
+                      myLocationButtonEnabled: false,
                     ),
-                  ),
-                ),
-
-                // Zoom slider
-                Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-                  child: Row(
-                    children: [
-                      Text('Zoom: ${zoom.toStringAsFixed(1)}',
-                          style: const TextStyle(color: Colors.white)),
-                      Expanded(
-                        child: Slider(
-                          min: 5,
-                          max: 18,
-                          divisions: 13,
-                          value: zoom,
-                          onChanged: onZoomChange,
-                          activeColor: Colors.green,
-                          inactiveColor: Colors.grey,
-                        ),
-                      )
-                    ],
                   ),
                 ),
 
@@ -592,24 +528,6 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-// Optional bottom nav reused
-class BottomNavBar extends StatelessWidget {
-  const BottomNavBar({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 60,
-      decoration: const BoxDecoration(
-        color: Color(0xFF167339),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      child: const Center(
-        child: Icon(Icons.home, color: Colors.white, size: 40),
       ),
     );
   }

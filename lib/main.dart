@@ -5,6 +5,9 @@ import 'screens/video_splash_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/main_menu_screen.dart';
 import 'screens/coordinate_entry_screen.dart';
+import 'screens/registration_screen.dart';
+import 'screens/landing_screen.dart';
+import 'screens/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +34,9 @@ class MyApp extends StatelessWidget {
         '/': (context) => VideoSplashScreen(),
         '/main-menu': (context) => MainMenuScreen(),
         '/coordinate-entry': (context) => CoordinateEntryScreen(),
+        '/registration': (context) => RegistrationScreen(),
+        '/landing': (context) => LandingScreen(),
+        '/login': (context) => LoginScreen(),
       },
     );
   }

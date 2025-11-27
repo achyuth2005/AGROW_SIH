@@ -22,14 +22,14 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> {
       }).catchError((error) {
         debugPrint("Video player error: $error");
         // Fallback to main menu if video fails
-        Navigator.pushReplacementNamed(context, '/main-menu');
+        Navigator.pushReplacementNamed(context, '/landing');
       })
       ..addListener(() {
         // When the video ends, move to the next screen
         if (_controller.value.isInitialized && 
             !_controller.value.isPlaying && 
             _controller.value.position >= _controller.value.duration) {
-          Navigator.pushReplacementNamed(context, '/main-menu');
+          Navigator.pushReplacementNamed(context, '/landing');
         }
       });
   }

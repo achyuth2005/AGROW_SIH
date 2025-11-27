@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "481266794982",
+    "project_id": "agrow-sih-5f46b",
+    "storage_bucket": "agrow-sih-5f46b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:481266794982:android:f795a1fe76a6f2de6a1627",
+        "android_client_info": {
+          "package_name": "com.example.agroww_sih"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "481266794982-uhgoh037qa7e0q8pngsc759du5djmi5l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.agroww_sih",
+            "certificate_hash": "e5ba36d9ee5b794e94eaa4301081c6497072ac6e"
+          }
+        },
+        {
+          "client_id": "481266794982-av1uqqfqpat7blj33342g83232prd512.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCndnkpIE5uQt4-Ok8rJBCGqtlSMa03Qi0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "481266794982-av1uqqfqpat7blj33342g83232prd512.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

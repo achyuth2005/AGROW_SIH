@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,6 +12,248 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
+  bool _isLoading = false;
+
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _signIn() async {
+    final input = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (input.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all fields")),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      if (_isPhoneNumber(input)) {
+        await _verifyPhoneNumber(input);
+      } else {
+        if (password.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Please enter your password")),
+          );
+          return;
+        }
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: input,
+          password: password,
+        );
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/main-menu');
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? "Authentication failed")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("An unexpected error occurred")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _googleSignIn() async {
+    try {
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser == null) {
+        // The user canceled the sign-in
+        return;
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Create a new credential
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Once signed in, return the UserCredential
+      await FirebaseAuth.instance.signInWithCredential(credential);
+      
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/main-menu');
+      }
+    } catch (e) {
+      debugPrint("Google Sign-In Error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Google Sign-In failed: $e")),
+        );
+      }
+    }
+  }
+
+  bool _isPhoneNumber(String input) {
+    // Simple check: if it contains only digits (and maybe a +), treat as phone
+    final clean = input.replaceAll(RegExp(r'\s+'), '');
+    return RegExp(r'^\+?[0-9]+$').hasMatch(clean);
+  }
+
+  Future<void> _verifyPhoneNumber(String phoneNumber) async {
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: phoneNumber,
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        await FirebaseAuth.instance.signInWithCredential(credential);
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/main-menu');
+        }
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Phone Auth Failed: ${e.message}")),
+          );
+        }
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        _showOtpDialog(verificationId);
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {},
+    );
+  }
+
+  void _showOtpDialog(String verificationId) {
+    final otpController = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text("Enter OTP"),
+        content: TextField(
+          controller: otpController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(hintText: "Enter 6-digit code"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final code = otpController.text.trim();
+              if (code.length < 6) return;
+
+              try {
+                final credential = PhoneAuthProvider.credential(
+                  verificationId: verificationId,
+                  smsCode: code,
+                );
+                await FirebaseAuth.instance.signInWithCredential(credential);
+                if (mounted) {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pushReplacementNamed(context, '/main-menu');
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Invalid OTP")),
+                );
+              }
+            },
+            child: const Text("Verify"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _signInAnonymously() async {
+    try {
+      await FirebaseAuth.instance.signInAnonymously();
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/main-menu');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Guest login failed: $e")),
+        );
+      }
+    }
+  }
+
+  Future<void> _forgotPassword() async {
+    final emailController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Reset Password"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Enter your email to receive a password reset link."),
+            const SizedBox(height: 10),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(
+                labelText: "Email",
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isEmpty) return;
+              
+              try {
+                await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Password reset link sent!")),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Failed to send reset link")),
+                  );
+                }
+              }
+            },
+            child: const Text("Send"),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +346,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         _buildLabel("Email / Phone No,", Colors.white),
                         const SizedBox(height: 8),
                         _buildTextField(
+                          controller: _emailController,
                           hint: "Enter your email or phone no.",
                           fillColor: inputFill,
                           textColor: primaryDark,
@@ -111,6 +356,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         _buildLabel("Password", Colors.white),
                         const SizedBox(height: 8),
                         _buildTextField(
+                          controller: _passwordController,
                           hint: "Enter your password",
                           fillColor: inputFill,
                           textColor: primaryDark,
@@ -153,9 +399,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                             GestureDetector(
-                              onTap: () {
-                                // TODO: Forgot Password
-                              },
+                              onTap: _forgotPassword,
                               child: const Text(
                                 "Forgot Password?",
                                 style: TextStyle(
@@ -175,9 +419,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushReplacementNamed(context, '/main-menu');
-                            },
+                            onPressed: _isLoading ? null : _signIn,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: limeGreen,
                               foregroundColor: primaryDark,
@@ -186,13 +428,22 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               elevation: 0,
                             ),
-                            child: const Text(
-                              "Login",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: primaryDark,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Login",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -219,7 +470,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 56,
                           child: ElevatedButton(
                             onPressed: () {
-                              // TODO: Google Login
+                              _googleSignIn();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: inputFill,
@@ -248,6 +499,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Guest Login
+                        Center(
+                          child: TextButton(
+                            onPressed: _signInAnonymously,
+                            child: const Text(
+                              "Continue as Guest",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
@@ -310,11 +577,13 @@ class _LoginScreenState extends State<LoginScreen> {
     required String hint,
     required Color fillColor,
     required Color textColor,
+    TextEditingController? controller,
     bool isPassword = false,
     bool isVisible = false,
     VoidCallback? onVisibilityChanged,
   }) {
     return TextField(
+      controller: controller,
       obscureText: isPassword && !isVisible,
       style: TextStyle(color: textColor),
       decoration: InputDecoration(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -11,6 +13,101 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  bool _isLoading = false;
+
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _signUp() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all fields")),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Passwords do not match")),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password must be at least 6 characters")),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final UserCredential res = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      final User? user = res.user;
+
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('profiles').doc(user.uid).set({
+          'id': user.uid,
+          'email': email,
+        });
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registration successful! Please login.")),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? "Registration failed")),
+        );
+      }
+    } on FirebaseException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Database Error: ${e.message}")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("An unexpected error occurred")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,6 +200,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         _buildLabel("Email / Phone No.", Colors.white),
                         const SizedBox(height: 8),
                         _buildTextField(
+                          controller: _emailController,
                           hint: "Enter your email or phone no.",
                           fillColor: inputFill,
                           textColor: primaryDark,
@@ -112,6 +210,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         _buildLabel("Password", Colors.white),
                         const SizedBox(height: 8),
                         _buildTextField(
+                          controller: _passwordController,
                           hint: "Enter your password",
                           fillColor: inputFill,
                           textColor: primaryDark,
@@ -128,6 +227,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         _buildLabel("Confirm Password", Colors.white),
                         const SizedBox(height: 8),
                         _buildTextField(
+                          controller: _confirmPasswordController,
                           hint: "Re-enter your password",
                           fillColor: inputFill,
                           textColor: primaryDark,
@@ -146,9 +246,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: Implement registration logic
-                            },
+                            onPressed: _isLoading ? null : _signUp,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: limeGreen, // Lime green button
                               foregroundColor: primaryDark, // Dark text
@@ -157,13 +255,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               ),
                               elevation: 0,
                             ),
-                            child: const Text(
-                              "Sign-up",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: primaryDark,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Sign-up",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -182,7 +289,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             ),
                             GestureDetector(
                               onTap: () {
-                                // TODO: Navigate to Login
+                                Navigator.pushReplacementNamed(context, '/login');
                               },
                               child: Text(
                                 "Sign In",
@@ -225,11 +332,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     required String hint,
     required Color fillColor,
     required Color textColor,
+    TextEditingController? controller,
     bool isPassword = false,
     bool isVisible = false,
     VoidCallback? onVisibilityChanged,
   }) {
     return TextField(
+      controller: controller,
       obscureText: isPassword && !isVisible,
       style: TextStyle(color: textColor),
       decoration: InputDecoration(

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class VideoSplashScreen extends StatefulWidget {
   const VideoSplashScreen({super.key});
@@ -22,17 +24,27 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> {
       }).catchError((error) {
         debugPrint("Video player error: $error");
         // Fallback to main menu if video fails
-        Navigator.pushReplacementNamed(context, '/landing');
+        _navigateNext();
       })
       ..addListener(() {
         // When the video ends, move to the next screen
         if (_controller.value.isInitialized && 
             !_controller.value.isPlaying && 
             _controller.value.position >= _controller.value.duration) {
-          Navigator.pushReplacementNamed(context, '/landing');
+          _navigateNext();
         }
       });
   }
+
+  void _navigateNext() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      Navigator.pushReplacementNamed(context, '/main-menu');
+    } else {
+      Navigator.pushReplacementNamed(context, '/landing');
+    }
+  }
+
 
   @override
   void dispose() {

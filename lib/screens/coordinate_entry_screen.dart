@@ -1,7 +1,7 @@
 import 'dart:math' as Math;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import 'mapped_report_page.dart';
@@ -15,7 +15,7 @@ class CoordinateEntryScreen extends StatefulWidget {
 
 class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   late GoogleMapController _mapController;
-  final _sb = Supabase.instance.client;
+  final _firestore = FirebaseFirestore.instance;
 
   final List<TextEditingController> latControllers =
       List.generate(4, (_) => TextEditingController());
@@ -66,7 +66,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   Future<void> _insertFourPointRow(List<LatLng> pts) async {
     if (pts.length != 4) return;
     try {
-      await _sb.from('coordinates_quad').insert({
+      await _firestore.collection('coordinates_quad').add({
         'lat1': pts[0].latitude,
         'lon1': pts[0].longitude,
         'lat2': pts[1].latitude,
@@ -75,6 +75,7 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
         'lon3': pts[2].longitude,
         'lat4': pts[3].latitude,
         'lon4': pts[3].longitude,
+        'inserted_at': FieldValue.serverTimestamp(),
       });
     } on Exception catch (e) {
       debugPrint('Insert failed: $e');
@@ -87,12 +88,12 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
 
   Future<List<Map<String, dynamic>>> _fetchLatest() async {
     try {
-      final rows = await _sb
-          .from('coordinates_quad')
-          .select()
-          .order('inserted_at', ascending: false)
-          .limit(10);
-      return List<Map<String, dynamic>>.from(rows);
+      final snapshot = await _firestore
+          .collection('coordinates_quad')
+          .orderBy('inserted_at', descending: true)
+          .limit(10)
+          .get();
+      return snapshot.docs.map((doc) => doc.data()).toList();
     } on Exception catch (e) {
       debugPrint('Fetch failed: $e');
       return [];

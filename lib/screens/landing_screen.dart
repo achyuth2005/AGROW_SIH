@@ -50,7 +50,7 @@ class LandingScreen extends StatelessWidget {
             child: Center(
               child: Container(
                 width: 376,
-                height: 189,
+                height: 240, // Increased height for guest button
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 decoration: BoxDecoration(
                   color: primaryDark,
@@ -73,6 +73,22 @@ class LandingScreen extends StatelessWidget {
                       onTap: () {
                         Navigator.pushNamed(context, '/registration');
                       },
+                    ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/main-menu');
+                      },
+                      child: const Text(
+                        "Continue as Guest",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Colors.white,
+                        ),
+                      ),
                     ),
                   ],
                 ),

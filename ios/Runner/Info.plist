@@ -45,6 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Agrow needs access to your location to provide localized content.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'coming_soon_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -10,6 +12,22 @@ class SettingsScreen extends StatelessWidget {
       context,
       MaterialPageRoute(builder: (_) => const ComingSoonScreen()),
     );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    try {
+      await GoogleSignIn().signOut();
+      await FirebaseAuth.instance.signOut();
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error logging out: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -106,6 +124,13 @@ class SettingsScreen extends StatelessWidget {
                         onTap: () => _goComingSoon(context),
                         delay: 800,
                       ),
+                      _listButton(
+                        label: 'Logout',
+                        onTap: () => _logout(context),
+                        delay: 900,
+                        icon: Icons.logout,
+                        isDestructive: true,
+                      ),
                     ],
                   ),
                 ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1, end: 0),
@@ -173,11 +198,13 @@ class SettingsScreen extends StatelessWidget {
     required String label,
     required VoidCallback onTap,
     int delay = 0,
+    IconData? icon,
+    bool isDestructive = false,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Material(
-        color: Colors.green[200],
+        color: isDestructive ? Colors.red[50] : Colors.green[200],
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
@@ -189,14 +216,17 @@ class SettingsScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     label,
-                    style: const TextStyle(
-                      color: Color(0xFF0D3F2C),
+                    style: TextStyle(
+                      color: isDestructive ? Colors.red[700] : const Color(0xFF0D3F2C),
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
                     ),
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Color(0xFF167339)),
+                Icon(
+                  icon ?? Icons.chevron_right, 
+                  color: isDestructive ? Colors.red[700] : const Color(0xFF167339)
+                ),
               ],
             ),
           ),

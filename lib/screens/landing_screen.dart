@@ -75,10 +75,10 @@ class LandingScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/main-menu');
-                      },
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(context, '/location-permission');
+                        },
                       child: const Text(
                         "Continue as Guest",
                         style: TextStyle(

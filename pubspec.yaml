@@ -47,6 +47,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   flutter_animate: ^4.5.2
   flutter_svg: ^2.0.10+1
+  permission_handler: ^11.3.0
 
 dev_dependencies:
   flutter_test:
@@ -86,6 +87,9 @@ flutter:
     - assets/Background.png
     - assets/AGROW LOGO.png
     - assets/toppng.com-google-g-logo-icon-480x480.png
+    - assets/LocationPerm2.png
+    - assets/notif.png
+    - assets/backsmall.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

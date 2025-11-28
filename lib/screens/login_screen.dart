@@ -54,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
           password: password,
         );
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/main-menu');
+          Navigator.pushReplacementNamed(context, '/location-permission');
         }
       }
     } on FirebaseAuthException catch (e) {
@@ -101,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await FirebaseAuth.instance.signInWithCredential(credential);
       
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/main-menu');
+        Navigator.pushReplacementNamed(context, '/location-permission');
       }
     } catch (e) {
       debugPrint("Google Sign-In Error: $e");
@@ -125,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
       verificationCompleted: (PhoneAuthCredential credential) async {
         await FirebaseAuth.instance.signInWithCredential(credential);
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/main-menu');
+          Navigator.pushReplacementNamed(context, '/location-permission');
         }
       },
       verificationFailed: (FirebaseAuthException e) {
@@ -172,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 await FirebaseAuth.instance.signInWithCredential(credential);
                 if (mounted) {
                   Navigator.pop(context); // Close dialog
-                  Navigator.pushReplacementNamed(context, '/main-menu');
+                  Navigator.pushReplacementNamed(context, '/location-permission');
                 }
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -191,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await FirebaseAuth.instance.signInAnonymously();
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/main-menu');
+        Navigator.pushReplacementNamed(context, '/location-permission');
       }
     } catch (e) {
       if (mounted) {

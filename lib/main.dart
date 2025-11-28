@@ -8,6 +8,8 @@ import 'screens/coordinate_entry_screen.dart';
 import 'screens/registration_screen.dart';
 import 'screens/landing_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/location_permission_screen.dart';
+import 'screens/notification_permission_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +36,8 @@ class MyApp extends StatelessWidget {
         '/registration': (context) => RegistrationScreen(),
         '/landing': (context) => LandingScreen(),
         '/login': (context) => LoginScreen(),
+        '/location-permission': (context) => LocationPermissionScreen(),
+        '/notification-permission': (context) => NotificationPermissionScreen(),
       },
     );
   }

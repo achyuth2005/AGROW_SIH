@@ -1,0 +1,18 @@
+# Exclude everything by default
+*
+
+# Include only what we need for the backend
+!lib/
+!lib/models/
+!lib/models/*.py
+!lib/__init__.py
+!requirements.txt
+!Dockerfile
+!Procfile
+
+# Explicitly exclude binary files if they are in lib (unlikely but safe)
+*.png
+*.jpg
+*.mov
+*.mp4
+*.xcassets

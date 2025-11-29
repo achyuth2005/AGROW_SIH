@@ -39,53 +39,72 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
   }
 
   Future<void> _fetchSatelliteImage() async {
+    // Primary URL (Localhost/Custom)
+    final primaryUrl = _serverUrl;
+    // Fallback URL (Hugging Face Space)
+    // Note: The user provided https://aniket2006-agrow.hf.space
+    // We assume the endpoint is /api/satellite based on the local server structure.
+    // If the HF space root IS the API, we might need to adjust, but standard practice is /api/satellite.
+    // Let's assume /api/satellite for now as per plan.
+    const fallbackUrl = 'https://aniket2006-agrow.hf.space/api/satellite';
+
     try {
-      // Convert LatLng points to [[lon, lat], ...] format
-      final polygon = widget.points.map((p) => [p.longitude, p.latitude]).toList();
-      // Close the polygon if not closed
-      if (polygon.isNotEmpty && polygon.first != polygon.last) {
-        polygon.add(polygon.first);
-      }
-
-      final response = await http.post(
-        Uri.parse(_serverUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'polygon': polygon,
-          'days_back': 30,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          setState(() {
-            _imageData = base64Decode(data['image']);
-            _metadata = {
-              'timestamp': data['timestamp'],
-              'cloud_cover': data['cloud_cover'],
-            };
-            _bbox = data['bbox'];
-            _dimensions = data['dimensions'];
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _errorMessage = data['error'] ?? 'Unknown error';
-            _isLoading = false;
-          });
-        }
-      } else {
+      await _attemptFetch(primaryUrl);
+    } catch (e) {
+      print('Primary server failed: $e. Trying fallback...');
+      try {
+        await _attemptFetch(fallbackUrl);
+        // If fallback succeeds, maybe we should notify the user or update the UI?
+        // For now, just logging it.
+        print('Fallback to Hugging Face Space successful.');
+      } catch (e2) {
         setState(() {
-          _errorMessage = 'Server error: ${response.statusCode}';
+          _errorMessage = 'Connection failed: Both primary and fallback servers are unreachable.\nPrimary: $e\nFallback: $e2';
           _isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Connection failed: $e. Make sure the Python server is running.';
-        _isLoading = false;
-      });
+    }
+  }
+
+  Future<void> _attemptFetch(String url) async {
+    // Convert LatLng points to [[lon, lat], ...] format
+    final polygon = widget.points.map((p) => [p.longitude, p.latitude]).toList();
+    // Close the polygon if not closed
+    if (polygon.isNotEmpty && polygon.first != polygon.last) {
+      polygon.add(polygon.first);
+    }
+
+    print('Fetching satellite image from: $url');
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'polygon': polygon,
+        'days_back': 30,
+      }),
+    ).timeout(const Duration(seconds: 30)); // Add timeout to fail fast
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        setState(() {
+          _imageData = base64Decode(data['image']);
+          _metadata = {
+            'timestamp': data['timestamp'],
+            'cloud_cover': data['cloud_cover'],
+          };
+          _bbox = data['bbox'];
+          _dimensions = data['dimensions'];
+          _isLoading = false;
+          _errorMessage = null; // Clear any previous errors
+        });
+        return; // Success!
+      } else {
+        throw Exception(data['error'] ?? 'Unknown API error');
+      }
+    } else {
+      throw Exception('Server error: ${response.statusCode}');
     }
   }
 

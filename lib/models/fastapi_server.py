@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
 import os
-from satellite_pipeline import fetch_satellite_rgb_for_polygon, rgb_to_base64
+from .satellite_pipeline import fetch_satellite_rgb_for_polygon, rgb_to_base64
 
 app = FastAPI()
 

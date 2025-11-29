@@ -2,3 +2,6 @@ flask
 sentinelhub
 numpy
 pillow
+fastapi
+uvicorn
+pydantic

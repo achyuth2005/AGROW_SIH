@@ -29,12 +29,8 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
   Map<String, dynamic>? _bbox;
   List<dynamic>? _dimensions;
 
-  String get _apiUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:5001/api/satellite';
-    }
-    return 'http://127.0.0.1:5001/api/satellite';
-  }
+  // Default to Android Emulator IP, but allow user to change it
+  String _serverUrl = Platform.isAndroid ? 'http://10.0.2.2:5001/api/satellite' : 'http://127.0.0.1:5001/api/satellite';
 
   @override
   void initState() {
@@ -52,7 +48,7 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
       }
 
       final response = await http.post(
-        Uri.parse(_apiUrl),
+        Uri.parse(_serverUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'polygon': polygon,
@@ -170,6 +166,15 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
                                       ),
                                       child: const Text('Retry'),
                                     ),
+                                    const SizedBox(width: 12),
+                                    ElevatedButton(
+                                      onPressed: _showUrlDialog,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white.withOpacity(0.2),
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text('Change URL'),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -286,6 +291,47 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ],
+    );
+  }
+  void _showUrlDialog() {
+    final urlController = TextEditingController(text: _serverUrl);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Configure Server URL'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter the full URL (e.g., https://xyz.ngrok-free.app/api/satellite)'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: urlController,
+              decoration: const InputDecoration(
+                labelText: 'Server URL',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _serverUrl = urlController.text.trim();
+                _isLoading = true;
+                _errorMessage = null;
+              });
+              Navigator.pop(context);
+              _fetchSatelliteImage();
+            },
+            child: const Text('Save & Retry'),
+          ),
+        ],
+      ),
     );
   }
 }

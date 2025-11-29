@@ -10,34 +10,39 @@ import 'screens/landing_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/location_permission_screen.dart';
 import 'screens/notification_permission_screen.dart';
+import 'package:agroww_sih/screens/research_profile_screen.dart';
+import 'screens/profile_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp();
-  runApp(MyApp());
+  await dotenv.load(fileName: ".env");
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Agri Analytics Demo',
+      title: 'Agrow',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: Color(0xFF0D986A),
-        scaffoldBackgroundColor: Color(0xFF0D986A),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        useMaterial3: true,
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => VideoSplashScreen(),
-        '/main-menu': (context) => MainMenuScreen(),
-        '/coordinate-entry': (context) => CoordinateEntryScreen(),
-        '/registration': (context) => RegistrationScreen(),
-        '/landing': (context) => LandingScreen(),
-        '/login': (context) => LoginScreen(),
-        '/location-permission': (context) => LocationPermissionScreen(),
-        '/notification-permission': (context) => NotificationPermissionScreen(),
+        '/': (context) => const LandingScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/registration': (context) => const RegistrationScreen(),
+        '/main-menu': (context) => const MainMenuScreen(),
+        '/location-permission': (context) => const LocationPermissionScreen(),
+        '/notification-permission': (context) => const NotificationPermissionScreen(),
+        '/research-profile': (context) => const ResearchProfileScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        '/coordinate-entry': (context) => const CoordinateEntryScreen(),
       },
     );
   }

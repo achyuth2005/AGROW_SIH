@@ -76,10 +76,15 @@ class MainMenuScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const CircleAvatar(
-            radius: 22,
-            backgroundColor: Colors.white,
-            child: Icon(Icons.person, color: Color(0xFF0D986A), size: 28),
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, '/profile');
+            },
+            child: const CircleAvatar(
+              radius: 22,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, color: Color(0xFF0D986A), size: 28),
+            ),
           ),
           const SizedBox(width: 18),
           Expanded(

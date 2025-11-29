@@ -1,0 +1,4 @@
+flask
+sentinelhub
+numpy
+pillow

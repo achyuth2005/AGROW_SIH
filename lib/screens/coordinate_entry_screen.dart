@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import 'mapped_report_page.dart';
+import 'satellite_image_screen.dart';
 
 class CoordinateEntryScreen extends StatefulWidget {
   const CoordinateEntryScreen({super.key});
@@ -441,10 +442,9 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
-                                          MappedReportAnalysisScreen(
+                                          SatelliteImageScreen(
                                         points: points,
                                         center: center,
-                                        zoom: 14.0, // Default zoom for next screen
                                       ),
                                     ),
                                   );

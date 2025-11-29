@@ -379,40 +379,4 @@ def save_rgb_image(rgb_array: np.ndarray, filepath: str):
     img_pil.save(filepath)
 
 
-# ============================================================================
-# EXAMPLE USAGE
-# ============================================================================
 
-if __name__ == "__main__":
-    # Example polygon (farmland in Punjab)
-    polygon = [
-        [75.8385, 30.8900],
-        [75.8615, 30.8900],
-        [75.8615, 30.9100],
-        [75.8385, 30.9100],
-        [75.8385, 30.8900]
-    ]
-    
-    # Credentials (replace with actual)
-    SH_CLIENT_ID = "713b1096-4c36-4bf6-b03c-ce01aa297fb6"
-    SH_CLIENT_SECRET = "waVNOwoXx7HyH9rImt2BDayZC1jkbqk3"
-    
-    # Fetch RGB
-    result = fetch_satellite_rgb_for_polygon(
-        polygon_coords=polygon,
-        client_id=SH_CLIENT_ID,
-        client_secret=SH_CLIENT_SECRET,
-        days_back=30
-    )
-    
-    if result['success']:
-        print(f"SUCCESS!")
-        print(f"   Date: {result['timestamp']}")
-        print(f"   Cloud Cover: {result['cloud_cover']:.1f}%")
-        print(f"   Dimensions: {result['dimensions']}")
-        
-        # Save image
-        save_rgb_image(result['rgb_image'], 'satellite_output.png')
-        print(f"   Saved: satellite_output.png")
-    else:
-        print(f"FAILED: {result['error']}")

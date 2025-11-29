@@ -77,7 +77,7 @@ class SettingsScreen extends StatelessWidget {
                         context: context,
                         label: 'Edit Profile',
                         trailing: const Icon(Icons.edit, color: Color(0xFF167339)),
-                        onTap: () => _goComingSoon(context),
+                        onTap: () => Navigator.pushNamed(context, '/profile'),
                       ).animate().fadeIn(delay: 200.ms).slideX(),
                       const SizedBox(height: 10),
                       _pillButton(

@@ -7,12 +7,14 @@ import 'full_screen_map_page.dart';
 import 'infographics_screen.dart';
 import 'coordinate_entry_screen.dart';
 import 'notification_page.dart';
+import 'sidebar_drawer.dart';
+import 'chatbot_screen.dart';
 
 class MainMenuScreen extends StatelessWidget {
   final List<String> menuItems = const [
     "Analytics Page", "Mapped Analytics", "Infographics",
     "Export Analytic Report", "Download Raw Data",
-    "View Map", "Settings"
+    "View Map", "View Profile", "Settings"
   ];
 
   const MainMenuScreen({super.key});
@@ -21,7 +23,10 @@ class MainMenuScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0D986A),
-      body: SafeArea(
+      drawer: const SidebarDrawer(),
+      body: Builder(
+        builder: (context) {
+          return SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isWeb = constraints.maxWidth > 900;
@@ -65,6 +70,8 @@ class MainMenuScreen extends StatelessWidget {
             }
           },
         ),
+          );
+        },
       ),
       bottomNavigationBar: const HomeNavBar().animate().slideY(begin: 1, end: 0, duration: 600.ms, curve: Curves.easeOutBack),
     );
@@ -78,12 +85,12 @@ class MainMenuScreen extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: () {
-              Navigator.pushNamed(context, '/profile');
+              Scaffold.of(context).openDrawer();
             },
             child: const CircleAvatar(
               radius: 22,
               backgroundColor: Colors.white,
-              child: Icon(Icons.person, color: Color(0xFF0D986A), size: 28),
+              child: Icon(Icons.menu, color: Color(0xFF0D986A), size: 28),
             ),
           ),
           const SizedBox(width: 18),
@@ -175,6 +182,8 @@ class MainMenuScreen extends StatelessWidget {
                         builder: (_) => const FullScreenMapPage(),
                       ),
                     );
+                  } else if (item == "View Profile") {
+                    Navigator.pushNamed(context, '/profile');
                   } else if (item == "Infographics") {
                     Navigator.push(
                       context,
@@ -279,7 +288,7 @@ class MainMenuScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const ComingSoonScreen(),
+                        builder: (_) => const ChatbotScreen(),
                       ),
                     );
                   },

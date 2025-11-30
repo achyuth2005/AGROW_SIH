@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -52,8 +54,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     for (var field in _formFields) {
       _controllers[field['key']] = TextEditingController();
     }
-    // Pre-fill dummy data for visualization if needed
-    _controllers['full_name']?.text = "Achyuth Chetta";
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _controllers['full_name']?.text = prefs.getString('user_full_name') ?? "Achyuth Chetta";
+      // Load other fields if needed
+    });
+  }
+
+  Future<void> _saveProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_full_name', _controllers['full_name']?.text ?? "User");
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile Saved')),
+      );
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -101,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Padding(
                           padding: const EdgeInsets.only(left: 8, top: 8),
                           child: IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.white),
+                            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
@@ -143,7 +163,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             border: Border.all(color: Colors.white, width: 4),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 10,
                                 offset: const Offset(0, 5),
                               ),
@@ -198,7 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               hintText: field['hint'],
                               hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
                               filled: true,
-                              fillColor: Colors.white.withOpacity(0.6),
+                              fillColor: Colors.white.withValues(alpha: 0.6),
                               isDense: true,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -219,10 +239,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Implement save logic
-                        Navigator.pop(context);
-                      },
+                      onPressed: _saveProfile,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryDark,
                         foregroundColor: const Color(0xFFAEF051), // Lime green text

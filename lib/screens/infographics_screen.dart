@@ -47,7 +47,7 @@ class _InfographicsScreenState extends State<InfographicsScreen> {
                             color: Colors.white.withOpacity(0.2),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.arrow_back, color: Colors.white),
+                          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
                         ),
                       ),
                       const SizedBox(width: 16),

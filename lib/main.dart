@@ -12,11 +12,20 @@ import 'screens/location_permission_screen.dart';
 import 'screens/notification_permission_screen.dart';
 import 'package:agroww_sih/screens/research_profile_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/intro_screen.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await dotenv.load(fileName: ".env");
+  
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+
   runApp(const MyApp());
 }
 
@@ -40,6 +49,7 @@ class MyApp extends StatelessWidget {
         '/main-menu': (context) => const MainMenuScreen(),
         '/location-permission': (context) => const LocationPermissionScreen(),
         '/notification-permission': (context) => const NotificationPermissionScreen(),
+        '/intro': (context) => const IntroScreen(),
         '/research-profile': (context) => const ResearchProfileScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/coordinate-entry': (context) => const CoordinateEntryScreen(),

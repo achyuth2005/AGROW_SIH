@@ -82,7 +82,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                       children: [
                         TextButton(
                           onPressed: () {
-                            Navigator.pushReplacementNamed(context, '/research-profile');
+                            Navigator.pushReplacementNamed(context, '/intro');
                           },
                           child: const Text(
                             "Skip",
@@ -100,7 +100,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                             
                             if (context.mounted) {
                               if (status.isGranted) {
-                                Navigator.pushReplacementNamed(context, '/research-profile');
+                                Navigator.pushReplacementNamed(context, '/intro');
                               } else if (status.isPermanentlyDenied) {
                                 openAppSettings();
                               } else {

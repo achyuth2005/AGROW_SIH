@@ -171,6 +171,10 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
     }
   }
 
+  void _handleSkipAll() {
+    Navigator.pushReplacementNamed(context, '/main-menu');
+  }
+
   void _loadSavedAnswer() {
     _selectedOptions.clear();
     _textController.clear();
@@ -269,7 +273,7 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
                     const SizedBox(height: 30),
 
                   // Options List or Input Field
-                  Expanded(
+                    Expanded(
                     flex: currentQuestion['showImagePlaceholder'] == true ? 0 : 1,
                     child: isInput
                         ? Padding(
@@ -371,73 +375,94 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
                   // Footer Buttons (Back + Next/Submit)
                   Padding(
                     padding: const EdgeInsets.all(24.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
                       children: [
-                        // Back Button
-                        if (_currentIndex > 0)
-                          TextButton(
-                            onPressed: _handleBack,
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                            ),
-                            child: const Text(
-                              "Back",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          )
-                        else
-                          const SizedBox(width: 60), // Placeholder to keep alignment if needed, or just empty
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Back Button
+                            if (_currentIndex > 0)
+                              TextButton(
+                                onPressed: _handleBack,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                                ),
+                                child: const Text(
+                                  "Back",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              )
+                            else
+                              const SizedBox(width: 60), // Placeholder to keep alignment if needed, or just empty
 
-                        // Next/Submit Button
-                        if (isInput)
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 20),
-                              child: ElevatedButton(
-                                onPressed: _textController.text.trim().isNotEmpty ? _handleNext : null,
+                            // Next/Submit Button
+                            if (isInput)
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: ElevatedButton(
+                                    onPressed: _textController.text.trim().isNotEmpty ? _handleNext : null,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: selectedColor, // Lime Green for Submit
+                                      foregroundColor: primaryDark,
+                                      disabledBackgroundColor: Colors.grey[400],
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: const Text(
+                                      "Submit",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else
+                              ElevatedButton(
+                                onPressed: _selectedOptions.isNotEmpty ? _handleNext : null,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: selectedColor, // Lime Green for Submit
-                                  foregroundColor: primaryDark,
+                                  backgroundColor: primaryDark,
+                                  foregroundColor: Colors.white,
                                   disabledBackgroundColor: Colors.grey[400],
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
                                   elevation: 0,
                                 ),
                                 child: const Text(
-                                  "Submit",
+                                  "Next",
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                            ),
-                          )
-                        else
-                          ElevatedButton(
-                            onPressed: _selectedOptions.isNotEmpty ? _handleNext : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryDark,
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: Colors.grey[400],
-                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              "Next",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                          ],
+                        ),
+                        
+                        // Skip Button (Only for Role Selection)
+                        if (currentQuestion['key'] == 'role')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: TextButton(
+                              onPressed: _handleSkipAll,
+                              child: const Text(
+                                "Skip All",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ),

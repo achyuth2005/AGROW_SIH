@@ -162,6 +162,8 @@ class _MappedReportAnalysisScreenState
               zoomControlsEnabled: true,
               zoomGesturesEnabled: true,
               scrollGesturesEnabled: true,
+              tiltGesturesEnabled: true,
+              rotateGesturesEnabled: true,
               myLocationButtonEnabled: false,
               liteModeEnabled: false, // Use full map for interaction if needed
             ),

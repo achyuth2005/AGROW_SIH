@@ -25,7 +25,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Future<void> _loadUserName() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userName = prefs.getString('user_full_name') ?? "Achyuth Chetta";
+      _userName = prefs.getString('user_full_name') ?? "User";
     });
   }
 
@@ -90,7 +90,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 // Custom AppBar
                 SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
                     child: Row(
                       children: [
                         IconButton(

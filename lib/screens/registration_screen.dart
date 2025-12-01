@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -62,17 +63,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
 
     try {
-      final UserCredential res = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final firebase_auth.UserCredential res = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       
-      final User? user = res.user;
+      final firebase_auth.User? user = res.user;
 
       if (user != null) {
-        await FirebaseFirestore.instance.collection('profiles').doc(user.uid).set({
-          'id': user.uid,
+        // Save to Supabase
+        await Supabase.instance.client.from('user_profiles').upsert({
+          'user_id': user.uid,
           'email': email,
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
         });
       }
 
@@ -82,7 +86,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         );
         Navigator.pushReplacementNamed(context, '/login');
       }
-    } on FirebaseAuthException catch (e) {
+    } on firebase_auth.FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message ?? "Registration failed")),

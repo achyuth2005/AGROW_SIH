@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -34,21 +36,28 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   void initState() {
     super.initState();
-    _notifications = List.from(_initialNotifications);
+    _loadNotifications(); // Call _loadNotifications instead of initializing from _initialNotifications
+  }
+
+  Future<void> _loadNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? saved = prefs.getStringList('notifications');
+    
+    if (saved != null) {
+      setState(() {
+        _notifications = saved.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
+      });
+    } else {
+      setState(() {
+        _notifications = [];
+      });
+    }
   }
 
   void _toggleNotifications() {
+    // For now, just a placeholder or could load more from history if we had pagination
     setState(() {
-      if (_isExpanded) {
-        // Hide older notifications (reset to initial)
-        _notifications = List.from(_initialNotifications);
-        _isExpanded = false;
-      } else {
-        // Show older notifications (duplicate existing for demo)
-        final olderNotifications = List<Map<String, dynamic>>.from(_initialNotifications);
-        _notifications.addAll(olderNotifications);
-        _isExpanded = true;
-      }
+      _isExpanded = !_isExpanded;
     });
   }
 
@@ -75,14 +84,14 @@ class _NotificationPageState extends State<NotificationPage> {
               children: [
                 // Custom App Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Back Button
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withOpacity(0.3), // Changed withValues to withOpacity
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
@@ -119,7 +128,7 @@ class _NotificationPageState extends State<NotificationPage> {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withOpacity(0.05), // Changed withValues to withOpacity
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -145,51 +154,20 @@ class _NotificationPageState extends State<NotificationPage> {
 
                 // Notification List
                 Expanded(
-                  child: ListView.builder(
+                  child: _notifications.isEmpty 
+                    ? const Center(child: Text("No notifications yet"))
+                    : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    itemCount: _notifications.length + 1, // +1 for the button
+                    itemCount: _notifications.length, // Removed +1 for the button
                     itemBuilder: (context, index) {
-                      if (index == _notifications.length) {
-                        // View/Hide Older Notifications Button
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 20.0),
-                          child: GestureDetector(
-                            onTap: _toggleNotifications,
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    _isExpanded ? 'Hide Older Notifications' : 'View Older Notifications',
-                                    style: const TextStyle(
-                                      color: Color(0xFF0D4F40),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                                    color: const Color(0xFF0D4F40),
-                                  ),
-                                ],
-                              ),
-                            ).animate().fadeIn(delay: 400.ms),
-                          ),
-                        );
-                      }
-
+                      // Removed the button logic from here
                       final notification = _notifications[index];
                       return _buildNotificationCard(
-                        date: notification['date'],
-                        time: notification['time'],
-                        delay: notification['delay'] ?? 0,
+                        title: notification['title'] ?? 'No Title',
+                        body: notification['body'] ?? 'No Body',
+                        date: notification['date'] ?? '',
+                        time: notification['time'] ?? '',
+                        delay: (index * 100), // Adjusted delay calculation
                       );
                     },
                   ),
@@ -203,12 +181,14 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Widget _buildNotificationCard({
+    required String title,
+    required String body,
     required String date,
     required String time,
     required int delay,
   }) {
     return Container(
-      height: 140, // Fixed height as per design
+      // Removed fixed height
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -216,41 +196,44 @@ class _NotificationPageState extends State<NotificationPage> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(0.1), // Changed withValues to withOpacity
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Stack(
+      child: Column( // Changed from Stack to Column
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Content placeholder (if any text was needed, it would go here)
-          
-          // Date and Time at bottom left
-          Positioned(
-            bottom: 0,
-            left: 0,
-            child: Row(
-              children: [
-                Text(
-                  date,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Text(
-                  time,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            body,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end, // Aligned to end
+            children: [
+              Text(
+                "$date $time", // Combined date and time
+                style: const TextStyle(
+                  color: Colors.black54, // Changed color
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ],
       ),

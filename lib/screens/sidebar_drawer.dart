@@ -91,7 +91,7 @@ class SidebarDrawer extends StatelessWidget {
               children: [
                 _buildMenuItem(context, icon: Icons.person_outline, title: "Profile", onTap: () => Navigator.pushNamed(context, '/profile')),
                 _buildMenuItem(context, icon: Icons.download_outlined, title: "Export Detailed Reports", onTap: () {}),
-                _buildMenuItem(context, icon: Icons.translate, title: "Language Preference", onTap: () {}),
+                _buildMenuItem(context, icon: Icons.translate, title: "Language Preference", onTap: () => Navigator.pushNamed(context, '/language-selection')),
                 _buildMenuItem(context, icon: Icons.settings_outlined, title: "Permissions", onTap: () {}),
                 _buildMenuItem(context, icon: Icons.shield_outlined, title: "Privacy and Security", onTap: () {}),
                 _buildMenuItem(context, icon: Icons.chat_bubble_outline, title: "Feedback", onTap: () {}),

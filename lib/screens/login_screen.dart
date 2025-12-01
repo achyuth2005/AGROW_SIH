@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -49,10 +51,34 @@ class _LoginScreenState extends State<LoginScreen> {
           );
           return;
         }
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: input,
           password: password,
         );
+        
+        final user = userCredential.user;
+        if (user != null) {
+           try {
+             final data = await Supabase.instance.client
+                 .from('user_profiles')
+                 .select()
+                 .eq('user_id', user.uid)
+                 .maybeSingle();
+             
+             if (data != null) {
+               final prefs = await SharedPreferences.getInstance();
+               if (data['full_name'] != null) {
+                 await prefs.setString('user_full_name', data['full_name']);
+               }
+               if (data['avatar_url'] != null) {
+                 await prefs.setString('user_avatar_url', data['avatar_url']);
+               }
+             }
+           } catch (e) {
+             debugPrint("Error fetching profile on login: $e");
+           }
+        }
+
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/location-permission');
         }
@@ -98,7 +124,35 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       // Once signed in, return the UserCredential
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final user = userCredential.user;
+
+      if (user != null) {
+        // Save to Supabase
+        await Supabase.instance.client.from('user_profiles').upsert({
+          'user_id': user.uid,
+          'email': user.email,
+          'full_name': user.displayName,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+
+        // Save to SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        if (user.displayName != null) {
+          await prefs.setString('user_full_name', user.displayName!);
+        }
+        // For Google Sign-In, we might want to use user.photoURL if Supabase doesn't have one yet,
+        // but for consistency let's fetch from Supabase or just rely on what we have.
+        // If we just upserted, we might not have the avatar_url in the local variable if it was existing.
+        // Let's try to fetch the latest profile to be sure, or just set it if we had one.
+        // Actually, Google user has photoURL. Let's save that if we want to use it as default.
+        if (user.photoURL != null) {
+           await prefs.setString('user_avatar_url', user.photoURL!);
+           // Also update Supabase if it's missing there? 
+           // The upsert above didn't include avatar_url. 
+           // Let's leave it for now to avoid overwriting a custom one.
+        }
+      }
       
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/location-permission');

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'mapped_report_page.dart';
 import 'satellite_image_screen.dart';
@@ -17,6 +19,7 @@ class CoordinateEntryScreen extends StatefulWidget {
 class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   late GoogleMapController _mapController;
   final _supabase = Supabase.instance.client;
+  String? _avatarUrl;
 
   final List<TextEditingController> latControllers =
       List.generate(4, (_) => TextEditingController());
@@ -35,6 +38,21 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   );
 
   LatLng center = const LatLng(26.18, 91.0);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAvatar();
+  }
+
+  Future<void> _loadAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _avatarUrl = prefs.getString('user_avatar_url');
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -67,7 +85,11 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
   Future<void> _insertFourPointRow(List<LatLng> pts) async {
     if (pts.length != 4) return;
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      final userId = user?.uid; // Nullable if not logged in, but column is nullable for now
+
       await _supabase.from('coordinates_quad').insert({
+        'user_id': userId,
         'lat1': pts[0].latitude,
         'lon1': pts[0].longitude,
         'lat2': pts[1].latitude,
@@ -228,9 +250,12 @@ class _CoordinateEntryScreenState extends State<CoordinateEntryScreen> {
                   padding: const EdgeInsets.all(18),
                   child: Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         backgroundColor: Colors.white,
-                        child: Icon(Icons.person, color: Color(0xFF167339)),
+                        backgroundImage: _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+                        child: _avatarUrl == null 
+                            ? const Icon(Icons.person, color: Color(0xFF167339))
+                            : null,
                       ),
                       const SizedBox(width: 18),
                       Expanded(

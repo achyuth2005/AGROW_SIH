@@ -4,8 +4,30 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'coming_soon_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+import 'package:shared_preferences/shared_preferences.dart';
+
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  String _userName = "User";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('user_full_name') ?? "User";
+    });
+  }
 
   void _goComingSoon(BuildContext context) {
     Navigator.push(
@@ -72,6 +94,23 @@ class SettingsScreen extends StatelessWidget {
                           child: Icon(Icons.person, size: 56, color: Color(0xFF167339)),
                         ),
                       ).animate().scale(curve: Curves.easeOutBack),
+                      const SizedBox(height: 12),
+                      Text(
+                        _userName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1, end: 0),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "Farmer", // Placeholder or load from prefs if we had role
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.1, end: 0),
                       const SizedBox(height: 16),
                       _pillButton(
                         context: context,
@@ -99,6 +138,12 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
+                      _listButton(
+                        label: 'Language',
+                        onTap: () => Navigator.pushNamed(context, '/language-selection'),
+                        delay: 350,
+                        icon: Icons.language,
+                      ),
                       _listButton(
                         label: 'Coordinates History',
                         onTap: () => _goComingSoon(context),

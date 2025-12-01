@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/research_data.dart';
 
 class ResearchProfileScreen extends StatefulWidget {
@@ -103,8 +105,23 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
       });
     } else {
       // Finished
-      // TODO: Save answers to backend/local storage if needed
+      _saveAnswers();
       Navigator.pushReplacementNamed(context, '/main-menu');
+    }
+  }
+
+  Future<void> _saveAnswers() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await Supabase.instance.client.from('user_profiles').upsert({
+        'user_id': user.uid,
+        'questionnaire_data': _answers,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('Error saving profile: $e');
     }
   }
 
@@ -287,7 +304,7 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
                                     hintText: "Enter your Goal",
                                     hintStyle: TextStyle(color: Colors.grey[500]),
                                     filled: true,
-                                    fillColor: Colors.white.withOpacity(0.8),
+                                    fillColor: Colors.white.withValues(alpha: 0.8),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(15),
                                       borderSide: BorderSide.none,
@@ -341,7 +358,7 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? selectedColor : Colors.white.withOpacity(0.8),
+                                      color: isSelected ? selectedColor : Colors.white.withValues(alpha: 0.8),
                                       borderRadius: BorderRadius.circular(30),
                                       border: Border.all(
                                         color: isSelected ? selectedColor : Colors.transparent,
@@ -350,7 +367,7 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
                                       boxShadow: [
                                         if (!isSelected)
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.05),
+                                            color: Colors.black.withValues(alpha: 0.05),
                                             blurRadius: 4,
                                             offset: const Offset(0, 2),
                                           ),

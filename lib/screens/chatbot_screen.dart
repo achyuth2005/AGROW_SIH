@@ -150,15 +150,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                             return Align(
                               alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                               child: Container(
+                                constraints: BoxConstraints(
+                                  maxWidth: MediaQuery.of(context).size.width * 0.75,
+                                ),
                                 margin: const EdgeInsets.symmetric(vertical: 4),
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
                                   color: isUser ? const Color(0xFF0F3C33) : Colors.white,
                                   borderRadius: BorderRadius.only(
-                                    topLeft: const Radius.circular(16),
-                                    topRight: const Radius.circular(16),
-                                    bottomLeft: isUser ? const Radius.circular(16) : Radius.zero,
-                                    bottomRight: isUser ? Radius.zero : const Radius.circular(16),
+                                    topLeft: isUser ? const Radius.circular(16) : Radius.zero,
+                                    topRight: isUser ? Radius.zero : const Radius.circular(16),
+                                    bottomLeft: const Radius.circular(16),
+                                    bottomRight: const Radius.circular(16),
                                   ),
                                   boxShadow: [
                                     BoxShadow(

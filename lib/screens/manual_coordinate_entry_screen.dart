@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'satellite_image_screen.dart';
+import 'dart:math' as Math;
+import 'package:agroww_sih/screens/satellite_image_screen.dart';
 
 class ManualCoordinateEntryScreen extends StatefulWidget {
   final List<LatLng> initialPoints;
@@ -21,6 +22,14 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
   final List<TextEditingController> _lonControllers = [];
   final List<String> _latDirections = []; // 'N' or 'S'
   final List<String> _lonDirections = []; // 'E' or 'W'
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _otherCropController = TextEditingController();
+  String? _selectedCrop;
+  final List<String> _crops = [
+    "Rice", "Wheat", "Maize", "Pulses", "Groundnut", "Cotton", 
+    "Jowar", "Bajra", "Sugarcane", "Mustard/Rapeseed", "Barley", 
+    "Sesame", "Chickpea", "Banana", "Coconut", "Other"
+  ];
   bool _isSubmitting = false;
 
   @override
@@ -56,9 +65,32 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _otherCropController.dispose();
     for (var c in _latControllers) c.dispose();
     for (var c in _lonControllers) c.dispose();
     super.dispose();
+  }
+
+  double _calculateArea(List<LatLng> points) {
+    if (points.length < 3) return 0.0;
+    double area = 0.0;
+    const double earthRadius = 6371000; // meters
+
+    for (int i = 0; i < points.length; i++) {
+      final p1 = points[i];
+      final p2 = points[(i + 1) % points.length];
+
+      final x1 = p1.longitude * (Math.pi / 180) * earthRadius * Math.cos(p1.latitude * (Math.pi / 180));
+      final y1 = p1.latitude * (Math.pi / 180) * earthRadius;
+      final x2 = p2.longitude * (Math.pi / 180) * earthRadius * Math.cos(p2.latitude * (Math.pi / 180));
+      final y2 = p2.latitude * (Math.pi / 180) * earthRadius;
+
+      area += (x1 * y2) - (x2 * y1);
+    }
+    
+    final areaSqMeters = area.abs() / 2.0;
+    return areaSqMeters * 0.000247105; // Convert to acres
   }
 
   Future<void> _submitCoordinates() async {
@@ -81,8 +113,29 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
         points.add(LatLng(lat, lon));
       }
 
+      if (_nameController.text.trim().isEmpty) {
+        throw Exception("Please enter a field name");
+      }
+      if (_selectedCrop == null) {
+        throw Exception("Please select a crop type");
+      }
+      
+      String finalCrop = _selectedCrop!;
+      if (_selectedCrop == 'Other') {
+        if (_otherCropController.text.trim().isEmpty) {
+          throw Exception("Please enter the crop name");
+        }
+        finalCrop = _otherCropController.text.trim();
+      }
+
+      // Calculate Area
+      final areaAcres = _calculateArea(points);
+
       // Insert into Supabase
       final insertData = {
+        'name': _nameController.text.trim(),
+        'crop_type': finalCrop,
+        'area_acres': areaAcres,
         'lat1': points[0].latitude.abs(),
         'lat1_dir': _latDirections[0],
         'lon1': points[0].longitude.abs(),
@@ -212,6 +265,92 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Field Details Section
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white.withOpacity(0.2)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Field Details",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                // Name Input
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF0F5F3),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: TextField(
+                                    controller: _nameController,
+                                    decoration: InputDecoration(
+                                      hintText: "Enter Field Name",
+                                      hintStyle: TextStyle(color: Colors.grey[600]),
+                                      prefixIcon: const Icon(Icons.edit, color: Color(0xFF0F3C33)),
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                // Crop Dropdown
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF0F5F3),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: _selectedCrop,
+                                      hint: Text("Select Crop Type", style: TextStyle(color: Colors.grey[600])),
+                                      isExpanded: true,
+                                      icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF0F3C33)),
+                                      items: _crops.map((String crop) {
+                                        return DropdownMenuItem<String>(
+                                          value: crop,
+                                          child: Text(crop, style: const TextStyle(color: Colors.black87)),
+                                        );
+                                      }).toList(),
+                                      onChanged: (val) => setState(() => _selectedCrop = val),
+                                    ),
+                                  ),
+                                ),
+                                if (_selectedCrop == 'Other') ...[
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0F5F3),
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    child: TextField(
+                                      controller: _otherCropController,
+                                      decoration: InputDecoration(
+                                        hintText: "Enter Crop Name",
+                                        hintStyle: TextStyle(color: Colors.grey[600]),
+                                        prefixIcon: const Icon(Icons.grass, color: Color(0xFF0F3C33)),
+                                        border: InputBorder.none,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 24),
+
                           for (int i = 0; i < 4; i++)
                             _buildPointRow(i),
                           

@@ -1,5 +1,6 @@
 import 'package:agroww_sih/screens/camera_screen.dart';
 import 'package:agroww_sih/screens/gallery_screen.dart';
+import 'package:agroww_sih/screens/news_screen.dart';
 import 'package:agroww_sih/screens/export_reports_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -224,8 +225,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                           builder: (_) => const ExportReportsScreen(),
                         ),
                       );
-                    } else if (item == "News" || 
-                               item == "View Previous Analytics" || 
+                    } else if (item == "News") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NewsScreen(),
+                        ),
+                      );
+                    } else if (item == "View Previous Analytics" || 
                                item == "Predicted Analytics & Data") {
                       Navigator.push(
                         context,

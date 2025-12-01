@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'chat_history_drawer.dart';
 
@@ -55,10 +54,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
+        _scrollController.jumpTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
         );
       }
     });
@@ -141,7 +138,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                                 ),
                               ),
                             ],
-                          ).animate().fadeIn().slideY(begin: 0.2, end: 0),
+                          ),
                         )
                       : ListView.builder(
                           controller: _scrollController,
@@ -179,7 +176,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                                   ),
                                 ),
                               ),
-                            ).animate().fadeIn().slideY(begin: 0.1, end: 0);
+                            );
                           },
                         ),
                 ),

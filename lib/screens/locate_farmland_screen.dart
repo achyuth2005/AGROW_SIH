@@ -2,7 +2,6 @@ import 'dart:math' as Math;
 import 'package:flutter/material.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'manual_coordinate_entry_screen.dart';
 
 class LocateFarmlandScreen extends StatefulWidget {
@@ -169,7 +168,7 @@ class _LocateFarmlandScreenState extends State<LocateFarmlandScreen> {
                         ),
                       ],
                     ),
-                  ).animate().fadeIn(delay: 200.ms),
+                  ),
 
                   const SizedBox(height: 20),
 
@@ -197,7 +196,7 @@ class _LocateFarmlandScreenState extends State<LocateFarmlandScreen> {
                         ),
                       ),
                     ),
-                  ).animate().scale(delay: 300.ms),
+                  ),
 
                   const SizedBox(height: 20),
 
@@ -274,7 +273,7 @@ class _LocateFarmlandScreenState extends State<LocateFarmlandScreen> {
                           ),
                       ],
                     ),
-                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
+                  ),
                 ],
               ),
             ),

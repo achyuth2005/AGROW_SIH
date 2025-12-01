@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/research_data.dart';
 
@@ -274,7 +273,7 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
                         color: Colors.black87,
                         fontFamily: 'Inter',
                       ),
-                    ).animate(key: ValueKey(_currentIndex)).fadeIn().slideY(begin: 0.2, end: 0),
+                    ),
                   ),
 
                   // Image Placeholder (if enabled)
@@ -383,7 +382,7 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
                                       ),
                                     ),
                                   ),
-                                ).animate().fadeIn(delay: (50 * index).ms).slideX(),
+                                ),
                               );
                             },
                           ),

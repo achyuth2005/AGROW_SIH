@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class InfographicsScreen extends StatefulWidget {
   const InfographicsScreen({super.key});
@@ -61,7 +60,7 @@ class _InfographicsScreenState extends State<InfographicsScreen> {
                       ),
                     ],
                   ),
-                ).animate().fadeIn(duration: 500.ms).slideX(begin: -0.2, end: 0),
+                ),
 
                 // Main Content
                 Expanded(
@@ -97,7 +96,7 @@ class _InfographicsScreenState extends State<InfographicsScreen> {
                                       color: Colors.white.withOpacity(0.7)),
                                 ],
                               ),
-                            ).animate().fadeIn(delay: 200.ms),
+                            ),
 
                             // Grid of Charts
                             Expanded(
@@ -127,7 +126,7 @@ class _InfographicsScreenState extends State<InfographicsScreen> {
                       ),
                     ),
                   ),
-                ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1, end: 0),
+                ),
                 
                 const SizedBox(height: 20),
               ],
@@ -186,6 +185,6 @@ class _InfographicsScreenState extends State<InfographicsScreen> {
           ),
         ],
       ),
-    ).animate().fadeIn(delay: (300 + index * 100).ms).scale(curve: Curves.easeOutBack);
+    );
   }
 }

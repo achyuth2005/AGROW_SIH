@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({super.key});
@@ -38,7 +37,7 @@ class LandingScreen extends StatelessWidget {
               child: Image.asset(
                 'assets/AGROW LOGO.png',
                 height: 500, // Adjusted height to fit well with new position
-              ).animate().fadeIn(duration: 800.ms).scale(),
+              ),
             ),
           ),
 
@@ -92,7 +91,7 @@ class LandingScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-              ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.5, end: 0),
+              ),
             ),
           ),
         ],

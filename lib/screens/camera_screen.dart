@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/image_service.dart';
@@ -198,7 +197,7 @@ class _CameraScreenState extends State<CameraScreen> {
                             child: const Icon(Icons.camera_alt, color: Colors.white, size: 30),
                           ),
                         ),
-                      ).animate().scale(),
+                      ),
                   ],
                 ),
               ),

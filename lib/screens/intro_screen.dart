@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class IntroScreen extends StatelessWidget {
   const IntroScreen({super.key});
@@ -40,7 +39,7 @@ class IntroScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 _buildHighlightedText("everyday growth", limeGreen, Colors.transparent),
               ],
-            ).animate().fadeIn().slideX(),
+            ),
 
             const Spacer(flex: 1),
 
@@ -62,7 +61,7 @@ class IntroScreen extends StatelessWidget {
                           bottomLeft: Radius.circular(20),
                         ),
                       ),
-                    ).animate().fadeIn(delay: (100 * index).ms).slideX(begin: 1, end: 0);
+                      );
                   }),
                 ),
               ),
@@ -96,7 +95,7 @@ class IntroScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.5, end: 0),
+              ),
             ),
             
             const SizedBox(height: 20),

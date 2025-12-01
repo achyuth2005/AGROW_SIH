@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -148,7 +147,7 @@ class _NotificationPageState extends State<NotificationPage> {
                       ],
                     ),
                   ),
-                ).animate().fadeIn().slideY(begin: -0.2, end: 0),
+                ),
 
                 const SizedBox(height: 20),
 
@@ -237,6 +236,6 @@ class _NotificationPageState extends State<NotificationPage> {
           ),
         ],
       ),
-    ).animate().fadeIn(delay: delay.ms).slideX(begin: -0.1, end: 0);
+    );
   }
 }

@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:io' show Platform;
 import 'mapped_report_page.dart';
 
@@ -131,7 +130,7 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
-              ).animate().fadeIn().slideY(begin: -0.2, end: 0),
+              ),
               
               const SizedBox(height: 20),
 
@@ -253,7 +252,7 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
                                   ),
                                 ),
                               ],
-                            ).animate().fadeIn(),
+                            ),
                 ),
               ),
 
@@ -287,7 +286,7 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
+              ),
             ],
           ),
         ),

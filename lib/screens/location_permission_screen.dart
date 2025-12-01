@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class LocationPermissionScreen extends StatelessWidget {
@@ -36,7 +35,7 @@ class LocationPermissionScreen extends StatelessWidget {
                     child: Image.asset(
                       'assets/LocationPerm2.png',
                       fit: BoxFit.contain,
-                    ).animate().fadeIn(duration: 600.ms).scale(),
+                    ),
                   ),
                   
                   const Spacer(flex: 1),
@@ -55,7 +54,7 @@ class LocationPermissionScreen extends StatelessWidget {
                             color: primaryDark,
                             fontFamily: 'Inter',
                           ),
-                        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+                        ),
                         
                         const SizedBox(height: 16),
                         
@@ -67,7 +66,7 @@ class LocationPermissionScreen extends StatelessWidget {
                             color: primaryDark,
                             height: 1.5,
                           ),
-                        ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
+                        ),
                       ],
                     ),
                   ),
@@ -132,7 +131,7 @@ class LocationPermissionScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.5, end: 0),
+                  ),
                 ],
               ),
             ),

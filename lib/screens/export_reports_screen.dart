@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ExportReportsScreen extends StatelessWidget {
@@ -67,7 +66,7 @@ class ExportReportsScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       _buildExportButton("Export all categories with anomaly reports."),
                     ],
-                  ).animate().fadeIn().slideY(begin: 0.1, end: 0),
+                  ),
 
                   const SizedBox(height: 20),
 
@@ -79,7 +78,7 @@ class ExportReportsScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       _buildExportButton("Export all categories with anomaly reports."),
                     ],
-                  ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1, end: 0),
+                  ),
 
                   const SizedBox(height: 20),
 
@@ -87,7 +86,7 @@ class ExportReportsScreen extends StatelessWidget {
                   _buildExportButton(
                     "Export Mapped Analytics",
                     isStandalone: true,
-                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
+                  ),
                   
                   const SizedBox(height: 40),
                 ],

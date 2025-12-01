@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'coming_soon_screen.dart';
@@ -93,7 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           backgroundColor: Colors.white,
                           child: Icon(Icons.person, size: 56, color: Color(0xFF167339)),
                         ),
-                      ).animate().scale(curve: Curves.easeOutBack),
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         _userName,
@@ -102,7 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
-                      ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1, end: 0),
+                      ),
                       const SizedBox(height: 4),
                       const Text(
                         "Farmer", // Placeholder or load from prefs if we had role
@@ -110,23 +109,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           color: Colors.white70,
                           fontSize: 14,
                         ),
-                      ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.1, end: 0),
+                      ),
                       const SizedBox(height: 16),
                       _pillButton(
                         context: context,
                         label: 'Edit Profile',
                         trailing: const Icon(Icons.edit, color: Color(0xFF167339)),
                         onTap: () => Navigator.pushNamed(context, '/profile'),
-                      ).animate().fadeIn(delay: 200.ms).slideX(),
+                      ),
                       const SizedBox(height: 10),
                       _pillButton(
                         context: context,
                         label: 'Change Password',
                         onTap: () => _goComingSoon(context),
-                      ).animate().fadeIn(delay: 300.ms).slideX(),
+                      ),
                     ],
                   ),
-                ).animate().fadeIn().slideY(begin: -0.1, end: 0),
+                ),
                 const SizedBox(height: 18),
 
                 // List section
@@ -178,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1, end: 0),
+                ),
                 const SizedBox(height: 24),
 
                 // Bottom home chip (static)
@@ -196,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Icon(Icons.home, color: Colors.white, size: 28),
                     ),
                   ),
-                ).animate().scale(delay: 900.ms, curve: Curves.easeOutBack),
+                ),
               ],
             ),
           ),
@@ -277,6 +276,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
-    ).animate().fadeIn(delay: delay.ms).slideX(begin: -0.1, end: 0);
+    );
   }
 }

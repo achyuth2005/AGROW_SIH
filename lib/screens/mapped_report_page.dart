@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class MappedReportAnalysisScreen extends StatefulWidget {
   final List<LatLng> points;
@@ -81,7 +80,7 @@ class _MappedReportAnalysisScreenState
     
     Future.delayed(const Duration(milliseconds: 200), () {
       try {
-        _mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 32));
+        _mapController.moveCamera(CameraUpdate.newLatLngBounds(bounds, 32));
       } catch (e) {
         debugPrint("Camera update failed: $e");
       }
@@ -249,7 +248,7 @@ class _MappedReportAnalysisScreenState
                 color: Colors.white,
               ),
             ),
-          ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.2, end: 0),
+          ),
 
           // Analytics content box
           Expanded(
@@ -274,7 +273,7 @@ class _MappedReportAnalysisScreenState
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
-                  ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
+                  ),
                   const SizedBox(height: 16),
                   Expanded(
                     child: SingleChildScrollView(
@@ -288,7 +287,7 @@ class _MappedReportAnalysisScreenState
                               color: Colors.white70,
                               height: 1.5,
                             ),
-                          ).animate().fadeIn(delay: 300.ms),
+                          ),
                           const SizedBox(height: 20),
                           Container(
                             padding: const EdgeInsets.all(12),
@@ -304,7 +303,7 @@ class _MappedReportAnalysisScreenState
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
-                          ).animate().fadeIn(delay: 400.ms),
+                          ),
                         ],
                       ),
                     ),
@@ -331,10 +330,10 @@ class _MappedReportAnalysisScreenState
                         ),
                       ),
                     ),
-                  ).animate().scale(delay: 500.ms, curve: Curves.easeOutBack),
+                  ),
                 ],
               ),
-            ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.1, end: 0),
+            ),
           ),
         ],
       ),
@@ -421,10 +420,10 @@ class _MappedReportAnalysisScreenState
                   ),
                 ],
               ),
-            ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.5, end: 0),
+            ),
 
             // Map section
-            _buildMapSection().animate().fadeIn(delay: 200.ms).slideY(begin: -0.1, end: 0),
+            _buildMapSection(),
 
             // PageView for analytics with proper constraints
             Expanded(
@@ -444,7 +443,7 @@ class _MappedReportAnalysisScreenState
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: _buildPageIndicator(),
-            ).animate().fadeIn(delay: 600.ms),
+            ),
 
             // Bottom home button
             Container(
@@ -462,7 +461,7 @@ class _MappedReportAnalysisScreenState
                   size: 28,
                 ),
               ),
-            ).animate().scale(delay: 700.ms, curve: Curves.easeOutBack),
+            ),
           ],
         ),
       ),
@@ -732,7 +731,7 @@ class _ExtendedAnalyticsSheet extends StatelessWidget {
                     ),
                   ],
                 ),
-              ).animate().fadeIn(delay: 200.ms).slideX(),
+              ),
 
               // Content
               Expanded(
@@ -771,7 +770,7 @@ class _ExtendedAnalyticsSheet extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ).animate().fadeIn(delay: (300 + index * 100).ms).slideX(begin: 0.1, end: 0);
+                    );
                   },
                 ),
               ),
@@ -800,7 +799,7 @@ class _ExtendedAnalyticsSheet extends StatelessWidget {
                     ),
                   ),
                 ),
-              ).animate().fadeIn(delay: 800.ms).slideY(begin: 1, end: 0),
+              ),
             ],
           ),
         );

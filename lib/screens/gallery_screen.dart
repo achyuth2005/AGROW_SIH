@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../services/image_service.dart';
 
 class GalleryScreen extends StatefulWidget {
@@ -142,7 +141,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           );
                         },
                       ),
-                    ).animate().fadeIn(delay: (index * 100).ms).scale();
+                    );
                   },
                 );
               },

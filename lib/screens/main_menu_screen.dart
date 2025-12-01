@@ -2,7 +2,6 @@ import 'package:agroww_sih/screens/camera_screen.dart';
 import 'package:agroww_sih/screens/gallery_screen.dart';
 import 'package:agroww_sih/screens/export_reports_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'coming_soon_screen.dart';
 import 'settings_screen.dart';
@@ -98,7 +97,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           );
         },
       ),
-      bottomNavigationBar: const HomeNavBar().animate().slideY(begin: 1, end: 0, duration: 600.ms, curve: Curves.easeOutBack),
+      bottomNavigationBar: const HomeNavBar(),
     );
   }
 
@@ -159,7 +158,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.3, end: 0, curve: Curves.easeOutQuad);
+    );
   }
 
   Widget _buildMenuList(BuildContext context) {
@@ -193,7 +192,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               final item = entry.value;
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
-                child: _ScaleButton(
+                child: GestureDetector(
                   onTap: () {
                     if (item == "Add a Farmland") {
                       Navigator.push(
@@ -294,12 +293,12 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     ),
                   ),
                 ),
-              ).animate().fadeIn(delay: (200 + (index * 50)).ms, duration: 400.ms).slideX(begin: -0.1, end: 0, curve: Curves.easeOut);
+              );
             }),
           ],
         ),
       ),
-    ).animate().fadeIn(delay: 100.ms, duration: 600.ms).slideY(begin: 0.1, end: 0, curve: Curves.easeOutQuad);
+    );
   }
 }
 
@@ -320,48 +319,4 @@ class HomeNavBar extends StatelessWidget {
   }
 }
 
-class _ScaleButton extends StatefulWidget {
-  final Widget child;
-  final VoidCallback onTap;
-  const _ScaleButton({required this.child, required this.onTap});
 
-  @override
-  State<_ScaleButton> createState() => _ScaleButtonState();
-}
-
-class _ScaleButtonState extends State<_ScaleButton> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _scale = Tween<double>(begin: 1.0, end: 0.95).animate(_controller);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) {
-        _controller.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _controller.reverse(),
-      child: ScaleTransition(
-        scale: _scale,
-        child: widget.child,
-      ),
-    );
-  }
-}

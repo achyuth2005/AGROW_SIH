@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'add_note_screen.dart';
 import 'view_notes_screen.dart';
@@ -155,7 +154,7 @@ class _FarmlandMapScreenState extends State<FarmlandMapScreen> {
         northeast: LatLng(maxLat, maxLng),
       );
       final controller = await _controller.future;
-      controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+      controller.moveCamera(CameraUpdate.newLatLngBounds(bounds, 50));
     }
   }
 
@@ -729,7 +728,7 @@ class _FarmlandMapScreenState extends State<FarmlandMapScreen> {
             ),
           ],
         ),
-      ).animate().slideY(begin: -1, end: 0, curve: Curves.easeOut),
+      ),
     );
   }
 
@@ -771,7 +770,7 @@ class _FarmlandMapScreenState extends State<FarmlandMapScreen> {
             ),
           ),
         ),
-      ).animate().slideY(begin: 1, end: 0, curve: Curves.easeOutBack),
+      ),
     );
   }
 
@@ -824,7 +823,7 @@ class _FarmlandMapScreenState extends State<FarmlandMapScreen> {
             ),
           ],
         ),
-      ).animate().slideY(begin: 1, end: 0, curve: Curves.easeOutBack),
+      ),
     );
   }
 }

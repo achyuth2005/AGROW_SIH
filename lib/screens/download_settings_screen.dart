@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class DownloadSettingsScreen extends StatelessWidget {
   final VoidCallback onBackToInfographics;
@@ -53,7 +52,7 @@ class DownloadSettingsScreen extends StatelessWidget {
                       const Icon(Icons.download, color: Colors.white),
                     ],
                   ),
-                ).animate().fadeIn().slideY(begin: -0.5, end: 0),
+                ),
 
                 const Padding(
                   padding: EdgeInsets.only(bottom: 8.0),
@@ -65,7 +64,7 @@ class DownloadSettingsScreen extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                ).animate().fadeIn(delay: 200.ms),
+                ),
 
                 // Card
                 Container(
@@ -116,7 +115,7 @@ class DownloadSettingsScreen extends StatelessWidget {
                               icon: Icons.cloud_download,
                               brand: brand,
                               onTap: () {},
-                            ).animate().fadeIn(delay: 400.ms).scale(),
+                            ),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -126,7 +125,7 @@ class DownloadSettingsScreen extends StatelessWidget {
                               brand: brand,
                               trailing: const Icon(Icons.arrow_drop_down, color: Color(0xFF167339)),
                               onTap: () {},
-                            ).animate().fadeIn(delay: 500.ms).scale(),
+                            ),
                           ),
                         ],
                       ),
@@ -145,7 +144,7 @@ class DownloadSettingsScreen extends StatelessWidget {
                           onPressed: () {},
                           child: const Text('Select Format'),
                         ),
-                      ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
+                      ),
                       const SizedBox(height: 18),
 
                       // Back actions
@@ -161,7 +160,7 @@ class DownloadSettingsScreen extends StatelessWidget {
                           onPressed: onBackToInfographics,
                           child: const Text('Back to Infographics'),
                         ),
-                      ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
+                      ),
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
@@ -175,10 +174,10 @@ class DownloadSettingsScreen extends StatelessWidget {
                           onPressed: onBackToMenu,
                           child: const Text('Back to Menu'),
                         ),
-                      ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2, end: 0),
+                      ),
                     ],
                   ),
-                ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1, end: 0),
+                ),
 
                 const Spacer(),
 
@@ -193,7 +192,7 @@ class DownloadSettingsScreen extends StatelessWidget {
                   child: const Center(
                     child: Icon(Icons.home, color: Colors.white, size: 28),
                   ),
-                ).animate().scale(delay: 900.ms, curve: Curves.easeOutBack),
+                ),
                 const SizedBox(height: 12),
               ],
             ),

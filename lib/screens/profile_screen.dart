@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -404,7 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                               ],
-                            ).animate().scale(curve: Curves.easeOutBack),
+                            ),
                           ),
                         ),
                       ],
@@ -464,7 +463,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ],
                             ),
-                          ).animate().fadeIn().slideY(begin: 0.1, end: 0);
+                          );
                         }),
 
                         const SizedBox(height: 20),
@@ -490,7 +489,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           ),
-                        ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
+                        ),
                       ],
                     ),
                   ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LanguageSelectionScreen extends StatefulWidget {
@@ -163,7 +162,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                 ),
               ),
             ),
-          ).animate().fadeIn().slideY(begin: 0.1, end: 0),
+          ),
 
           // Language List
           Expanded(
@@ -218,7 +217,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                       ),
                     ),
                   ),
-                ).animate().fadeIn(delay: (50 * index).ms).slideX(begin: -0.1, end: 0);
+                );
               },
             ),
           ),

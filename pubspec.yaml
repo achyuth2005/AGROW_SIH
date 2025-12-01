@@ -48,7 +48,6 @@ dependencies:
   video_player: ^2.10.0
   flutter_launcher_icons: ^0.14.4
   flutter_dotenv: ^6.0.0
-  flutter_animate: ^4.5.2
   flutter_svg: ^2.0.10+1
   permission_handler: ^11.3.0
   http: ^1.2.0

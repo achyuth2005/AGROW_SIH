@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'satellite_image_screen.dart';
 
 class ManualCoordinateEntryScreen extends StatefulWidget {
@@ -196,7 +195,7 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
                       ),
                     ),
                   ),
-                ).animate().fadeIn().slideY(begin: -0.5, end: 0),
+                ),
 
                 const SizedBox(height: 20),
 
@@ -240,11 +239,11 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
                                       ),
                                     ),
                             ),
-                          ).animate().fadeIn(delay: 500.ms).scale(),
+                          ),
                         ],
                       ),
                     ),
-                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+                  ),
                 ),
                 
                 const SizedBox(height: 20),
@@ -306,7 +305,7 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
           ),
         ],
       ),
-    ).animate().fadeIn(delay: (300 + index * 100).ms).slideX(begin: -0.1, end: 0);
+    );
   }
 
   Widget _buildInputRow(

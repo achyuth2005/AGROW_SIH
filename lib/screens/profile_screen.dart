@@ -89,6 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           setState(() {
             _controllers['full_name']?.text = user.displayName ?? "";
             _controllers['email']?.text = user.email ?? "";
+            _avatarUrl = user.photoURL;
           });
         }
       }

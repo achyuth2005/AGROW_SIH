@@ -174,19 +174,76 @@ def analyze_with_llm(summary_report: Dict, crop_type: str, farmer_context: Dict,
     stress_text = format_stress_context(stress_context)
     
     # Create prompt for LLM
-    prompt = f"""
-{indices_context}
-
-{stress_text}
-
-FIELD METADATA:
-- Location: Latitude {center_lat:.4f}, Longitude {center_lon:.4f}
-- Field Size: {field_size_hectares:.2f} hectares
-
-Based on the vegetation indices data AND the deep learning stress detection results above, 
+    # Using concatenation to avoid potential f-string parsing issues with long multi-line strings
+    prompt = f"{indices_context}\n\n{stress_text}\n\n"
+    prompt += "FIELD METADATA:\n"
+    prompt += f"- Location: Latitude {center_lat:.4f}, Longitude {center_lon:.4f}\n"
+    prompt += f"- Field Size: {field_size_hectares:.2f} hectares\n\n"
+    
+    prompt += """Based on the vegetation indices data AND the deep learning stress detection results above, 
 provide a comprehensive analysis.
 
 Use the cluster patterns to identify distinct zones in the field.
+Use the anomaly detection results to pinpoint specific problem areas.
+Analyze the temporal trends in each cluster to determine if stress is worsening or recovering.
+Combine the spectral indices (NDVI, NDWI, etc.) with the stress scores to explain the *cause* of stress.
+
+You MUST respond with a valid JSON object (no markdown, no code blocks) with EXACTLY this structure:
+
+{
+  "soil_moisture": {
+    "level": "Low" or "Moderate" or "High",
+    "maximum_value": <float>,
+    "minimum_value": <float>,
+    "analysis": "Analyse mainly SMI patterns,spatial and temporal and variation,then check all other information along with the context given to give four words,not necessarily full sentences,but capture the sense which are very impactful,very simple to understand about the current soil moisture content of the overall field"
+  },
+  "soil_salinity": {
+    "level": "Low" or "Moderate" or "High",
+    "analysis": "Analyse mainly NDSI patterns,spatial and temporal and variation,then check all other information along with the context given to give four words,not necessarily full sentences,but capture the sense which are very impactful,very simple to understand about the current soil salinity of the overall field"
+  },
+  "organic_matter": {
+    "level": "Low" or "Moderate" or "High",
+    "analysis": "Analyse mainly SOMI patterns,spatial and temporal and variation,then check all other information along with the context given to give four words,not necessarily full sentences,but capture the sense which are very impactful,very simple to understand about the current soil organic matter content of the overall field"
+  },
+  "soil_fertility": {
+    "level": "Low" or "Moderate" or "High",
+    "analysis": "Analyse mainly SFI patterns,spatial and temporal and variation,then check all other information along with the context given to give four words,not necessarily full sentences,but capture the sense which are very impactful,very simple to understand about the current soil fertility of the overall field"
+  },
+  "Pest Rsk": {
+    "level": "Low" or "Moderate" or "High",
+    "analysis": "Analyse field patterns,temporal and spatial health variations very meticulously,catch the pattern and use the indices as additional confirmation to give accurate pest risk diseases and give 4 words not necessarily connected sentences,but capture the sense which are very impactful,very simple to understand about current pest risk or its spreading pattern"
+  },
+  "Nutrient Stress": {
+    "level": "Low" or "Moderate" or "High",
+    "analysis":"Analyse field patterns,temporal and spatial health variations very meticulously,catch the pattern and use NDRE,NDVI,MCARI,OSAVI as primary indices whose trends both spatial and temporal should be closely analysed and four words not neccesarily connected sentences,but capture the sense which are very impactful,very simple to understand about current nutrient stress"
+  },
+  "Disease Risk": {
+    "level": "Low" or "Moderate" or "High",
+    "analysis": "Analyse field patterns,temporal and spatial health variations very meticulously,catch the pattern be closely analysed and four words not neccesarily connected sentences,but capture the sense which are very impactful,very simple to understand about current disease rsik of the entire field,preferably a possible attacking agent/pest name"
+  },
+  "Stress Zone": {
+    "level": "Low" or "Moderate" or "Alert",
+    "analysis": "Analyse field patterns,temporal and spatial health variations very meticulously,catch the pattern be closely analysed and four words not neccesarily connected sentences,but capture the sense which are very impactful,very simple to understand about current stress zones in the entire field,the location,intensity,duration of stress or stress spread pattern in the field "
+  },
+  "overall_health": {
+    "status": "poor" or "fair" or "good" or "excellent",
+    "key_concerns": ["concern1", "concern2"],
+    "recommendations": ["recommendation1", "recommendation2"]
+  }
+}
+
+IMPORTANT GUIDELINES:
+- For soil_moisture.maximum_value and minimum_value, use the SMI index values from the data
+- For soil_salinity.trend, provide EXACTLY four words describing the trend based on SASI values
+- For organic_matter.status, provide EXACTLY four words based on SOMI index values
+- For soil_fertility.status, provide EXACTLY four words (not a sentence) about soil health based on SFI values
+- For vegetation_stress.status, provide EXACTLY four words based on NDVI, EVI, NDRE temporal patterns
+- For photosynthetic_stress.status, provide EXACTLY four words based on PRI, PSRI, RECI values
+- For hotspot_detection.description, provide LESS THAN 6 words about stress direction and intensity
+- For moisture_zones.description, provide NOT MORE THAN 6 words about moisture variation and trend
+- Use spatial statistics (max, min, range) to identify hotspots and zones
+- Consider temporal trends to detect spreading patterns
+- Base your analysis on the actual index values provided
 - Provide actionable insights relevant to the farmer's context
 
 Return ONLY the JSON object, no additional text.

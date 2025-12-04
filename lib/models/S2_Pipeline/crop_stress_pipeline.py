@@ -364,8 +364,10 @@ function evaluatePixel(sample) {
         logger.info(f"  Soil Salinity: {llm_analysis['soil_salinity']['level']}")
         logger.info(f"  Organic Matter: {llm_analysis['organic_matter']['level']}")
         logger.info(f"  Soil Fertility: {llm_analysis['soil_fertility']['level']}")
-        logger.info(f"  Vegetation Stress: {llm_analysis['vegetation_stress']['level']}")
-        logger.info(f"  Photosynthetic Stress: {llm_analysis['photosynthetic_stress']['level']}")
+        logger.info(f"  Pest Risk: {llm_analysis.get('Pest Rsk', llm_analysis.get('pest_risk', {})).get('level', 'N/A')}")
+        logger.info(f"  Nutrient Stress: {llm_analysis.get('Nutrient Stress', llm_analysis.get('nutrient_stress', {})).get('level', 'N/A')}")
+        logger.info(f"  Disease Risk: {llm_analysis.get('Disease Risk', llm_analysis.get('disease_risk', {})).get('level', 'N/A')}")
+        logger.info(f"  Stress Zone: {llm_analysis.get('Stress Zone', llm_analysis.get('stress_zone', {})).get('level', 'N/A')}")
         logger.info(f"  Overall Health: {llm_analysis['overall_health']['status']}")
         logger.info("=" * 60)
         

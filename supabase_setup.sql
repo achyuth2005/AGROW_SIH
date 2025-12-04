@@ -27,8 +27,23 @@ CREATE TABLE IF NOT EXISTS public.coordinates_quad (
     lon4 double precision,
     lon4_dir text,
 
+    -- Additional Fields
+    name text,
+    crop_type text,
+    area_acres double precision,
+    user_id text,
+
     inserted_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Add columns if they don't exist (for updates)
+DO $$
+BEGIN
+    ALTER TABLE public.coordinates_quad ADD COLUMN IF NOT EXISTS name text;
+    ALTER TABLE public.coordinates_quad ADD COLUMN IF NOT EXISTS crop_type text;
+    ALTER TABLE public.coordinates_quad ADD COLUMN IF NOT EXISTS area_acres double precision;
+    ALTER TABLE public.coordinates_quad ADD COLUMN IF NOT EXISTS user_id text;
+END $$;
 
 -- Enable RLS
 ALTER TABLE public.coordinates_quad ENABLE ROW LEVEL SECURITY;
@@ -48,7 +63,8 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
     date_of_birth date,
     address text,
     questionnaire_data jsonb,
-    avatar_url text
+    avatar_url text,
+    fcm_token text
 );
 
 -- Add columns if they don't exist (for updates)
@@ -61,6 +77,7 @@ BEGIN
     ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS address text;
     ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS questionnaire_data jsonb;
     ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS avatar_url text;
+    ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS fcm_token text;
 END $$;
 
 -- Enable RLS

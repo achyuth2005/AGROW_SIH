@@ -2,6 +2,7 @@ import 'package:agroww_sih/screens/camera_screen.dart';
 import 'package:agroww_sih/screens/gallery_screen.dart';
 import 'package:agroww_sih/screens/news_screen.dart';
 import 'package:agroww_sih/screens/export_reports_screen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'coming_soon_screen.dart';
@@ -72,6 +73,20 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         }
       }
     });
+
+    // Sync FCM Token
+    _syncFcmToken();
+  }
+
+  Future<void> _syncFcmToken() async {
+    try {
+      String? token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await NotificationService.saveTokenToBackend(token);
+      }
+    } catch (e) {
+      debugPrint("Error syncing FCM token in MainMenu: $e");
+    }
   }
 
   Future<void> _loadAvatar() async {
@@ -123,19 +138,30 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           ),
           const SizedBox(width: 18),
           Expanded(
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.green.shade300,
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: const Row(
-                children: [
-                  SizedBox(width: 12),
-                  Icon(Icons.search, color: Color(0xFF167339)),
-                  SizedBox(width: 8),
-                  Text("Search", style: TextStyle(color: Color(0xFF167339))),
-                ],
+            child: GestureDetector(
+              onTap: () async {
+                final result = await showSearch(
+                  context: context,
+                  delegate: MenuSearchDelegate(menuItems),
+                );
+                if (result != null && result.isNotEmpty) {
+                  _navigateToItem(result);
+                }
+              },
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.green.shade300,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: const Row(
+                  children: [
+                    SizedBox(width: 12),
+                    Icon(Icons.search, color: Color(0xFF167339)),
+                    SizedBox(width: 8),
+                    Text("Search", style: TextStyle(color: Color(0xFF167339))),
+                  ],
+                ),
               ),
             ),
           ),
@@ -194,93 +220,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: GestureDetector(
-                  onTap: () {
-                    if (item == "Add a Farmland") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LocateFarmlandScreen(),
-                        ),
-                      );
-                    } else if (item == "Add a Farmland 2") {
-                      Navigator.pushNamed(context, '/farmland-map');
-                    } else if (item == "Camera") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CameraScreen(),
-                        ),
-                      );
-                    } else if (item == "My Gallery") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const GalleryScreen(),
-                        ),
-                      );
-                    } else if (item == "Export Analytic Report") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ExportReportsScreen(),
-                        ),
-                      );
-                    } else if (item == "News") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const NewsScreen(),
-                        ),
-                      );
-                    } else if (item == "View Previous Analytics" || 
-                               item == "Predicted Analytics & Data") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ComingSoonScreen(),
-                        ),
-                      );
-                    } else if (item == "AI Chatbot") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ChatbotScreen(),
-                        ),
-                      );
-                    } else if (item == "Mapped Analytics") {
-                      Navigator.pushNamed(context, '/coordinate-entry');
-                    } else if (item == "Settings") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SettingsScreen(),
-                        ),
-                      );
-                    } else if (item == "View Map") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const FullScreenMapPage(),
-                        ),
-                      );
-                    } else if (item == "View Profile") {
-                      Navigator.pushNamed(context, '/profile').then((_) => _loadAvatar()); // Refresh avatar on return
-                    } else if (item == "Infographics") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const InfographicsScreen(),
-                        ),
-                      );
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ComingSoonScreen(),
-                        ),
-                      );
-                    }
-                  },
+                  onTap: () => _navigateToItem(item),
                   child: Material(
                     color: Colors.green[100],
                     borderRadius: BorderRadius.circular(15),
@@ -307,20 +247,170 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       ),
     );
   }
+
+  void _navigateToItem(String item) {
+    if (item == "Add a Farmland") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const LocateFarmlandScreen(),
+        ),
+      );
+    } else if (item == "Add a Farmland 2") {
+      Navigator.pushNamed(context, '/farmland-map');
+    } else if (item == "Camera") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CameraScreen(),
+        ),
+      );
+    } else if (item == "My Gallery") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => GalleryScreen(),
+        ),
+      );
+    } else if (item == "Export Analytic Report") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ExportReportsScreen(),
+        ),
+      );
+    } else if (item == "News") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NewsScreen(),
+        ),
+      );
+    } else if (item == "View Previous Analytics" || 
+               item == "Predicted Analytics & Data") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ComingSoonScreen(),
+        ),
+      );
+    } else if (item == "AI Chatbot") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatbotScreen(),
+        ),
+      );
+    } else if (item == "Mapped Analytics") {
+      Navigator.pushNamed(context, '/coordinate-entry');
+    } else if (item == "Settings") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SettingsScreen(),
+        ),
+      );
+    } else if (item == "View Map") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const FullScreenMapPage(),
+        ),
+      );
+    } else if (item == "View Profile") {
+      Navigator.pushNamed(context, '/profile').then((_) => _loadAvatar()); // Refresh avatar on return
+    } else if (item == "Infographics") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => InfographicsScreen(),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ComingSoonScreen(),
+        ),
+      );
+    }
+  }
+}
+
+class MenuSearchDelegate extends SearchDelegate<String> {
+  final List<String> menuItems;
+
+  MenuSearchDelegate(this.menuItems);
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, '');
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return _buildList(context, query);
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return _buildList(context, query);
+  }
+
+  Widget _buildList(BuildContext context, String query) {
+    final List<String> suggestions = query.isEmpty
+        ? menuItems
+        : menuItems.where((item) => item.toLowerCase().contains(query.toLowerCase())).toList();
+
+    return ListView.builder(
+      itemCount: suggestions.length,
+      itemBuilder: (context, index) {
+        final String item = suggestions[index];
+        return ListTile(
+          title: Text(item),
+          onTap: () {
+            close(context, item);
+          },
+        );
+      },
+    );
+  }
 }
 
 class HomeNavBar extends StatelessWidget {
   const HomeNavBar({super.key});
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 60,
-      decoration: const BoxDecoration(
-        color: Color(0xFF167339),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      child: const Center(
-        child: Icon(Icons.home, color: Colors.white, size: 40),
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamedAndRemoveUntil(context, '/main-menu', (route) => false);
+      },
+      child: Container(
+        height: 60,
+        decoration: const BoxDecoration(
+          color: Color(0xFF167339),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        ),
+        child: const Center(
+          child: Icon(Icons.home, color: Colors.white, size: 40),
+        ),
       ),
     );
   }

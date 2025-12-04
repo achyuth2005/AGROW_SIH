@@ -22,6 +22,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/notification_service.dart';
 
+import 'screens/home_screen.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -31,6 +36,16 @@ Future<void> main() async {
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+
+  // Initialize Guest ID
+  final prefs = await SharedPreferences.getInstance();
+  if (!prefs.containsKey('guest_user_id')) {
+    final guestId = const Uuid().v4();
+    await prefs.setString('guest_user_id', guestId);
+    debugPrint("Generated new Guest ID: $guestId");
+  } else {
+    debugPrint("Existing Guest ID: ${prefs.getString('guest_user_id')}");
+  }
 
   // Initialize Notifications
   final notificationService = NotificationService();
@@ -58,7 +73,8 @@ class MyApp extends StatelessWidget {
         '/': (context) => const LandingScreen(),
         '/login': (context) => const LoginScreen(),
         '/registration': (context) => const RegistrationScreen(),
-        '/main-menu': (context) => const MainMenuScreen(),
+        '/main-menu': (context) => const HomeScreen(),
+        '/main-menu-list': (context) => const MainMenuScreen(),
         '/location-permission': (context) => const LocationPermissionScreen(),
         '/notification-permission': (context) => const NotificationPermissionScreen(),
         '/intro': (context) => const IntroScreen(),

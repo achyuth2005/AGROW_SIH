@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 
 class NotificationService {
@@ -30,7 +31,14 @@ class NotificationService {
     try {
       String? token = await _firebaseMessaging.getToken();
       debugPrint("FCM Token: $token");
-      // TODO: Save token to backend if needed
+      if (token != null) {
+        await saveTokenToBackend(token);
+      }
+      
+      // Listen for token refresh
+      _firebaseMessaging.onTokenRefresh.listen((newToken) {
+        saveTokenToBackend(newToken);
+      });
     } catch (e) {
       debugPrint("Error getting FCM token: $e");
     }
@@ -70,6 +78,23 @@ class NotificationService {
       await prefs.setStringList('notifications', notifications);
     } catch (e) {
       debugPrint("Error saving notification: $e");
+    }
+  }
+  static Future<void> saveTokenToBackend(String token) async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        await Supabase.instance.client.from('user_profiles').upsert({
+          'user_id': user.id,
+          'fcm_token': token,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+        debugPrint("FCM Token saved to backend for user: ${user.id}");
+      } else {
+        debugPrint("User not logged in, skipping FCM token save");
+      }
+    } catch (e) {
+      debugPrint("Error saving FCM token to backend: $e");
     }
   }
 }

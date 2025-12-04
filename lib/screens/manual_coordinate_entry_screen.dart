@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math' as Math;
-import 'package:agroww_sih/screens/satellite_image_screen.dart';
+
 
 class ManualCoordinateEntryScreen extends StatefulWidget {
   final List<LatLng> initialPoints;
@@ -163,23 +163,7 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
 
       if (!mounted) return;
 
-      // Calculate center for next screen
-      double latSum = 0, lonSum = 0;
-      for (var p in points) {
-        latSum += p.latitude;
-        lonSum += p.longitude;
-      }
-      final center = LatLng(latSum / 4, lonSum / 4);
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => SatelliteImageScreen(
-            points: points,
-            center: center,
-          ),
-        ),
-      );
+      Navigator.pushReplacementNamed(context, '/farmland-map');
 
     } catch (e) {
       if (!mounted) return;

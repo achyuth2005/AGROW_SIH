@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'coming_soon_screen.dart';
+import 'main_menu_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -137,6 +138,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   child: Column(
                     children: [
+                      _listButton(
+                        label: 'Legacy Main Menu',
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MainMenuScreen())),
+                        delay: 250,
+                        icon: Icons.history,
+                      ),
+                      _listButton(
+                        label: 'All Features',
+                        onTap: () => Navigator.pushNamed(context, '/main-menu-list'),
+                        delay: 300,
+                        icon: Icons.list_alt,
+                      ),
                       _listButton(
                         label: 'Language',
                         onTap: () => Navigator.pushNamed(context, '/language-selection'),

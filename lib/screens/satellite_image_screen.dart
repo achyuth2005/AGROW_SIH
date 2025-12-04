@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -31,10 +32,35 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
   // Default to Android Emulator IP, but allow user to change it
   String _serverUrl = Platform.isAndroid ? 'http://10.0.2.2:5001/api/satellite' : 'http://127.0.0.1:5001/api/satellite';
 
+  int _currentMessageIndex = 0;
+  Timer? _messageTimer;
+  final List<String> _loadingMessages = [
+    "Connecting to Sentinel-2 satellite...",
+    "Waking up Achyuth chetta...",
+    "Finding Adith in the football field...",
+    "Did you know? Healthy plants reflect more near-infrared light!",
+    "Analyzing vegetation density...",
+    "Calibrating spectral bands...",
+    "Measuring chlorophyll levels...",
+    "Processing cloud cover data...",
+    "Almost there, decoding imagery...",
+  ];
+
   @override
   void initState() {
     super.initState();
+    _startMessageRotation();
     _fetchSatelliteImage();
+  }
+
+  void _startMessageRotation() {
+    _messageTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentMessageIndex = (_currentMessageIndex + 1) % _loadingMessages.length;
+        });
+      }
+    });
   }
 
   Future<void> _fetchSatelliteImage() async {
@@ -108,6 +134,12 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
   }
 
   @override
+  void dispose() {
+    _messageTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0D986A),
@@ -142,15 +174,25 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
                     border: Border.all(color: Colors.white24),
                   ),
                   child: _isLoading
-                      ? const Center(
+                      ? Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               CircularProgressIndicator(color: Colors.white),
                               SizedBox(height: 16),
-                              Text(
-                                'Fetching satellite data...',
-                                style: TextStyle(color: Colors.white),
+                              const SizedBox(height: 16),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 500),
+                                child: Text(
+                                  _loadingMessages[_currentMessageIndex],
+                                  key: ValueKey<int>(_currentMessageIndex),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ],
                           ),

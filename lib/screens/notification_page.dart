@@ -29,7 +29,7 @@ class _NotificationPageState extends State<NotificationPage> {
     },
   ];
 
-  late List<Map<String, dynamic>> _notifications;
+  List<Map<String, dynamic>> _notifications = [];
   bool _isExpanded = false;
 
   @override
@@ -114,7 +114,7 @@ class _NotificationPageState extends State<NotificationPage> {
                   ),
                 ),
 
-                const SizedBox(height: 30), // Increased breathing room
+                const SizedBox(height: 60), // Increased breathing room
 
                 // Search Bar
                 Padding(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'main_menu_screen.dart';
 
 class SidebarDrawer extends StatelessWidget {
   const SidebarDrawer({super.key});
@@ -34,52 +35,44 @@ class SidebarDrawer extends StatelessWidget {
       child: Column(
         children: [
           // Custom Header
-          SizedBox(
-            height: 160,
-            child: Stack(
-              children: [
-                // Content
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Back Button (Close Drawer)
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.05),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.arrow_back_ios_new,
-                              color: Colors.black,
-                              size: 18,
-                            ),
-                          ),
+          // Custom Header
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Back Button (Close Drawer)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.05),
+                          shape: BoxShape.circle,
                         ),
-                        const Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(right: 40),
-                            child: Text(
-                              "Settings & Activity",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Colors.black,
+                          size: 18,
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  // Title
+                  const Text(
+                    "Settings & Activity",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -97,6 +90,7 @@ class SidebarDrawer extends StatelessWidget {
                 _buildMenuItem(context, icon: Icons.help_outline, title: "Help and Support", onTap: () {}),
                 _buildMenuItem(context, icon: Icons.play_circle_outline, title: "App tutorial", onTap: () {}),
                 _buildMenuItem(context, icon: Icons.help_center_outlined, title: "FAQs", onTap: () {}),
+                _buildMenuItem(context, icon: Icons.history, title: "Legacy Main Menu", onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MainMenuScreen()))),
                 
                 // Log out
                 Padding(

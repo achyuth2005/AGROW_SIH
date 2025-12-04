@@ -99,17 +99,15 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D986A),
+      backgroundColor: const Color(0xFFE1EFEF), // Light mint background
       drawer: const SidebarDrawer(),
       body: Builder(
         builder: (context) {
-          return SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(context),
-                Expanded(child: _buildMenuList(context)),
-              ],
-            ),
+          return Column(
+            children: [
+              _buildHeader(context),
+              Expanded(child: _buildMenuList(context)),
+            ],
           );
         },
       ),
@@ -118,73 +116,86 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(18.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          GestureDetector(
-            onTap: () {
-              Scaffold.of(context).openDrawer();
-            },
-            child: CircleAvatar(
-              radius: 22,
-              backgroundColor: Colors.white,
-              backgroundImage: _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
-              child: _avatarUrl == null 
-                  ? const Icon(Icons.menu, color: Color(0xFF0D986A), size: 28)
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: GestureDetector(
-              onTap: () async {
-                final result = await showSearch(
-                  context: context,
-                  delegate: MenuSearchDelegate(menuItems),
-                );
-                if (result != null && result.isNotEmpty) {
-                  _navigateToItem(result);
-                }
-              },
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.green.shade300,
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: const Row(
-                  children: [
-                    SizedBox(width: 12),
-                    Icon(Icons.search, color: Color(0xFF167339)),
-                    SizedBox(width: 8),
-                    Text("Search", style: TextStyle(color: Color(0xFF167339))),
-                  ],
+    return Stack(
+      children: [
+        Image.asset(
+          'assets/backsmall.png',
+          width: double.infinity,
+          fit: BoxFit.fitWidth,
+          alignment: Alignment.topCenter,
+        ),
+        Positioned(
+          top: 50,
+          left: 16,
+          right: 16,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Scaffold.of(context).openDrawer();
+                },
+                child: _avatarUrl == null 
+                      ? const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(Icons.menu, color: Colors.white, size: 28),
+                        )
+                      : CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.white,
+                          backgroundImage: NetworkImage(_avatarUrl!),
+                        ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () async {
+                    final result = await showSearch(
+                      context: context,
+                      delegate: MenuSearchDelegate(menuItems),
+                    );
+                    if (result != null && result.isNotEmpty) {
+                      _navigateToItem(result);
+                    }
+                  },
+                  child: Container(
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: const Row(
+                      children: [
+                        SizedBox(width: 12),
+                        Icon(Icons.search, color: Color(0xFF167339), size: 20),
+                        SizedBox(width: 8),
+                        Text("Search", style: TextStyle(color: Color(0xFF167339), fontSize: 14)),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationPage()),
-              );
-            },
-            child: CircleAvatar(
-              radius: 22,
-              backgroundColor: Colors.green[100],
-              child: const Icon(
-                Icons.notifications,
-                color: Color(0xFF167339),
-                size: 28,
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationPage()),
+                  );
+                },
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(
+                    Icons.notifications_outlined,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -192,14 +203,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 26),
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF000000), Color(0x00000000)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        borderRadius: BorderRadius.circular(25),
-      ),
+      // Removed dark gradient
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,9 +212,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             const Text(
               "Main Menu",
               style: TextStyle(
-                color: Colors.white,
+                color: Color(0xFF0F3C33), // Deep Forest Green
                 fontSize: 20,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
@@ -221,22 +225,31 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: GestureDetector(
                   onTap: () => _navigateToItem(item),
-                  child: Material(
-                    color: Colors.green[100],
-                    borderRadius: BorderRadius.circular(15),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
                     child: ListTile(
                       dense: true,
                       title: Text(
                         item,
                         style: const TextStyle(
-                          color: Color(0xFF167339),
-                          fontWeight: FontWeight.w400,
+                          color: Color(0xFF0F3C33),
+                          fontWeight: FontWeight.w600,
                           fontSize: 15,
                         ),
                       ),
                       trailing: item == "Settings"
                           ? const Icon(Icons.settings, color: Color(0xFF167339))
-                          : null,
+                          : const Icon(Icons.arrow_forward_ios, color: Color(0xFF167339), size: 16),
                     ),
                   ),
                 ),

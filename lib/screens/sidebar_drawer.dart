@@ -47,16 +47,12 @@ class SidebarDrawer extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.05),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(
                           Icons.arrow_back_ios_new,
                           color: Colors.black,
-                          size: 18,
+                          size: 24,
                         ),
                       ),
                     ),

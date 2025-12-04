@@ -296,11 +296,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           height: 180,
                           child: Container(
                             decoration: const BoxDecoration(
+                              color: Color(0xFF167339),
                               image: DecorationImage(
-                                image: AssetImage('assets/backsmallsetting.png'),
-                                fit: BoxFit.fill,
-                                alignment: Alignment.topCenter,
+                                image: AssetImage('assets/Background.png'),
+                                fit: BoxFit.cover,
+                                opacity: 0.4,
                               ),
+                              borderRadius: BorderRadius.vertical(bottom: Radius.circular(25)),
                             ),
                           ),
                         ),
@@ -321,7 +323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     child: Padding(
                                       padding: const EdgeInsets.only(left: 8),
                                       child: IconButton(
-                                        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                                        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 24),
                                         onPressed: () => Navigator.pop(context),
                                       ),
                                     ),

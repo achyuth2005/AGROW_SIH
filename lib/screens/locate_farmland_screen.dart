@@ -102,17 +102,13 @@ class _LocateFarmlandScreenState extends State<LocateFarmlandScreen> {
               Positioned(
                 top: 50,
                 left: 20,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 24),
                     ),
-                    child: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
                   ),
-                ),
               ),
               const Positioned(
                 top: 50,

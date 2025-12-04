@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:agroww_sih/screens/sidebar_drawer.dart';
 import 'package:agroww_sih/screens/notification_page.dart';
@@ -380,69 +381,88 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFE1EFEF), // Light mint background
       drawer: const SidebarDrawer(),
-      body: Column(
+      body: Stack(
         children: [
-          _buildHeader(),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildFieldSelector(),
-                  const SizedBox(height: 10),
-                  _buildStatusCarousel(),
-                  const SizedBox(height: 10),
-                  _buildPageIndicator(),
-                  const SizedBox(height: 20),
-                  _buildActionGrid(),
-                  const SizedBox(height: 20),
-                ],
+          Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 100), // Space for bottom nav
+                    child: Column(
+                      children: [
+                        _buildFieldSelector(),
+                        const SizedBox(height: 10),
+                        _buildStatusCarousel(),
+                        const SizedBox(height: 10),
+                        _buildPageIndicator(),
+                        const SizedBox(height: 20),
+                        _buildActionGrid(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-          _buildBottomNavBar(),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildBottomNavBar(),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Container(
-      height: 120, // Slightly increased height
-      decoration: const BoxDecoration(
-        color: Color(0xFF167339),
-        image: DecorationImage(
-          image: AssetImage('assets/Background.png'),
-          fit: BoxFit.cover,
-          opacity: 0.4,
+    return Stack(
+      children: [
+        Image.asset(
+          'assets/backsmall.png',
+          width: double.infinity,
+          fit: BoxFit.fitWidth,
+          alignment: Alignment.topCenter,
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(25)),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        Positioned(
+          top: 50,
+          left: 16,
+          right: 16,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Menu Button (Left)
               Builder(
-                builder: (context) => IconButton(
-                  icon: const Icon(Icons.menu, color: Colors.white, size: 32), // Larger icon
-                  onPressed: () => Scaffold.of(context).openDrawer(),
+                builder: (context) => GestureDetector(
+                  onTap: () => Scaffold.of(context).openDrawer(),
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(Icons.menu, color: Colors.white, size: 28),
+                  ),
                 ),
               ),
-              Image.asset('assets/AGROWH.png', height: 50), // Large Logo replacing text
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 32), // Larger icon
-                onPressed: () => Navigator.push(
+              
+              // Logo (Center)
+              Image.asset('assets/Frame 5.png', height: 40),
+              
+              // Notification Button (Right)
+              GestureDetector(
+                onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const NotificationPage()),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(Icons.notifications_outlined, color: Colors.white, size: 28),
                 ),
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -566,22 +586,45 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   Widget _buildStatusCarousel() {
     return SizedBox(
-      height: 400, // Reduced height
+      height: 400,
       child: GestureDetector(
-        onPanDown: (_) => _stopAutoScroll(), // Stop on interaction
-        child: PageView(
+        onPanDown: (_) => _stopAutoScroll(),
+        child: PageView.builder(
           controller: _pageController,
           onPageChanged: (int page) {
             setState(() {
               _currentPage = page;
             });
           },
-          children: [
-            _buildSoilStatusCard(),
-            _buildWeatherStatusCard(),
-            _buildCropStatusCard(),
-            _buildPestRiskCard(),
-          ],
+          itemCount: 4,
+          itemBuilder: (context, index) {
+            return AnimatedBuilder(
+              animation: _pageController,
+              builder: (context, child) {
+                double value = 1.0;
+                if (_pageController.position.haveDimensions) {
+                  value = _pageController.page! - index;
+                  value = (1 - (value.abs() * 0.2)).clamp(0.0, 1.0);
+                } else {
+                  // Initial state or when controller not ready
+                  value = (index == _currentPage) ? 1.0 : 0.8;
+                }
+                return Center(
+                  child: SizedBox(
+                    height: Curves.easeOut.transform(value) * 400,
+                    width: Curves.easeOut.transform(value) * 450,
+                    child: child,
+                  ),
+                );
+              },
+              child: [
+                _buildSoilStatusCard(),
+                _buildWeatherStatusCard(),
+                _buildCropStatusCard(),
+                _buildPestRiskCard(),
+              ][index],
+            );
+          },
         ),
       ),
     );
@@ -1218,7 +1261,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildNewStatItem(String label, String value, IconData icon, String description, {Color? valueColor}) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(10), // Reduced padding
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Reduced vertical padding
         decoration: BoxDecoration(
           color: const Color(0xFFE1EFEF).withOpacity(0.5),
           borderRadius: BorderRadius.circular(12),
@@ -1358,33 +1401,49 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBottomNavBar() {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.only(bottom: 10, top: 10),
-      decoration: const BoxDecoration(
-        color: Color(0xFFE1EFEF), // Match background
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildNavCircle(Colors.white),
-          const SizedBox(width: 12),
-          _buildNavCircle(Colors.white),
-          const SizedBox(width: 12),
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: const Color(0xFF167339),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.home, color: Colors.white, size: 30),
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          height: 80,
+          padding: const EdgeInsets.only(bottom: 20, top: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE1EFEF).withOpacity(0.8), // Semi-transparent
+            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.2))),
           ),
-          const SizedBox(width: 12),
-          _buildNavCircle(Colors.white),
-          const SizedBox(width: 12),
-          _buildNavCircle(Colors.white),
-        ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 24),
+                onPressed: () => Navigator.pop(context),
+              ),
+              const SizedBox(width: 12),
+              _buildNavCircle(Colors.white.withOpacity(0.8)),
+              const SizedBox(width: 12),
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF167339),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF167339).withOpacity(0.4),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.home, color: Colors.white, size: 30),
+              ),
+              const SizedBox(width: 12),
+              _buildNavCircle(Colors.white.withOpacity(0.8)),
+              const SizedBox(width: 12),
+              _buildNavCircle(Colors.white.withOpacity(0.8)),
+            ],
+          ),
+        ),
       ),
     );
   }

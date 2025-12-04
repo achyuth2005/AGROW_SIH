@@ -64,9 +64,74 @@ class MyApp extends StatelessWidget {
       title: 'Agrow',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
-        textTheme: GoogleFonts.manropeTextTheme(),
+        colorScheme: const ColorScheme(
+          brightness: Brightness.light,
+          primary: Color(0xFF0D986A),
+          onPrimary: Colors.white,
+          secondary: Color(0xFF0F3C33),
+          onSecondary: Colors.white,
+          tertiary: Color(0xFFC6F68D),
+          onTertiary: Color(0xFF0F3C33),
+          error: Color(0xFFBA1A1A),
+          onError: Colors.white,
+          surface: Color(0xFFE1EFEF),
+          onSurface: Color(0xFF0F3C33),
+        ),
+        scaffoldBackgroundColor: const Color(0xFFE1EFEF),
+        textTheme: GoogleFonts.manropeTextTheme().apply(
+          bodyColor: const Color(0xFF0F3C33),
+          displayColor: const Color(0xFF0F3C33),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF0D986A),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0D986A),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF0D986A), width: 1.5),
+          ),
+          hintStyle: TextStyle(color: Colors.grey[500]),
+        ),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 2,
+          shadowColor: Colors.black.withOpacity(0.05),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          clipBehavior: Clip.antiAlias,
+          margin: const EdgeInsets.only(bottom: 16),
+        ),
       ),
       initialRoute: '/',
       routes: {

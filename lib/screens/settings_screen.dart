@@ -56,163 +56,198 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0D986A),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF167339),
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-              children: [
-                // Profile card
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(24),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF003A2A), Color(0x00003A2A)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      const CircleAvatar(
-                        radius: 58,
-                        backgroundColor: Colors.white24,
-                        child: CircleAvatar(
-                          radius: 52,
-                          backgroundColor: Colors.white,
-                          child: Icon(Icons.person, size: 56, color: Color(0xFF167339)),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _userName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        "Farmer", // Placeholder or load from prefs if we had role
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _pillButton(
-                        context: context,
-                        label: 'Edit Profile',
-                        trailing: const Icon(Icons.edit, color: Color(0xFF167339)),
-                        onTap: () => Navigator.pushNamed(context, '/profile'),
-                      ),
-                      const SizedBox(height: 10),
-                      _pillButton(
-                        context: context,
-                        label: 'Change Password',
-                        onTap: () => _goComingSoon(context),
-                      ),
-                    ],
+      body: Column(
+        children: [
+          // Custom Header
+          Stack(
+            children: [
+              Image.asset(
+                'assets/backsmall.png',
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+                alignment: Alignment.topCenter,
+              ),
+              Positioned(
+                top: 50,
+                left: 20,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 24),
                   ),
                 ),
-                const SizedBox(height: 18),
+              ),
+              const Positioned(
+                top: 50,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Text(
+                    'Settings',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          // Content
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  children: [
+                    // Profile card
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF003A2A), Color(0x00003A2A)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          const CircleAvatar(
+                            radius: 58,
+                            backgroundColor: Colors.white24,
+                            child: CircleAvatar(
+                              radius: 52,
+                              backgroundColor: Colors.white,
+                              child: Icon(Icons.person, size: 56, color: Color(0xFF167339)),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _userName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            "Farmer", // Placeholder or load from prefs if we had role
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _pillButton(
+                            context: context,
+                            label: 'Edit Profile',
+                            trailing: const Icon(Icons.edit, color: Color(0xFF167339)),
+                            onTap: () => Navigator.pushNamed(context, '/profile'),
+                          ),
+                          const SizedBox(height: 10),
+                          _pillButton(
+                            context: context,
+                            label: 'Change Password',
+                            onTap: () => _goComingSoon(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
 
-                // List section
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Column(
-                    children: [
-                      _listButton(
-                        label: 'Legacy Main Menu',
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MainMenuScreen())),
-                        delay: 250,
-                        icon: Icons.history,
+                    // List section
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                      _listButton(
-                        label: 'All Features',
-                        onTap: () => Navigator.pushNamed(context, '/main-menu-list'),
-                        delay: 300,
-                        icon: Icons.list_alt,
+                      child: Column(
+                        children: [
+                          _listButton(
+                            label: 'Legacy Main Menu',
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MainMenuScreen())),
+                            delay: 250,
+                            icon: Icons.history,
+                          ),
+                          _listButton(
+                            label: 'All Features',
+                            onTap: () => Navigator.pushNamed(context, '/main-menu-list'),
+                            delay: 300,
+                            icon: Icons.list_alt,
+                          ),
+                          _listButton(
+                            label: 'Language',
+                            onTap: () => Navigator.pushNamed(context, '/language-selection'),
+                            delay: 350,
+                            icon: Icons.language,
+                          ),
+                          _listButton(
+                            label: 'Coordinates History',
+                            onTap: () => _goComingSoon(context),
+                            delay: 400,
+                          ),
+                          _listButton(
+                            label: 'App Tutorial',
+                            onTap: () => _goComingSoon(context),
+                            delay: 500,
+                          ),
+                          _listButton(
+                            label: 'Notifications',
+                            onTap: () => _goComingSoon(context),
+                            delay: 600,
+                          ),
+                          _listButton(
+                            label: 'Privacy & Security',
+                            onTap: () => _goComingSoon(context),
+                            delay: 700,
+                          ),
+                          _listButton(
+                            label: 'About',
+                            onTap: () => _goComingSoon(context),
+                            delay: 800,
+                          ),
+                          _listButton(
+                            label: 'Logout',
+                            onTap: () => _logout(context),
+                            delay: 900,
+                            icon: Icons.logout,
+                            isDestructive: true,
+                          ),
+                        ],
                       ),
-                      _listButton(
-                        label: 'Language',
-                        onTap: () => Navigator.pushNamed(context, '/language-selection'),
-                        delay: 350,
-                        icon: Icons.language,
-                      ),
-                      _listButton(
-                        label: 'Coordinates History',
-                        onTap: () => _goComingSoon(context),
-                        delay: 400,
-                      ),
-                      _listButton(
-                        label: 'App Tutorial',
-                        onTap: () => _goComingSoon(context),
-                        delay: 500,
-                      ),
-                      _listButton(
-                        label: 'Notifications',
-                        onTap: () => _goComingSoon(context),
-                        delay: 600,
-                      ),
-                      _listButton(
-                        label: 'Privacy & Security',
-                        onTap: () => _goComingSoon(context),
-                        delay: 700,
-                      ),
-                      _listButton(
-                        label: 'About',
-                        onTap: () => _goComingSoon(context),
-                        delay: 800,
-                      ),
-                      _listButton(
-                        label: 'Logout',
-                        onTap: () => _logout(context),
-                        delay: 900,
-                        icon: Icons.logout,
-                        isDestructive: true,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
+                    ),
+                    const SizedBox(height: 24),
 
-                // Bottom home chip (static)
-                Center(
-                  child: Container(
-                    height: 56,
-                    width: 96,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF003A2A), Color(0xFF167339)],
+                    // Bottom home chip (static)
+                    Center(
+                      child: Container(
+                        height: 56,
+                        width: 96,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF003A2A), Color(0xFF167339)],
+                          ),
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.home, color: Colors.white, size: 28),
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(28),
                     ),
-                    child: const Center(
-                      child: Icon(Icons.home, color: Colors.white, size: 28),
-                    ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

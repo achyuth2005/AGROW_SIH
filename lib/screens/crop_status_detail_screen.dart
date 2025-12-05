@@ -33,7 +33,7 @@ class CropStatusDetailScreen extends StatelessWidget {
                           "12% in the past week",
                           [0.4, 0.5, 0.45, 0.6, 0.84, 0.75, 0.8],
                           [0.8, 0.82, 0.85, 0.83, 0.88, 0.85, 0.9],
-                          indexType: 'NDVI', // Vegetation greenness
+                          metric: 'greenness', // NDVI
                           subMetrics: [
                             _buildSubMetric("Leaf Health", "Good", Colors.green),
                             _buildSubMetric("Canopy Density", "Average", Colors.green),
@@ -50,7 +50,7 @@ class CropStatusDetailScreen extends StatelessWidget {
                           "0.1 dS/m past week",
                           [0.6, 0.58, 0.65, 0.7, 0.75, 0.72, 0.78],
                           [0.78, 0.8, 0.82, 0.85, 0.83, 0.88, 0.9],
-                          indexType: 'EVI', // Enhanced vegetation
+                          metric: 'greenness', // EVI for biomass
                           subMetrics: [
                              _buildSubMetric("Crop Vigor", "High", Colors.green),
                              _buildSubMetric("Stem Count", "Detected", Colors.green),
@@ -67,7 +67,7 @@ class CropStatusDetailScreen extends StatelessWidget {
                           "0.2 in past week",
                           [0.5, 0.55, 0.52, 0.58, 0.6, 0.55, 0.58],
                           [0.58, 0.6, 0.62, 0.65, 0.63, 0.68, 0.7],
-                          indexType: 'NDRE', // Red edge for nitrogen
+                          metric: 'nitrogen_level', // NDRE
                         ),
                         const SizedBox(height: 16),
                         _buildDetailSection(
@@ -194,6 +194,7 @@ class CropStatusDetailScreen extends StatelessWidget {
     List<double> forecastData, {
     List<Widget>? subMetrics,
     String indexType = 'NDVI',
+    String metric = 'greenness',
   }) {
     // Get coordinates from s2Data or use defaults
     final double lat = s2Data?['center_lat'] ?? 26.1885;
@@ -282,7 +283,7 @@ class CropStatusDetailScreen extends StatelessWidget {
                 centerLat: lat,
                 centerLon: lon,
                 fieldSizeHectares: fieldSize,
-                indexType: indexType,
+                metric: metric,
                 title: title,
                 width: 100,
                 height: 80,

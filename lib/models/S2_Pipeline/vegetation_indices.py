@@ -113,6 +113,13 @@ def calculate_sfi(img: np.ndarray) -> np.ndarray:
     sasi = calculate_sasi(img)
     return (ndvi * somi) / (sasi + 1e-10)
 
+def calculate_gndvi(img: np.ndarray) -> np.ndarray:
+    """GNDVI (Green NDVI) = (NIR - GREEN) / (NIR + GREEN)
+    Highly sensitive to chlorophyll content and nitrogen status"""
+    nir = img[:, :, 7]   # B08
+    green = img[:, :, 2]  # B03
+    return (nir - green) / (nir + green + 1e-10)
+
 # Index registry
 INDEX_FUNCTIONS = {
     'NDVI': calculate_ndvi,
@@ -127,7 +134,8 @@ INDEX_FUNCTIONS = {
     'MCARI': calculate_mcari,
     'SASI': calculate_sasi,
     'SOMI': calculate_somi,
-    'SFI': calculate_sfi
+    'SFI': calculate_sfi,
+    'GNDVI': calculate_gndvi
 }
 
 # ==================== BATCH CALCULATION ====================

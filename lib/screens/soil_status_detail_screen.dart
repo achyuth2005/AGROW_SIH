@@ -32,7 +32,7 @@ class SoilStatusDetailScreen extends StatelessWidget {
                           "12% in the past week",
                           [0.4, 0.5, 0.45, 0.6, 0.64, 0.58, 0.62],
                           [0.62, 0.65, 0.7, 0.68, 0.72, 0.65, 0.75], // Forecast
-                          indexType: 'SMI', // Soil Moisture Index
+                          metric: 'soil_moisture',
                         ),
                         const SizedBox(height: 16),
                         _buildDetailSection(
@@ -43,7 +43,7 @@ class SoilStatusDetailScreen extends StatelessWidget {
                           "0.2% in the past week",
                           [0.3, 0.28, 0.32, 0.3, 0.28, 0.25, 0.28],
                           [0.28, 0.27, 0.26, 0.25, 0.24, 0.23, 0.22], // Forecast
-                          indexType: 'NDVI', // Vegetation health
+                          metric: 'soil_organic_matter',
                         ),
                         const SizedBox(height: 16),
                         _buildDetailSection(
@@ -54,7 +54,7 @@ class SoilStatusDetailScreen extends StatelessWidget {
                           "Stable",
                           [0.7, 0.72, 0.75, 0.78, 0.8, 0.82, 0.8],
                           [0.8, 0.81, 0.82, 0.83, 0.84, 0.85, 0.86],
-                          indexType: 'EVI', // Enhanced Vegetation
+                          metric: 'soil_fertility',
                         ),
                         const SizedBox(height: 16),
                         _buildDetailSection(
@@ -65,7 +65,7 @@ class SoilStatusDetailScreen extends StatelessWidget {
                           "No significant change",
                           [0.2, 0.22, 0.21, 0.23, 0.2, 0.19, 0.2],
                           [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
-                          indexType: 'NDWI', // Water index
+                          metric: 'soil_salinity',
                         ),
                         const SizedBox(height: 200), // Space for FABs
                       ],
@@ -139,11 +139,15 @@ class SoilStatusDetailScreen extends StatelessWidget {
     List<double> trendData,
     List<double> forecastData, {
     String indexType = 'NDVI',
+    String metric = 'greenness',
   }) {
     // Get coordinates from s2Data or use defaults
     final double lat = s2Data?['center_lat'] ?? 26.1885;
     final double lon = s2Data?['center_lon'] ?? 91.6894;
     final double fieldSize = s2Data?['field_size_hectares'] ?? 10.0;
+    
+    // DEBUG: Print coordinates being used
+    debugPrint('🗺️ HEATMAP for $title: lat=$lat, lon=$lon, size=$fieldSize ha, s2Data=$s2Data');
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -227,7 +231,7 @@ class SoilStatusDetailScreen extends StatelessWidget {
                 centerLat: lat,
                 centerLon: lon,
                 fieldSizeHectares: fieldSize,
-                indexType: indexType,
+                metric: metric,
                 title: title,
                 width: 100,
                 height: 80,

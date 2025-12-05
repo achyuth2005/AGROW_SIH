@@ -99,22 +99,27 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       _selectedHeatmapLayer = null;
     });
 
+    // Calculate center coordinates from field corners
+    double centerLat = 0, centerLon = 0;
+    int count = 0;
+    
+    for (int i = 1; i <= 4; i++) {
+      if (fieldData['lat$i'] != null && fieldData['lon$i'] != null) {
+        centerLat += (fieldData['lat$i'] as num).toDouble();
+        centerLon += (fieldData['lon$i'] as num).toDouble();
+        count++;
+      }
+    }
+    
+    if (count > 0) {
+      centerLat /= count;
+      centerLon /= count;
+    }
+    
+    final fieldSizeHa = (fieldData['area_acres'] ?? 0.04) * 0.404686;
+    debugPrint('📍 Field center: ($centerLat, $centerLon), size: $fieldSizeHa ha');
+
     try {
-      double centerLat = 0, centerLon = 0;
-      int count = 0;
-      
-      for (int i = 1; i <= 4; i++) {
-        if (fieldData['lat$i'] != null && fieldData['lon$i'] != null) {
-          centerLat += (fieldData['lat$i'] as num).toDouble();
-          centerLon += (fieldData['lon$i'] as num).toDouble();
-          count++;
-        }
-      }
-      
-      if (count > 0) {
-        centerLat /= count;
-        centerLon /= count;
-      }
 
       final service = Sentinel2Service();
       final result = await service.analyzeField(
@@ -133,7 +138,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
       if (mounted) {
         setState(() {
-          _s2LlmAnalysis = result['llm_analysis'];
+          _s2LlmAnalysis = {
+            ...?result['llm_analysis'],
+            // Include field coordinates for heatmap
+            'center_lat': centerLat,
+            'center_lon': centerLon,
+            'field_size_hectares': fieldSizeHa,
+          };
           _heatmapLayers = result['heatmap_layers'];
           _trends = result['trends'];
           _isLoadingS2 = false;
@@ -142,9 +153,48 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     } catch (e) {
       debugPrint("Error fetching Sentinel-2 analysis: $e");
       if (mounted) {
-        setState(() => _isLoadingS2 = false);
+        // Still set coordinates even if S2 analysis fails
+        setState(() {
+          _s2LlmAnalysis = {
+            'center_lat': centerLat,
+            'center_lon': centerLon,
+            'field_size_hectares': fieldSizeHa,
+          };
+          _isLoadingS2 = false;
+        });
       }
     }
+  }
+
+  /// Get coordinates from selected field for heatmap
+  Map<String, dynamic> _getFieldCoordinates() {
+    if (_selectedField == null) return {};
+    
+    final field = _selectedField!;
+    double centerLat = 0, centerLon = 0;
+    int count = 0;
+    
+    for (int i = 1; i <= 4; i++) {
+      if (field['lat$i'] != null && field['lon$i'] != null) {
+        centerLat += (field['lat$i'] as num).toDouble();
+        centerLon += (field['lon$i'] as num).toDouble();
+        count++;
+      }
+    }
+    
+    if (count > 0) {
+      centerLat /= count;
+      centerLon /= count;
+    }
+    
+    final fieldSizeHa = (field['area_acres'] ?? 0.04) * 0.404686;
+    debugPrint('📍 Passing to detail: ($centerLat, $centerLon), size: $fieldSizeHa ha');
+    
+    return {
+      'center_lat': centerLat,
+      'center_lon': centerLon,
+      'field_size_hectares': fieldSizeHa,
+    };
   }
 
   // --- Map Helpers ---
@@ -766,24 +816,28 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return GestureDetector(
       onTap: () {
         if (_currentCardIndex == 0) { // Soil Status
+          // Get coordinates from selected field
+          final fieldData = _getFieldCoordinates();
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => SoilStatusDetailScreen(s2Data: _s2LlmAnalysis),
+              builder: (_) => SoilStatusDetailScreen(s2Data: {...?_s2LlmAnalysis, ...fieldData}),
             ),
           );
         } else if (_currentCardIndex == 1) { // Crop Status
+          final fieldData = _getFieldCoordinates();
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => CropStatusDetailScreen(s2Data: _s2LlmAnalysis),
+              builder: (_) => CropStatusDetailScreen(s2Data: {...?_s2LlmAnalysis, ...fieldData}),
             ),
           );
         } else if (_currentCardIndex == 2) { // Bio-risk Status
+          final fieldData = _getFieldCoordinates();
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => BioRiskStatusDetailScreen(s2Data: _s2LlmAnalysis),
+              builder: (_) => BioRiskStatusDetailScreen(s2Data: {...?_s2LlmAnalysis, ...fieldData}),
             ),
           );
         }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:agroww_sih/widgets/trend_chart.dart';
 import 'package:agroww_sih/screens/soil_status_detail_screen.dart'; // For ForecastChartPainter
 import 'package:agroww_sih/widgets/analytics_fab_stack.dart';
+import 'package:agroww_sih/widgets/heatmap_widget.dart';
 
 class BioRiskStatusDetailScreen extends StatelessWidget {
   final Map<String, dynamic>? s2Data;
@@ -32,7 +33,7 @@ class BioRiskStatusDetailScreen extends StatelessWidget {
                           "High risk detected", // Placeholder text
                           [0.3, 0.4, 0.35, 0.5, 0.45, 0.4, 0.42],
                           [0.42, 0.45, 0.48, 0.5, 0.48, 0.52, 0.55],
-                          heatmapColor: Colors.orange,
+                          metric: 'pest_risk',
                         ),
                         const SizedBox(height: 16),
                         _buildDetailSection(
@@ -43,7 +44,7 @@ class BioRiskStatusDetailScreen extends StatelessWidget {
                           "15% rate per week",
                           [0.4, 0.5, 0.6, 0.7, 0.84, 0.8, 0.85],
                           [0.85, 0.88, 0.9, 0.92, 0.9, 0.95, 0.98],
-                          heatmapColor: Colors.red,
+                          metric: 'disease_risk',
                         ),
                         const SizedBox(height: 16),
                         _buildDetailSection(
@@ -54,7 +55,7 @@ class BioRiskStatusDetailScreen extends StatelessWidget {
                           "Mild decrease",
                           [0.6, 0.55, 0.58, 0.52, 0.5, 0.48, 0.5],
                           [0.5, 0.48, 0.45, 0.42, 0.4, 0.38, 0.35],
-                          heatmapColor: Colors.yellow,
+                          metric: 'nutrient_stress',
                         ),
                         const SizedBox(height: 16),
                         _buildStressZoneSection(),
@@ -129,8 +130,15 @@ class BioRiskStatusDetailScreen extends StatelessWidget {
     String changeText,
     List<double> trendData,
     List<double> forecastData, {
-    Color heatmapColor = Colors.grey,
+    String metric = 'pest_risk',
   }) {
+    // Get coordinates from s2Data or use defaults
+    final double lat = s2Data?['center_lat'] ?? 26.1885;
+    final double lon = s2Data?['center_lon'] ?? 91.6894;
+    final double fieldSize = s2Data?['field_size_hectares'] ?? 10.0;
+    
+    debugPrint('🗺️ BIORISK HEATMAP for $title: lat=$lat, lon=$lon, size=$fieldSize ha, metric=$metric');
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -209,43 +217,15 @@ class BioRiskStatusDetailScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              // Heatmap Placeholder
-              Container(
+              // Real Heatmap Widget
+              HeatmapWidget(
+                centerLat: lat,
+                centerLon: lon,
+                fieldSizeHectares: fieldSize,
+                metric: metric,
+                title: title,
                 width: 100,
                 height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.grey.shade200,
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Stack(
-                  children: [
-                     // Simulated heatmap gradient
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        gradient: RadialGradient(
-                          colors: [heatmapColor.withValues(alpha: 0.8), Colors.green.withValues(alpha: 0.3)],
-                          center: Alignment.center,
-                          radius: 0.8,
-                        ),
-                      ),
-                    ),
-                    const Positioned(
-                      right: 4,
-                      top: 4,
-                      bottom: 4,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                           // Scale indicator
-                           Icon(Icons.circle, size: 6, color: Colors.green),
-                           Icon(Icons.circle, size: 6, color: Colors.red),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
               ),
             ],
           ),

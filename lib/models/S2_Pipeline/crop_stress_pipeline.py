@@ -268,8 +268,8 @@ function evaluatePixel(sample) {
         logger.info("Preprocessing data for stress detection...")
         patches, patch_coords, metadata = preprocess_for_model(
             all_images,
-            patch_size=8,
-            stride=4
+            patch_size=4,
+            stride=2
         )
         
         logger.info(f"Original shape: {metadata['original_shape']}")

@@ -115,7 +115,7 @@ def handle_nan_values(images: np.ndarray, method='mean') -> np.ndarray:
         return images
 
 
-def create_patches(images: np.ndarray, patch_size: int = 16, stride: int = 8) -> Tuple[np.ndarray, List]:
+def create_patches(images: np.ndarray, patch_size: int = 4, stride: int = 2) -> Tuple[np.ndarray, List]:
     """
     Create overlapping patches from images for spatial analysis.
     
@@ -154,8 +154,8 @@ def create_patches(images: np.ndarray, patch_size: int = 16, stride: int = 8) ->
 
 
 def preprocess_for_model(all_images: np.ndarray, 
-                         patch_size: int = 16,
-                         stride: int = 8) -> Tuple[np.ndarray, List, dict]:
+                         patch_size: int = 4,
+                         stride: int = 2) -> Tuple[np.ndarray, List, dict]:
     """
     Complete preprocessing pipeline for stress detection model.
     

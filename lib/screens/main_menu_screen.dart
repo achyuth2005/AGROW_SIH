@@ -307,6 +307,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           builder: (_) => const ComingSoonScreen(),
         ),
       );
+    } else if (item == "Analytics Page") {
+      Navigator.pushNamed(context, '/analytics');
     } else if (item == "AI Chatbot") {
       Navigator.push(
         context,

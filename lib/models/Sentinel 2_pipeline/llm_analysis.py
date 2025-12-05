@@ -177,6 +177,7 @@ def analyze_with_llm(summary_report: Dict, crop_type: str, farmer_context: Dict,
     # Using concatenation to avoid potential f-string parsing issues with long multi-line strings
     prompt = f"{indices_context}\n\n{stress_text}\n\n"
     prompt += "FIELD METADATA:\n"
+    # Add location details
     prompt += f"- Location: Latitude {center_lat:.4f}, Longitude {center_lon:.4f}\n"
     prompt += f"- Field Size: {field_size_hectares:.2f} hectares\n\n"
     

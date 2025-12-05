@@ -12,6 +12,7 @@ import 'package:agroww_sih/screens/full_screen_map_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:agroww_sih/services/sar_analysis_service.dart';
+import 'package:agroww_sih/services/sentinel2_service.dart';
 import 'package:agroww_sih/screens/camera_screen.dart';
 import 'package:agroww_sih/screens/gallery_screen.dart';
 import 'package:agroww_sih/screens/news_screen.dart';
@@ -19,6 +20,7 @@ import 'package:agroww_sih/screens/export_reports_screen.dart';
 import 'package:agroww_sih/screens/settings_screen.dart';
 import 'package:agroww_sih/screens/infographics_screen.dart';
 import 'package:agroww_sih/screens/chatbot_screen.dart';
+import 'package:agroww_sih/screens/take_action_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -40,6 +42,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<dynamic>? _stressedPatches;
   List<dynamic>? _weatherData;
   String? _sarError;
+
+  // Sentinel-2 Data State
+  bool _isLoadingS2 = false;
+  Map<String, dynamic>? _s2Data;
+  Map<String, dynamic>? _s2LlmAnalysis;
+  String? _s2Error;
 
   // Loading Messages State
   int _currentLoadingMessageIndex = 0;
@@ -183,6 +191,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _weatherData = result['weather_data'];
         _isLoadingSar = false;
       });
+      
+      // Also fetch Sentinel-2 analysis for soil data
+      _fetchSentinel2Analysis(fieldData);
+      
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Field Analysis Updated")),
         );
@@ -195,9 +207,78 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoadingSar = false;
         _sarError = e.toString();
       });
+      // Still try Sentinel-2 even if SAR fails
+      _fetchSentinel2Analysis(fieldData);
     }
   }
 }
+
+  Future<void> _fetchSentinel2Analysis(Map<String, dynamic> fieldData) async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoadingS2 = true;
+      _s2Error = null;
+    });
+
+    try {
+      // Calculate center lat/lon from field coordinates
+      double centerLat = 0;
+      double centerLon = 0;
+      int count = 0;
+      
+      for (int i = 1; i <= 4; i++) {
+        if (fieldData['lat$i'] != null && fieldData['lon$i'] != null) {
+          centerLat += (fieldData['lat$i'] as num).toDouble();
+          centerLon += (fieldData['lon$i'] as num).toDouble();
+          count++;
+        }
+      }
+      
+      if (count > 0) {
+        centerLat /= count;
+        centerLon /= count;
+      } else {
+        // Default coordinates if none found
+        centerLat = 30.9060;
+        centerLon = 75.8350;
+      }
+
+      final service = Sentinel2Service();
+      final result = await service.analyzeField(
+        centerLat: centerLat,
+        centerLon: centerLon,
+        cropType: fieldData['crop_type'] ?? 'Wheat',
+        analysisDate: DateTime.now().toIso8601String().split('T')[0],
+        fieldSizeHectares: (fieldData['area_acres'] ?? 0.04) * 0.404686, // Convert acres to hectares
+        farmerContext: {
+          'role': 'Owner-Operator',
+          'years_farming': 10,
+          'irrigation_method': 'Standard',
+          'farming_goal': 'Optimize Yield'
+        },
+      );
+
+      if (mounted) {
+        debugPrint("Sentinel-2 Analysis Result Keys: ${result.keys.toList()}");
+        debugPrint("Sentinel-2 LLM Analysis: ${result['llm_analysis']}");
+        
+        setState(() {
+          _s2Data = result;
+          _s2LlmAnalysis = result['llm_analysis'];
+          _isLoadingS2 = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching Sentinel-2 analysis: $e");
+      if (mounted) {
+        setState(() {
+          _isLoadingS2 = false;
+          _s2Error = e.toString();
+        });
+      }
+    }
+  }
 
 
   @override
@@ -648,6 +729,66 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSoilStatusCard() {
+    // Show loading state while Sentinel-2 data is being fetched
+    if (_isLoadingS2) {
+      return _buildCard(
+        title: "Soil Status",
+        headerColor: const Color(0xFFC6F68D),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: Color(0xFF167339)),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  _loadingMessages[_currentLoadingMessageIndex],
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF0F3C33),
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Get Sentinel-2 LLM analysis data
+    final llm = _s2LlmAnalysis;
+    
+    // Extract soil data from LLM analysis
+    final soilMoisture = llm?['soil_moisture'];
+    final soilSalinity = llm?['soil_salinity'];
+    final organicMatter = llm?['organic_matter'];
+    final soilFertility = llm?['soil_fertility'];
+    
+    // Calculate overall soil health score
+    double soilHealthScore = 0.5; // Default
+    if (llm != null && llm['overall_soil_health'] != null) {
+      soilHealthScore = (llm['overall_soil_health'] as num).toDouble().clamp(0.0, 1.0);
+    } else {
+      // Calculate from individual components
+      int score = 0;
+      int count = 0;
+      for (var item in [soilMoisture, soilSalinity, organicMatter, soilFertility]) {
+        if (item != null && item['level'] != null) {
+          String level = item['level'].toString().toLowerCase();
+          if (level == 'high' || level == 'good') score += 3;
+          else if (level == 'moderate') score += 2;
+          else if (level == 'low') score += 1;
+          count++;
+        }
+      }
+      if (count > 0) soilHealthScore = (score / (count * 3)).clamp(0.0, 1.0);
+    }
+
     return _buildCard(
       title: "Soil Status",
       headerColor: const Color(0xFFC6F68D),
@@ -656,20 +797,20 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Row(
               children: [
-                _buildDetailedStatItem(
-                  "Avg Soil\nMoisture", 
-                  "--", 
+                _buildNewStatItem(
+                  "Moisture", 
+                  _capitalize(soilMoisture?['level'] ?? 'N/A'), 
                   Icons.water_drop_outlined,
-                  "No sensor",
-                  "data"
+                  soilMoisture?['analysis'] ?? 'Analyzing...', 
+                  valueColor: _getColorForLevel(soilMoisture?['level'])
                 ),
                 const SizedBox(width: 8),
-                _buildDetailedStatItem(
-                  "Avg Soil\nTemperature", 
-                  "--", 
-                  Icons.thermostat_outlined,
-                  "No sensor",
-                  "data"
+                _buildNewStatItem(
+                  "Organic", 
+                  _capitalize(organicMatter?['level'] ?? 'N/A'), 
+                  Icons.eco_outlined,
+                  organicMatter?['analysis'] ?? 'Analyzing...', 
+                  valueColor: _getColorForLevel(organicMatter?['level'])
                 ),
               ],
             ),
@@ -678,20 +819,20 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Row(
               children: [
-                _buildDetailedStatItem(
-                  "Avg pH\nLevel", 
-                  "--", 
-                  Icons.science_outlined,
-                  "No sensor",
-                  "data"
+                _buildNewStatItem(
+                  "Salinity", 
+                  _capitalize(soilSalinity?['level'] ?? 'N/A'), 
+                  Icons.grain_outlined,
+                  soilSalinity?['analysis'] ?? 'Analyzing...', 
+                  valueColor: _getColorForLevel(soilSalinity?['level'], invert: true) // Low salinity is good
                 ),
                 const SizedBox(width: 8),
-                _buildDetailedStatItem(
-                  "Avg Soil\nSalinity", 
-                  "--", 
-                  Icons.grain_outlined,
-                  "No sensor",
-                  "data"
+                _buildNewStatItem(
+                  "Fertility", 
+                  _capitalize(soilFertility?['level'] ?? 'N/A'), 
+                  Icons.spa_outlined,
+                  soilFertility?['analysis'] ?? 'Analyzing...', 
+                  valueColor: _getColorForLevel(soilFertility?['level'])
                 ),
               ],
             ),
@@ -699,24 +840,28 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 12),
           const Text("Overall Soil Health", style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0F3C33), fontSize: 14)),
           const SizedBox(height: 4),
-          Stack(
-            children: [
-              Container(
-                height: 10,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ),
-              Container(
-                height: 10,
-                width: 200,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4ADE80),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(
+                children: [
+                  Container(
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                  Container(
+                    height: 10,
+                    width: constraints.maxWidth * soilHealthScore,
+                    decoration: BoxDecoration(
+                      color: soilHealthScore > 0.6 ? const Color(0xFF4ADE80) : (soilHealthScore > 0.3 ? Colors.orange : Colors.red),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                ],
+              );
+            }
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 2, vertical: 2),
@@ -1019,61 +1164,86 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPestRiskCard() {
-   if (_isLoadingSar) {
-    return _buildCard(
-      title: "Pest Risk",
-      headerColor: const Color(0xFFC6F68D),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(color: Color(0xFF167339)),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                _loadingMessages[_currentLoadingMessageIndex],
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF0F3C33),
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
+    // Show loading state while Sentinel-2 data is being fetched
+    if (_isLoadingS2 || _isLoadingSar) {
+      return _buildCard(
+        title: "Bio Risk Status",
+        headerColor: const Color(0xFFC6F68D),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: Color(0xFF167339)),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  _loadingMessages[_currentLoadingMessageIndex],
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF0F3C33),
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
-    
-    final stressedCount = _stressedPatches?.length ?? 0;
-    final weakZoneStatus = stressedCount > 0 ? "Alert ($stressedCount)" : "Safe";
-    final weakZoneColor = stressedCount > 0 ? Colors.red : const Color(0xFF39E639);
-    final weakZoneDesc = stressedCount > 0 ? "Stressed patches detected" : "No stress detected";
+      );
+    }
 
-    // Dynamic interpretations based on nitrogen level (as a proxy for nutrient stress)
-    final nitrogenLevel = _healthSummary?['nitrogen_level']?.toLowerCase() ?? 'moderate';
-    String nutrientDesc = "Balanced levels";
-    if (nitrogenLevel == 'low') nutrientDesc = "Urea spray needed";
-    else if (nitrogenLevel == 'high') nutrientDesc = "Reduce fertilizer";
+    // Get Sentinel-2 LLM analysis data for bio risk
+    final llm = _s2LlmAnalysis;
+    
+    // Extract bio risk data - handle different possible key names from the API
+    final pestRisk = llm?['Pest Rsk'] ?? llm?['pest_risk'];
+    final nutrientStress = llm?['Nutrient Stress'] ?? llm?['nutrient_stress'];
+    final diseaseRisk = llm?['Disease Risk'] ?? llm?['disease_risk'];
+    final stressZone = llm?['Stress Zone'] ?? llm?['stress_zone'];
+    
+    // Calculate overall bio risk score
+    double bioRiskScore = 0.3; // Default to low
+    if (llm != null && llm['overall_biorisk'] != null) {
+      bioRiskScore = (llm['overall_biorisk'] as num).toDouble().clamp(0.0, 1.0);
+    } else {
+      // Calculate from individual components
+      int riskCount = 0;
+      int totalRisk = 0;
+      for (var item in [pestRisk, nutrientStress, diseaseRisk, stressZone]) {
+        if (item != null && item['level'] != null) {
+          String level = item['level'].toString().toLowerCase();
+          if (level == 'high' || level == 'alert') totalRisk += 3;
+          else if (level == 'moderate') totalRisk += 2;
+          else if (level == 'low') totalRisk += 1;
+          riskCount++;
+        }
+      }
+      if (riskCount > 0) bioRiskScore = (totalRisk / (riskCount * 3)).clamp(0.0, 1.0);
+    }
 
     return _buildCard(
-      title: "Pest Risk",
+      title: "Bio Risk Status",
       headerColor: const Color(0xFFC6F68D),
       child: Column(
         children: [
           Expanded(
             child: Row(
               children: [
-                _buildNewStatItem("Disease Risk", "Low", Icons.coronavirus, "No active threats", valueColor: const Color(0xFF39E639)),
+                _buildNewStatItem(
+                  "Pest Risk", 
+                  _capitalize(pestRisk?['level'] ?? 'N/A'), 
+                  Icons.bug_report, 
+                  pestRisk?['analysis'] ?? 'Analyzing...', 
+                  valueColor: _getColorForLevel(pestRisk?['level'], invert: true)
+                ),
                 const SizedBox(width: 8),
                 _buildNewStatItem(
-                  "Nutrient Stress", 
-                  _capitalize(nitrogenLevel), 
+                  "Nutrient", 
+                  _capitalize(nutrientStress?['level'] ?? 'N/A'), 
                   Icons.local_florist, 
-                  nutrientDesc, 
-                  valueColor: _getColorForLevel(nitrogenLevel, invert: true)
+                  nutrientStress?['analysis'] ?? 'Analyzing...', 
+                  valueColor: _getColorForLevel(nutrientStress?['level'], invert: true)
                 ),
               ],
             ),
@@ -1082,33 +1252,49 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Row(
               children: [
-                _buildNewStatItem("Fungal Risk", "Moderate", Icons.bug_report, "Keep ventilated", valueColor: Colors.orange),
+                _buildNewStatItem(
+                  "Disease", 
+                  _capitalize(diseaseRisk?['level'] ?? 'N/A'), 
+                  Icons.coronavirus, 
+                  diseaseRisk?['analysis'] ?? 'Analyzing...', 
+                  valueColor: _getColorForLevel(diseaseRisk?['level'], invert: true)
+                ),
                 const SizedBox(width: 8),
-                _buildNewStatItem("Weak Zone", weakZoneStatus, Icons.warning, weakZoneDesc, valueColor: weakZoneColor),
+                _buildNewStatItem(
+                  "Stress Zone", 
+                  _capitalize(stressZone?['level'] ?? 'N/A'), 
+                  Icons.warning_amber, 
+                  stressZone?['analysis'] ?? 'Analyzing...', 
+                  valueColor: _getColorForLevel(stressZone?['level'], invert: true)
+                ),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          const Text("Pest Attack Risk", style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0F3C33), fontSize: 14)),
+          const Text("Overall Bio Risk", style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0F3C33), fontSize: 14)),
           const SizedBox(height: 4),
-          Stack(
-             children: [
-              Container(
-                height: 10,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ),
-              Container(
-                height: 10,
-                width: 100,
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(
+                children: [
+                  Container(
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                  Container(
+                    height: 10,
+                    width: constraints.maxWidth * bioRiskScore,
+                    decoration: BoxDecoration(
+                      color: bioRiskScore < 0.3 ? const Color(0xFF4ADE80) : (bioRiskScore < 0.6 ? Colors.orange : Colors.red),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                ],
+              );
+            }
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 2, vertical: 2),
@@ -1187,72 +1373,83 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildDetailedStatItem(String label, String value, IconData icon, String sub1, String sub2, {Color? valueColor}) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12), // Reduced padding
-        decoration: BoxDecoration(
-          color: const Color(0xFFE1EFEF).withOpacity(0.5),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            _stopAutoScroll(); // Stop carousel on tap
+          },
           borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(fontSize: 14, color: Color(0xFF0F3C33), fontWeight: FontWeight.bold, height: 1.1), // Larger and bold
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Icon(icon, size: 30, color: const Color(0xFF597872)), // Larger icon
-              ],
+          splashColor: const Color(0xFFC6F68D).withOpacity(0.4),
+          highlightColor: const Color(0xFFC6F68D).withOpacity(0.2),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE1EFEF).withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
             ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Flexible(
-                  flex: 3,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: 28, // Larger font
-                        fontWeight: FontWeight.w900, // Extra bold
-                        color: valueColor ?? const Color(0xFF0F3C33),
-                        letterSpacing: -0.5,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: const TextStyle(fontSize: 14, color: Color(0xFF0F3C33), fontWeight: FontWeight.bold, height: 1.1),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
+                    Icon(icon, size: 30, color: const Color(0xFF597872)),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                Flexible(
-                  flex: 2,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      FittedBox(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      flex: 3,
+                      child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(sub1, style: const TextStyle(fontSize: 11, color: Color(0xFF597872), fontWeight: FontWeight.w600)), // Larger and bold
-                      ),
-                      if (sub2.isNotEmpty)
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(sub2, style: const TextStyle(fontSize: 11, color: Color(0xFF597872), fontWeight: FontWeight.w600)),
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          value,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: valueColor ?? const Color(0xFF0F3C33),
+                            letterSpacing: -0.5,
+                          ),
                         ),
-                    ],
-                  ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      flex: 2,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(sub1, style: const TextStyle(fontSize: 11, color: Color(0xFF597872), fontWeight: FontWeight.w600)),
+                          ),
+                          if (sub2.isNotEmpty)
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(sub2, style: const TextStyle(fontSize: 11, color: Color(0xFF597872), fontWeight: FontWeight.w600)),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1260,60 +1457,71 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNewStatItem(String label, String value, IconData icon, String description, {Color? valueColor}) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Reduced vertical padding
-        decoration: BoxDecoration(
-          color: const Color(0xFFE1EFEF).withOpacity(0.5),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            _stopAutoScroll(); // Stop carousel on tap
+          },
           borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
+          splashColor: const Color(0xFFC6F68D).withOpacity(0.4),
+          highlightColor: const Color(0xFFC6F68D).withOpacity(0.2),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE1EFEF).withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(icon, size: 20, color: const Color(0xFF597872)), // Reduced icon size
-                Expanded(
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontSize: 14, // Reduced font size
-                      color: Color(0xFF0F3C33),
-                      fontWeight: FontWeight.bold, // Made bolder
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Icon(icon, size: 20, color: const Color(0xFF597872)),
+                    Expanded(
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF0F3C33),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF0F3C33),
+                    fontWeight: FontWeight.w400,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: valueColor ?? const Color(0xFF0F3C33),
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 4), // Reduced spacing
-            Text(
-              description,
-              style: const TextStyle(
-                fontSize: 11, // Reduced font size
-                color: Color(0xFF0F3C33),
-                fontWeight: FontWeight.w400,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2), // Reduced spacing
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 24, // Reduced font size
-                  fontWeight: FontWeight.bold,
-                  color: valueColor ?? const Color(0xFF0F3C33),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -1329,13 +1537,13 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildActionButton(
                 "Locate\nFarmland",
                 Icons.add_location_alt_outlined,
-                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LocateFarmlandScreen())),
+                () => Navigator.pushNamed(context, '/farmland-map'),
               ),
               const SizedBox(width: 12),
               _buildActionButton(
                 "Summarized\nAnalytics",
                 Icons.analytics_outlined,
-                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ComingSoonScreen())),
+                () => Navigator.pushNamed(context, '/analytics'),
               ),
             ],
           ),
@@ -1351,7 +1559,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildActionButton(
                 "Take Action\nNow",
                 Icons.hub_outlined, // Changed to hub/network icon
-                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ComingSoonScreen())),
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TakeActionScreen())),
               ),
             ],
           ),
@@ -1463,14 +1671,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Color _getColorForLevel(String? level, {bool invert = false}) {
     if (level == null) return Colors.black;
     final l = level.toLowerCase();
+    // invert=true: For risk/stress metrics where High/Alert = bad (red), Low = good (green)
+    // invert=false: For health metrics where High = good (green), Low = bad (red)
     if (invert) {
-      if (l == 'high') return Colors.red;
+      if (l == 'high' || l == 'alert') return Colors.red;
       if (l == 'moderate') return Colors.orange;
-      return const Color(0xFF39E639);
+      return const Color(0xFF39E639); // Low = green (good)
     } else {
-      if (l == 'high') return const Color(0xFF39E639);
+      if (l == 'high') return const Color(0xFF39E639); // High = green (good)
       if (l == 'moderate') return Colors.orange;
-      return Colors.red;
+      return Colors.red; // Low = red (bad)
     }
   }
 

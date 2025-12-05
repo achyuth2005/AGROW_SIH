@@ -15,6 +15,7 @@ import 'screens/notification_permission_screen.dart';
 import 'package:agroww_sih/screens/research_profile_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/intro_screen.dart';
+import 'screens/analytics_screen.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -148,6 +149,7 @@ class MyApp extends StatelessWidget {
         '/coordinate-entry': (context) => const CoordinateEntryScreen(),
         '/language-selection': (context) => const LanguageSelectionScreen(),
         '/farmland-map': (context) => const FarmlandMapScreen(),
+        '/analytics': (context) => const AnalyticsScreen(),
       },
     );
   }

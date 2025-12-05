@@ -17,7 +17,6 @@ import logging
 import numpy as np
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
-from dateutil import parser
 
 from sentinelhub import (
     SHConfig, BBox, CRS, DataCollection, SentinelHubRequest,
@@ -172,7 +171,29 @@ function evaluatePixel(sample) {
             all_timestamps.append((timestamp, cloud_cover))
         
         # Sort by proximity to target date
-        all_timestamps.sort(key=lambda x: abs((parser.isoparse(x[0]) - target_date).days))
+        def parse_timestamp(ts_str):
+            """Parse timestamp with variable fractional seconds."""
+            ts_str = ts_str.replace('Z', '+00:00')
+            # Handle fractional seconds with varying precision
+            if '.' in ts_str:
+                parts = ts_str.split('.')
+                base = parts[0]
+                frac_and_tz = parts[1]
+                # Find where timezone starts
+                tz_start = -1
+                for i, c in enumerate(frac_and_tz):
+                    if c in ['+', '-']:
+                        tz_start = i
+                        break
+                if tz_start > 0:
+                    frac = frac_and_tz[:tz_start]
+                    tz = frac_and_tz[tz_start:]
+                    # Pad or truncate fractional seconds to 6 digits
+                    frac = (frac + '000000')[:6]
+                    ts_str = f"{base}.{frac}{tz}"
+            return datetime.fromisoformat(ts_str)
+        
+        all_timestamps.sort(key=lambda x: abs((parse_timestamp(x[0]) - target_date).days))
         selected_dates = [t[0] for t in all_timestamps[:num_images]]
         
         logger.info(f"Found {len(selected_dates)} suitable images:")
@@ -268,8 +289,8 @@ function evaluatePixel(sample) {
         logger.info("Preprocessing data for stress detection...")
         patches, patch_coords, metadata = preprocess_for_model(
             all_images,
-            patch_size=4,
-            stride=2
+            patch_size=8,
+            stride=4
         )
         
         logger.info(f"Original shape: {metadata['original_shape']}")
@@ -360,15 +381,20 @@ function evaluatePixel(sample) {
         )
         
         logger.info("\nLLM Analysis Results:")
-        logger.info(f"  Soil Moisture: {llm_analysis['soil_moisture']['level']}")
-        logger.info(f"  Soil Salinity: {llm_analysis['soil_salinity']['level']}")
-        logger.info(f"  Organic Matter: {llm_analysis['organic_matter']['level']}")
-        logger.info(f"  Soil Fertility: {llm_analysis['soil_fertility']['level']}")
-        logger.info(f"  Pest Risk: {llm_analysis.get('Pest Rsk', llm_analysis.get('pest_risk', {})).get('level', 'N/A')}")
-        logger.info(f"  Nutrient Stress: {llm_analysis.get('Nutrient Stress', llm_analysis.get('nutrient_stress', {})).get('level', 'N/A')}")
-        logger.info(f"  Disease Risk: {llm_analysis.get('Disease Risk', llm_analysis.get('disease_risk', {})).get('level', 'N/A')}")
-        logger.info(f"  Stress Zone: {llm_analysis.get('Stress Zone', llm_analysis.get('stress_zone', {})).get('level', 'N/A')}")
-        logger.info(f"  Overall Health: {llm_analysis['overall_health']['status']}")
+        # Log available keys gracefully (LLM may return different structures)
+        for key in ['soil_moisture', 'soil_salinity', 'organic_matter', 'soil_fertility']:
+            if key in llm_analysis and isinstance(llm_analysis[key], dict):
+                logger.info(f"  {key.replace('_', ' ').title()}: {llm_analysis[key].get('level', 'N/A')}")
+        
+        # Log additional stress-related keys if present
+        for key in ['vegetation_stress', 'photosynthetic_stress', 'greenness', 'biomass_growth', 
+                    'nitrogen_level', 'pest_risk', 'nutrient_stress', 'disease_risk', 'stress_zone']:
+            if key in llm_analysis and isinstance(llm_analysis[key], dict):
+                logger.info(f"  {key.replace('_', ' ').title()}: {llm_analysis[key].get('level', llm_analysis[key].get('status', 'N/A'))}")
+        
+        # Log overall health if present
+        if 'overall_health' in llm_analysis and isinstance(llm_analysis['overall_health'], dict):
+            logger.info(f"  Overall Health: {llm_analysis['overall_health'].get('status', 'N/A')}")
         logger.info("=" * 60)
         
         return llm_analysis
@@ -423,6 +449,59 @@ function evaluatePixel(sample) {
                 field_size_hectares
             )
             
+            # Step 5: Prepare Heatmap Layers
+            logger.info("Preparing heatmap layers...")
+            heatmap_layers = {}
+            
+            def get_layer(name):
+                if name in indices_data:
+                    # Get last time step, handle NaN, convert to list
+                    data = indices_data[name][-1]
+                    # Replace NaN with None for JSON compatibility
+                    return np.where(np.isnan(data), None, data).tolist()
+                return None
+
+            # Map requested metrics to indices
+            heatmap_layers['soil_moisture'] = get_layer('SMI')
+            heatmap_layers['soil_fertility'] = get_layer('SFI')
+            heatmap_layers['soil_salinity'] = get_layer('SASI')
+            heatmap_layers['greenness'] = get_layer('NDVI')
+            heatmap_layers['biomass_growth'] = get_layer('NDRE')
+            heatmap_layers['nitrogen_level'] = get_layer('RECI')
+            heatmap_layers['pest_risk'] = get_layer('PRI')
+            heatmap_layers['nutrient_stress'] = get_layer('MCARI')
+            heatmap_layers['disease_risk'] = get_layer('PSRI')
+            
+            # Stress Zones (Model Output) - Reconstruct 2D Grid
+            # Initialize grids matching the original image size
+            _, height, width, _ = all_images.shape
+            stress_sum_grid = np.zeros((height, width), dtype=np.float32)
+            stress_count_grid = np.zeros((height, width), dtype=np.float32)
+            
+            patch_size = metadata['patch_size']
+            scores = stress_results['stress_scores']
+            coords = patch_coords
+            
+            for score, (h, w) in zip(scores, coords):
+                # Add score to the patch region
+                stress_sum_grid[h:h+patch_size, w:w+patch_size] += score
+                stress_count_grid[h:h+patch_size, w:w+patch_size] += 1
+                
+            # Calculate average, avoiding division by zero
+            # Initialize with a default value (e.g., global mean) for areas not covered by patches
+            global_mean_stress = float(np.mean(scores))
+            reconstructed_stress_grid = np.full((height, width), global_mean_stress, dtype=np.float32)
+            
+            mask = stress_count_grid > 0
+            reconstructed_stress_grid[mask] = stress_sum_grid[mask] / stress_count_grid[mask]
+
+            heatmap_layers['stress_zones'] = {
+                'grid': np.where(np.isnan(reconstructed_stress_grid), None, reconstructed_stress_grid).tolist(),
+                'scores': stress_results['stress_scores'].tolist(),
+                'coords': coords.tolist() if isinstance(coords, np.ndarray) else coords,
+                'patch_size': metadata['patch_size']
+            }
+            
             # Compile results
             results = {
                 'metadata': {
@@ -434,6 +513,7 @@ function evaluatePixel(sample) {
                     'num_images': len(selected_dates),
                     'date_range': [selected_dates[0][:10], selected_dates[-1][:10]]
                 },
+                'heatmap_layers': heatmap_layers,
                 'vegetation_indices_summary': summary_report,
                 'stress_detection': stress_llm_context,
                 'llm_analysis': llm_analysis

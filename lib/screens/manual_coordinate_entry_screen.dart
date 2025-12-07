@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as Math;
 
 
@@ -131,8 +133,19 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
       // Calculate Area
       final areaAcres = _calculateArea(points);
 
+      // Get current user ID
+      final user = firebase_auth.FirebaseAuth.instance.currentUser;
+      final prefs = await SharedPreferences.getInstance();
+      final guestId = prefs.getString('guest_user_id');
+      
+      final userId = user?.uid ?? guestId;
+      if (userId == null) {
+        throw Exception("No user ID found. Please log in again.");
+      }
+
       // Insert into Supabase
       final insertData = {
+        'user_id': userId, // CRITICAL: This links the farmland to the user
         'name': _nameController.text.trim(),
         'crop_type': finalCrop,
         'area_acres': areaAcres,
@@ -163,7 +176,17 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(context, '/farmland-map');
+      // Go directly to HomePage and clear navigation stack
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Field added successfully!'), backgroundColor: Color(0xFF0D986A)),
+      );
+      
+      // Navigate to HomePage and remove all previous routes
+      Navigator.pushNamedAndRemoveUntil(
+        context, 
+        '/main-menu', 
+        (route) => false, // Remove all routes
+      );
 
     } catch (e) {
       if (!mounted) return;

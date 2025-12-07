@@ -71,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Field Selection State
   List<Map<String, dynamic>> _farmlands = [];
   Map<String, dynamic>? _selectedField;
+  bool _hasRedirectedToAddFarmland = false; // Prevent multiple redirects
 
   @override
   void initState() {
@@ -107,12 +108,21 @@ class _HomeScreenState extends State<HomeScreen> {
       final List data = response as List;
 
       if (data.isEmpty && mounted) {
-        // No farmlands found, redirect to Add Farmland
-        setState(() => _isLoadingSar = false); // Stop loading
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LocateFarmlandScreen()),
-        );
+        // No farmlands found - redirect to Add Farmland screen (ONCE only per session)
+        if (!_hasRedirectedToAddFarmland) {
+          _hasRedirectedToAddFarmland = true;
+          setState(() => _isLoadingSar = false);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LocateFarmlandScreen()),
+          ).then((_) {
+            // When user comes back, just refresh data (don't reset redirect flag)
+            if (mounted) _checkFarmlands();
+          });
+        } else {
+          // Already redirected once, just show empty state
+          setState(() => _isLoadingSar = false);
+        }
       } else if (data.isNotEmpty) {
         // Fetch user profile for context
         Map<String, dynamic>? userContext;
@@ -544,6 +554,108 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildEmptyFarmlandState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 40),
+            // Icon
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D986A).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.landscape_outlined,
+                size: 60,
+                color: Color(0xFF0D986A),
+              ),
+            ),
+            const SizedBox(height: 32),
+            // Title
+            const Text(
+              "Welcome to AGROW!",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F3C33),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            // Description
+            const Text(
+              "Start by adding your first farmland to get personalized crop analytics, health monitoring, and AI-powered insights.",
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF5D7A74),
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 40),
+            // Add Field Button
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const LocateFarmlandScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_location_alt_outlined),
+                label: const Text(
+                  "Add Your First Field",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D986A),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Skip hint
+            TextButton(
+              onPressed: () {
+                // User can still explore the app
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("You can add a field anytime from the menu"),
+                  ),
+                );
+              },
+              child: const Text(
+                "I'll do this later",
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:agroww_sih/widgets/trend_chart.dart';
 import 'package:agroww_sih/widgets/heatmap_widget.dart';
 import 'package:agroww_sih/screens/soil_status_detail_screen.dart'; // For ForecastChartPainter
 import 'package:agroww_sih/widgets/analytics_fab_stack.dart';
+import 'package:agroww_sih/widgets/timeseries_chart_widget.dart';
 
 class CropStatusDetailScreen extends StatelessWidget {
   final Map<String, dynamic>? s2Data;
@@ -34,6 +35,7 @@ class CropStatusDetailScreen extends StatelessWidget {
                           [0.4, 0.5, 0.45, 0.6, 0.84, 0.75, 0.8],
                           [0.8, 0.82, 0.85, 0.83, 0.88, 0.85, 0.9],
                           metric: 'greenness', // NDVI
+                          satelliteMetric: 'B08', // NIR band for vegetation
                           subMetrics: [
                             _buildSubMetric("Leaf Health", "Good", Colors.green),
                             _buildSubMetric("Canopy Density", "Average", Colors.green),
@@ -51,6 +53,7 @@ class CropStatusDetailScreen extends StatelessWidget {
                           [0.6, 0.58, 0.65, 0.7, 0.75, 0.72, 0.78],
                           [0.78, 0.8, 0.82, 0.85, 0.83, 0.88, 0.9],
                           metric: 'greenness', // EVI for biomass
+                          satelliteMetric: 'B8A', // Vegetation red edge
                           subMetrics: [
                              _buildSubMetric("Crop Vigor", "High", Colors.green),
                              _buildSubMetric("Stem Count", "Detected", Colors.green),
@@ -68,6 +71,7 @@ class CropStatusDetailScreen extends StatelessWidget {
                           [0.5, 0.55, 0.52, 0.58, 0.6, 0.55, 0.58],
                           [0.58, 0.6, 0.62, 0.65, 0.63, 0.68, 0.7],
                           metric: 'nitrogen_level', // NDRE
+                          satelliteMetric: 'B05', // Red edge for nitrogen
                         ),
                         const SizedBox(height: 16),
                         _buildDetailSection(
@@ -195,6 +199,7 @@ class CropStatusDetailScreen extends StatelessWidget {
     List<Widget>? subMetrics,
     String indexType = 'NDVI',
     String metric = 'greenness',
+    String? satelliteMetric,
   }) {
     // Get coordinates from s2Data or use defaults
     final double lat = s2Data?['center_lat'] ?? 26.1885;
@@ -314,49 +319,60 @@ class CropStatusDetailScreen extends StatelessWidget {
           ],
 
           const SizedBox(height: 24),
-
-          // Trend Chart
-          Text(
-            "$title Trend",
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F3C33),
+          // Interactive Time Series Chart (if satellite metric available)
+          if (satelliteMetric != null) ...[
+            TimeSeriesChartWidget(
+              centerLat: lat,
+              centerLon: lon,
+              fieldSizeHectares: fieldSize,
+              metric: satelliteMetric,
+              title: '$title Time Series (Tap for details)',
+              height: 200,
             ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 120,
-            child: TrendChart(
-              dataPoints: trendData,
-              color: const Color(0xFF167339),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Forecast Chart
-          Row(
-            children: [
-              Text(
-                "$title Forecast",
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F3C33),
-                ),
+          ] else ...[
+            // Fallback: Static Trend Chart
+            Text(
+              "$title Trend",
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F3C33),
               ),
-              const SizedBox(width: 4),
-              const Icon(Icons.info_outline, size: 14, color: Colors.grey),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 100,
-            child: TrendChart(
-              dataPoints: forecastData,
-              color: const Color(0xFF167339),
             ),
-          ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 120,
+              child: TrendChart(
+                dataPoints: trendData,
+                color: const Color(0xFF167339),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Forecast Chart
+            Row(
+              children: [
+                Text(
+                  "$title Forecast",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F3C33),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.info_outline, size: 14, color: Colors.grey),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 100,
+              child: TrendChart(
+                dataPoints: forecastData,
+                color: const Color(0xFF167339),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
 
           // Analysis Text

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:agroww_sih/widgets/trend_chart.dart';
 import 'package:agroww_sih/widgets/heatmap_widget.dart';
 import 'package:agroww_sih/widgets/analytics_fab_stack.dart';
+import 'package:agroww_sih/widgets/timeseries_chart_widget.dart';
 
 class SoilStatusDetailScreen extends StatelessWidget {
   final Map<String, dynamic>? s2Data;
@@ -33,6 +34,7 @@ class SoilStatusDetailScreen extends StatelessWidget {
                           [0.4, 0.5, 0.45, 0.6, 0.64, 0.58, 0.62],
                           [0.62, 0.65, 0.7, 0.68, 0.72, 0.65, 0.75], // Forecast
                           metric: 'soil_moisture',
+                          satelliteMetric: 'VV', // SAR VV for soil moisture
                         ),
                         const SizedBox(height: 16),
                         _buildDetailSection(
@@ -44,6 +46,7 @@ class SoilStatusDetailScreen extends StatelessWidget {
                           [0.3, 0.28, 0.32, 0.3, 0.28, 0.25, 0.28],
                           [0.28, 0.27, 0.26, 0.25, 0.24, 0.23, 0.22], // Forecast
                           metric: 'soil_organic_matter',
+                          satelliteMetric: 'B08', // NIR band for organic matter
                         ),
                         const SizedBox(height: 16),
                         _buildDetailSection(
@@ -55,6 +58,7 @@ class SoilStatusDetailScreen extends StatelessWidget {
                           [0.7, 0.72, 0.75, 0.78, 0.8, 0.82, 0.8],
                           [0.8, 0.81, 0.82, 0.83, 0.84, 0.85, 0.86],
                           metric: 'soil_fertility',
+                          satelliteMetric: 'B04', // Red band for fertility
                         ),
                         const SizedBox(height: 16),
                         _buildDetailSection(
@@ -66,6 +70,7 @@ class SoilStatusDetailScreen extends StatelessWidget {
                           [0.2, 0.22, 0.21, 0.23, 0.2, 0.19, 0.2],
                           [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
                           metric: 'soil_salinity',
+                          satelliteMetric: 'VH', // SAR VH for salinity
                         ),
                         const SizedBox(height: 200), // Space for FABs
                       ],
@@ -140,6 +145,7 @@ class SoilStatusDetailScreen extends StatelessWidget {
     List<double> forecastData, {
     String indexType = 'NDVI',
     String metric = 'greenness',
+    String? satelliteMetric, // VV, VH, B04, B08 etc. for TimeSeries API
   }) {
     // Get coordinates from s2Data or use defaults
     final double lat = s2Data?['center_lat'] ?? 26.1885;
@@ -240,48 +246,60 @@ class SoilStatusDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Trend Chart
-          Text(
-            "$title Trend",
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F3C33),
+          // Interactive Time Series Chart (if satellite metric available)
+          if (satelliteMetric != null) ...[
+            TimeSeriesChartWidget(
+              centerLat: lat,
+              centerLon: lon,
+              fieldSizeHectares: fieldSize,
+              metric: satelliteMetric,
+              title: '$title Time Series (Tap for details)',
+              height: 200,
             ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 120,
-            child: TrendChart(
-              dataPoints: trendData,
-              color: const Color(0xFF167339),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Forecast Chart
-          Row(
-            children: [
-              Text(
-                "$title Forecast",
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F3C33),
-                ),
+          ] else ...[
+            // Fallback: Static Trend Chart
+            Text(
+              "$title Trend",
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F3C33),
               ),
-              const SizedBox(width: 4),
-              const Icon(Icons.info_outline, size: 14, color: Colors.grey),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 120,
-            child: TrendChart(
-              dataPoints: forecastData,
-              color: const Color(0xFFFFD700), // Using the yellow from ForecastChartPainter
             ),
-          ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 120,
+              child: TrendChart(
+                dataPoints: trendData,
+                color: const Color(0xFF167339),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Forecast Chart
+            Row(
+              children: [
+                Text(
+                  "$title Forecast",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F3C33),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.info_outline, size: 14, color: Colors.grey),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 120,
+              child: TrendChart(
+                dataPoints: forecastData,
+                color: const Color(0xFFFFD700),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
 
           // Analysis Text

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:agroww_sih/screens/sidebar_drawer.dart';
 import 'package:agroww_sih/screens/notification_page.dart';
@@ -21,6 +23,7 @@ import 'package:agroww_sih/screens/settings_screen.dart';
 import 'package:agroww_sih/screens/infographics_screen.dart';
 import 'package:agroww_sih/screens/chatbot_screen.dart';
 import 'package:agroww_sih/screens/take_action_screen.dart';
+import 'package:agroww_sih/services/cache_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -72,6 +75,13 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _farmlands = [];
   Map<String, dynamic>? _selectedField;
   bool _hasRedirectedToAddFarmland = false; // Prevent multiple redirects
+
+  // Cache State
+  DateTime? _cacheLastUpdated;
+  bool _isCheckingForUpdates = false;
+
+  /// Returns true if currently displaying cached data (not fresh from API)
+  bool get _isCachedData => _cacheLastUpdated != null && !_isLoadingSar && !_isCheckingForUpdates;
 
   @override
   void initState() {
@@ -161,6 +171,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchSarAnalysis(Map<String, dynamic> fieldData, {Map<String, dynamic>? userContext}) async {
+    final fieldId = fieldData['id']?.toString() ?? '';
+    
+    // CACHE FIRST: Try to load from cache immediately
+    if (fieldId.isNotEmpty) {
+      final loadedFromCache = await _loadFromCacheIfAvailable(fieldId);
+      if (loadedFromCache) {
+        debugPrint("Loaded from cache for field $fieldId");
+        // Still fetch fresh data in background for next time
+        _checkForNewerImageInBackground(fieldData, userContext);
+        return;
+      }
+    }
+    
     try {
       // Parse coordinates from field data
       List<double> bbox;
@@ -200,7 +223,11 @@ class _HomeScreenState extends State<HomeScreen> {
         _stressedPatches = result['stressed_patches'];
         _weatherData = result['weather_data'];
         _isLoadingSar = false;
+        _cacheLastUpdated = DateTime.now();
       });
+      
+      // Save to cache for next time
+      _saveToCacheIfNeeded();
       
       // Also fetch Sentinel-2 analysis for soil data
       _fetchSentinel2Analysis(fieldData);
@@ -278,6 +305,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _s2LlmAnalysis = result['llm_analysis'];
           _isLoadingS2 = false;
         });
+        
+        // Update cache with Sentinel-2 data
+        _saveToCacheIfNeeded();
       }
     } catch (e) {
       debugPrint("Error fetching Sentinel-2 analysis: $e");
@@ -485,6 +515,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         _buildFieldSelector(),
                         const SizedBox(height: 10),
+                        _buildCacheStatusRow(), // Shows "Data from: DD-MM-YYYY"
                         _buildStatusCarousel(),
                         const SizedBox(height: 10),
                         _buildPageIndicator(),
@@ -657,6 +688,227 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  /// Small row showing when data was last updated from satellite
+  Widget _buildCacheStatusRow() {
+    if (_cacheLastUpdated == null && !_isLoadingSar) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            _isCheckingForUpdates ? Icons.sync : Icons.satellite_alt,
+            size: 14,
+            color: const Color(0xFF5D7A74),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _isCheckingForUpdates
+                ? "Checking for updates..."
+                : _cacheLastUpdated != null
+                    ? "Data from: ${CacheService.formatDateForDisplay(_cacheLastUpdated!)}"
+                    : "Loading...",
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF5D7A74),
+            ),
+          ),
+          if (!_isCheckingForUpdates && _cacheLastUpdated != null) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: _forceRefreshData,
+              child: const Icon(
+                Icons.refresh,
+                size: 16,
+                color: Color(0xFF0D986A),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Force refresh data from satellite (clears cache)
+  Future<void> _forceRefreshData() async {
+    if (_selectedField == null) return;
+    
+    final fieldId = _selectedField!['id']?.toString() ?? '';
+    await CacheService.clearCache(fieldId);
+    
+    setState(() {
+      _cacheLastUpdated = null;
+      _isLoadingSar = true;
+    });
+    
+    _fetchSarAnalysis(_selectedField!, userContext: null);
+  }
+
+  /// Save current data to cache
+  Future<void> _saveToCacheIfNeeded() async {
+    if (_selectedField == null || _sarData == null) return;
+    
+    final fieldId = _selectedField!['id']?.toString() ?? '';
+    final today = DateTime.now().toIso8601String().split('T')[0];
+    
+    await CacheService.saveCache(
+      fieldId: fieldId,
+      sarData: _sarData!,
+      sentinel2Data: _s2Data,
+      imageDate: today,
+    );
+    
+    if (mounted) {
+      setState(() {
+        _cacheLastUpdated = DateTime.now();
+      });
+    }
+  }
+
+  /// Load cached data for a field
+  Future<bool> _loadFromCacheIfAvailable(String fieldId) async {
+    final cached = await CacheService.getCache(fieldId);
+    if (cached == null) return false;
+    
+    final timestamp = await CacheService.getCacheTimestamp(fieldId);
+    
+    if (mounted) {
+      setState(() {
+        _sarData = cached['sar_data'] as Map<String, dynamic>?;
+        _s2Data = cached['sentinel2_data'] as Map<String, dynamic>?;
+        _healthSummary = _sarData?['health_summary'];
+        _weatherData = _sarData?['weather_data'];
+        // Also restore Sentinel-2 LLM analysis for Soil/Bio Risk cards
+        _s2LlmAnalysis = _s2Data?['llm_analysis'] as Map<String, dynamic>?;
+        _cacheLastUpdated = timestamp;
+        _isLoadingSar = false;
+        _isLoadingS2 = false; // Also mark S2 as not loading
+      });
+    }
+    return true;
+  }
+
+  /// Check for newer satellite image in background (doesn't block UI)
+  Future<void> _checkForNewerImageInBackground(Map<String, dynamic> fieldData, Map<String, dynamic>? userContext) async {
+    final fieldId = fieldData['id']?.toString() ?? '';
+    if (fieldId.isEmpty) return;
+    
+    if (mounted) {
+      setState(() => _isCheckingForUpdates = true);
+    }
+    
+    try {
+      // Calculate center lat/lon
+      double centerLat = 0, centerLon = 0;
+      int count = 0;
+      for (int i = 1; i <= 4; i++) {
+        if (fieldData['lat$i'] != null && fieldData['lon$i'] != null) {
+          centerLat += (fieldData['lat$i'] as num).toDouble();
+          centerLon += (fieldData['lon$i'] as num).toDouble();
+          count++;
+        }
+      }
+      if (count > 0) {
+        centerLat /= count;
+        centerLon /= count;
+      }
+      
+      // Call the lightweight latest-image-date endpoint
+      final uri = Uri.parse('https://aniket2006-agrow-sentinel2.hf.space/latest-image-date')
+          .replace(queryParameters: {
+        'lat': centerLat.toString(),
+        'lon': centerLon.toString(),
+      });
+      
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final latestDate = data['latest_date'] as String?;
+        
+        if (latestDate != null) {
+          final needsRefresh = await CacheService.needsRefresh(
+            fieldId: fieldId,
+            latestImageDate: latestDate,
+          );
+          
+          if (needsRefresh && mounted) {
+            debugPrint("Newer image available ($latestDate), refreshing...");
+            // Clear cache and re-fetch
+            await CacheService.clearCache(fieldId);
+            setState(() {
+              _isCheckingForUpdates = false;
+              _isLoadingSar = true;
+            });
+            // Re-fetch with fresh data (skip cache check)
+            _fetchSarAnalysisNoCache(fieldData, userContext: userContext);
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Background image check failed: $e");
+    }
+    
+    if (mounted) {
+      setState(() => _isCheckingForUpdates = false);
+    }
+  }
+
+  /// Fetch SAR analysis without cache check (for forced refresh)
+  Future<void> _fetchSarAnalysisNoCache(Map<String, dynamic> fieldData, {Map<String, dynamic>? userContext}) async {
+    // Copy of fetch logic without cache check
+    try {
+      List<double> bbox;
+      try {
+        bbox = _parseCoordinates(fieldData);
+      } catch (e) {
+        bbox = [75.8350, 30.9060, 75.8370, 30.9090];
+      }
+
+      final service = SarAnalysisService();
+      if (mounted) {
+        setState(() {
+          _isLoadingSar = true;
+          _sarError = null;
+        });
+        _startLoadingMessages();
+      }
+
+      final result = await service.analyzeField(
+        coordinates: bbox,
+        date: DateTime.now().toIso8601String().split('T')[0],
+        cropType: fieldData['crop_type'] ?? 'Wheat',
+        context: userContext,
+      );
+
+      if (mounted) {
+        _stopLoadingMessages();
+        setState(() {
+          _sarData = result;
+          _healthSummary = result['health_summary'];
+          _stressedPatches = result['stressed_patches'];
+          _weatherData = result['weather_data'];
+          _isLoadingSar = false;
+          _cacheLastUpdated = DateTime.now();
+        });
+        _saveToCacheIfNeeded();
+        _fetchSentinel2Analysis(fieldData);
+      }
+    } catch (e) {
+      if (mounted) {
+        _stopLoadingMessages();
+        setState(() {
+          _isLoadingSar = false;
+          _sarError = e.toString();
+        });
+      }
+    }
   }
 
     Widget _buildFieldSelector() {
@@ -904,6 +1156,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return _buildCard(
       title: "Soil Status",
       headerColor: const Color(0xFFC6F68D),
+      isCached: _isCachedData,
       child: Column(
         children: [
           Expanded(
@@ -1035,6 +1288,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return _buildCard(
       title: "Weather Status$dateStr",
       headerColor: const Color(0xFFC6F68D),
+      isCached: _isCachedData,
       child: Column(
         children: [
           // Row 1: Temperature & Humidity
@@ -1168,6 +1422,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return _buildCard(
       title: "Crop Status",
       headerColor: const Color(0xFFC6F68D),
+      isCached: _isCachedData,
       child: Column(
         children: [
           // Row 1: Greenness & Nitrogen
@@ -1337,6 +1592,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return _buildCard(
       title: "Bio Risk Status",
       headerColor: const Color(0xFFC6F68D),
+      isCached: _isCachedData,
       child: Column(
         children: [
           Expanded(
@@ -1424,7 +1680,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCard({required String title, required Color headerColor, required Widget child}) {
+  Widget _buildCard({required String title, required Color headerColor, required Widget child, bool isCached = false}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
@@ -1460,14 +1716,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: headerColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18, // Larger font
-                    color: Color(0xFF0F3C33),
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18, // Larger font
+                        color: Color(0xFF0F3C33),
+                      ),
+                    ),
+                    if (isCached) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F3C33).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          "Cached",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0F3C33),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               Expanded(

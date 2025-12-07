@@ -100,6 +100,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       _messages.add({"text": userText, "isUser": true});
       _controller.clear();
       _isLoading = true;
+      // Add empty AI message placeholder for streaming
+      _messages.add({
+        "text": "",
+        "isUser": false,
+        "isStreaming": true,
+      });
     });
     _scrollToBottom();
 
@@ -112,36 +118,96 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       final fieldName = prefs.getString('current_field_name');
       if (fieldName != null) fieldContext['field_name'] = fieldName;
       
-      // Call AI API
-      final response = await ChatbotService.sendMessage(
+      // Use streaming API for typewriter effect
+      String? messageId;
+      double? confidence;
+      String? diagnosis;
+      List<String>? suggestedFollowups;
+      
+      await for (final event in ChatbotService.streamMessage(
         sessionId: _sessionId!,
         message: userText,
         userId: _userId,
         fieldContext: fieldContext.isNotEmpty ? fieldContext : null,
-      );
-
-      if (mounted) {
-        setState(() {
-          _messages.add({
-            "text": response.response,
-            "isUser": false,
-            "id": response.messageId,
-            "confidence": response.confidence,
-            "diagnosis": response.diagnosis,
-            "suggestedFollowups": response.suggestedFollowups,
-          });
-          _isLoading = false;
-        });
-        _scrollToBottom();
+      )) {
+        if (!mounted) break;
+        
+        switch (event.type) {
+          case ChatStreamEventType.metadata:
+            // Store metadata for final message
+            messageId = event.messageId;
+            confidence = event.confidence;
+            diagnosis = event.diagnosis;
+            suggestedFollowups = event.suggestedFollowups;
+            break;
+            
+          case ChatStreamEventType.chunk:
+            // Append chunk to the streaming message
+            setState(() {
+              final lastIndex = _messages.length - 1;
+              _messages[lastIndex] = {
+                ..._messages[lastIndex],
+                "text": (_messages[lastIndex]["text"] as String) + (event.text ?? ""),
+              };
+            });
+            _scrollToBottom();
+            break;
+            
+          case ChatStreamEventType.done:
+            // Finalize the message with metadata
+            setState(() {
+              final lastIndex = _messages.length - 1;
+              _messages[lastIndex] = {
+                "text": event.fullText ?? _messages[lastIndex]["text"],
+                "isUser": false,
+                "isStreaming": false,
+                "id": messageId,
+                "confidence": confidence,
+                "diagnosis": diagnosis,
+                "suggestedFollowups": suggestedFollowups,
+              };
+              _isLoading = false;
+            });
+            break;
+            
+          case ChatStreamEventType.error:
+            setState(() {
+              final lastIndex = _messages.length - 1;
+              _messages[lastIndex] = {
+                "text": event.error ?? "An error occurred. Please try again.",
+                "isUser": false,
+                "isError": true,
+                "isStreaming": false,
+              };
+              _isLoading = false;
+            });
+            break;
+        }
+      }
+      
+      // Ensure loading state is cleared
+      if (mounted && _isLoading) {
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add({
-            "text": "I'm having trouble connecting. Please try again.",
-            "isUser": false,
-            "isError": true,
-          });
+          // Update the streaming message to show error
+          if (_messages.isNotEmpty && _messages.last["isStreaming"] == true) {
+            final lastIndex = _messages.length - 1;
+            _messages[lastIndex] = {
+              "text": "I'm having trouble connecting. Please try again.",
+              "isUser": false,
+              "isError": true,
+              "isStreaming": false,
+            };
+          } else {
+            _messages.add({
+              "text": "I'm having trouble connecting. Please try again.",
+              "isUser": false,
+              "isError": true,
+            });
+          }
           _isLoading = false;
         });
         _scrollToBottom();

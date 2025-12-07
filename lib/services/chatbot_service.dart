@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -131,6 +132,86 @@ class ChatbotService {
       return false;
     }
   }
+  
+  /// Stream a message response via SSE for typewriter effect
+  /// Returns a Stream of ChatStreamEvent (metadata, chunks, done, error)
+  static Stream<ChatStreamEvent> streamMessage({
+    required String sessionId,
+    required String message,
+    String? userId,
+    Map<String, dynamic>? fieldContext,
+  }) async* {
+    final client = http.Client();
+    
+    try {
+      final request = http.Request(
+        'POST',
+        Uri.parse('$_baseUrl/chat/stream'),
+      );
+      request.headers['Content-Type'] = 'application/json';
+      request.body = jsonEncode({
+        'session_id': sessionId,
+        'message': message,
+        'user_id': userId,
+        'field_context': fieldContext,
+      });
+      
+      final streamedResponse = await client.send(request).timeout(
+        const Duration(seconds: 90),
+      );
+      
+      if (streamedResponse.statusCode != 200) {
+        yield ChatStreamEvent.error('Stream failed: ${streamedResponse.statusCode}');
+        return;
+      }
+      
+      // Buffer for incomplete SSE lines
+      String buffer = '';
+      
+      await for (final chunk in streamedResponse.stream.transform(utf8.decoder)) {
+        buffer += chunk;
+        
+        // Process complete lines
+        while (buffer.contains('\n\n')) {
+          final eventEnd = buffer.indexOf('\n\n');
+          final eventData = buffer.substring(0, eventEnd);
+          buffer = buffer.substring(eventEnd + 2);
+          
+          // Parse SSE data line
+          if (eventData.startsWith('data: ')) {
+            final jsonStr = eventData.substring(6);
+            try {
+              final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+              final type = data['type'] as String?;
+              
+              if (type == 'metadata') {
+                yield ChatStreamEvent.metadata(
+                  sessionId: data['session_id'] ?? sessionId,
+                  messageId: data['message_id'] ?? '',
+                  confidence: (data['confidence'] ?? 0.0).toDouble(),
+                  diagnosis: data['diagnosis'],
+                  suggestedFollowups: List<String>.from(data['suggested_followups'] ?? []),
+                );
+              } else if (type == 'chunk') {
+                yield ChatStreamEvent.chunk(data['text'] ?? '');
+              } else if (type == 'done') {
+                yield ChatStreamEvent.done(data['full_text'] ?? '');
+              } else if (type == 'error') {
+                yield ChatStreamEvent.error(data['message'] ?? 'Unknown error');
+              }
+            } catch (e) {
+              debugPrint('SSE parse error: $e for data: $jsonStr');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Stream error: $e');
+      yield ChatStreamEvent.error(e.toString());
+    } finally {
+      client.close();
+    }
+  }
 }
 
 // ============================================================================
@@ -257,5 +338,66 @@ class ChatSessionSummary {
       updatedAt: json['updated_at'] ?? '',
       messageCount: json['message_count'] ?? 0,
     );
+  }
+}
+
+/// Event types for streaming chat responses
+enum ChatStreamEventType { metadata, chunk, done, error }
+
+/// Streaming chat event for SSE responses
+class ChatStreamEvent {
+  final ChatStreamEventType type;
+  final String? text;
+  final String? fullText;
+  final String? error;
+  final String? sessionId;
+  final String? messageId;
+  final double? confidence;
+  final String? diagnosis;
+  final List<String>? suggestedFollowups;
+
+  ChatStreamEvent._({
+    required this.type,
+    this.text,
+    this.fullText,
+    this.error,
+    this.sessionId,
+    this.messageId,
+    this.confidence,
+    this.diagnosis,
+    this.suggestedFollowups,
+  });
+
+  /// Metadata event with response info
+  factory ChatStreamEvent.metadata({
+    required String sessionId,
+    required String messageId,
+    required double confidence,
+    String? diagnosis,
+    List<String>? suggestedFollowups,
+  }) {
+    return ChatStreamEvent._(
+      type: ChatStreamEventType.metadata,
+      sessionId: sessionId,
+      messageId: messageId,
+      confidence: confidence,
+      diagnosis: diagnosis,
+      suggestedFollowups: suggestedFollowups,
+    );
+  }
+
+  /// Text chunk event
+  factory ChatStreamEvent.chunk(String text) {
+    return ChatStreamEvent._(type: ChatStreamEventType.chunk, text: text);
+  }
+
+  /// Stream complete event
+  factory ChatStreamEvent.done(String fullText) {
+    return ChatStreamEvent._(type: ChatStreamEventType.done, fullText: fullText);
+  }
+
+  /// Error event
+  factory ChatStreamEvent.error(String error) {
+    return ChatStreamEvent._(type: ChatStreamEventType.error, error: error);
   }
 }

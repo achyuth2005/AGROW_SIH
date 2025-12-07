@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as Math;
+import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
 
 
 class ManualCoordinateEntryScreen extends StatefulWidget {
@@ -202,37 +203,54 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F3), // Light mint background
-      body: Column(
-        children: [
-          // Header Section with Back Button
-          Stack(
-            children: [
-              Image.asset(
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 4),
+      body: Builder(
+        builder: (context) => Stack(
+          children: [
+            // Background Image (Header)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Image.asset(
                 'assets/backsmall.png',
-                width: double.infinity,
                 fit: BoxFit.fitWidth,
                 alignment: Alignment.topCenter,
               ),
-              Positioned(
-                top: 50,
-                left: 20,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
+            ),
+            // Content
+            Column(
+              children: [
+                // Header content with SafeArea
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        const Expanded(
+                          child: Text(
+                            "Your Fields",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 48), // Balance for back button
+                      ],
                     ),
-                    child: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
                   ),
                 ),
-              ),
-            ],
-          ),
 
-          // Content Section
-          Expanded(
+                // Content Section
+                Expanded(
             child: Column(
               children: [
                 // Header Title
@@ -396,7 +414,10 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
               ],
             ),
           ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -5,8 +5,8 @@ import os
 app = Flask(__name__)
 
 # TODO: Replace with actual credentials or use environment variables
-CLIENT_ID = "713b1096-4c36-4bf6-b03c-ce01aa297fb6"
-CLIENT_SECRET = "waVNOwoXx7HyH9rImt2BDayZC1jkbqk3"
+CLIENT_ID = "sh-709c1173-fc33-4a0e-90e4-b84161ed5b9d"
+CLIENT_SECRET = "IdopxGFFr3NKFJ4Y2ywJRVfmM5eBB9b4"
 
 @app.route('/api/satellite', methods=['POST'])
 def get_satellite_image():

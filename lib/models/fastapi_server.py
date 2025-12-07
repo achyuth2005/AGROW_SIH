@@ -13,8 +13,8 @@ class PolygonRequest(BaseModel):
     days_back: Optional[int] = 30
 
 # Credentials (should be env vars in production)
-CLIENT_ID = os.environ.get("SENTINEL_CLIENT_ID", "713b1096-4c36-4bf6-b03c-ce01aa297fb6")
-CLIENT_SECRET = os.environ.get("SENTINEL_CLIENT_SECRET", "waVNOwoXx7HyH9rImt2BDayZC1jkbqk3")
+CLIENT_ID = os.environ.get("SENTINEL_CLIENT_ID", "sh-709c1173-fc33-4a0e-90e4-b84161ed5b9d")
+CLIENT_SECRET = os.environ.get("SENTINEL_CLIENT_SECRET", "IdopxGFFr3NKFJ4Y2ywJRVfmM5eBB9b4")
 
 @app.get("/")
 def read_root():

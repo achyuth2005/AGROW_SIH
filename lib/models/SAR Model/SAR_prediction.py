@@ -78,8 +78,8 @@ def setup_sentinelhub():
     """Configure Sentinel Hub credentials and data collection."""
     config = SHConfig()
     
-    config.sh_client_id = "sh-4c23abb9-6263-4a2c-bdba-a4ff6b84bdfb"
-    config.sh_client_secret = "iZ4gexrfiWQpopHAGYlBeEMj9J8DAZtD"
+    config.sh_client_id = "sh-709c1173-fc33-4a0e-90e4-b84161ed5b9d"
+    config.sh_client_secret = "IdopxGFFr3NKFJ4Y2ywJRVfmM5eBB9b4"
     config.sh_base_url = "https://sh.dataspace.copernicus.eu"
     config.sh_token_url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
     

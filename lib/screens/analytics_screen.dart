@@ -11,6 +11,7 @@ import 'package:agroww_sih/screens/notification_page.dart';
 import 'package:agroww_sih/screens/soil_status_detail_screen.dart';
 import 'package:agroww_sih/screens/crop_status_detail_screen.dart';
 import 'package:agroww_sih/screens/bio_risk_status_detail_screen.dart';
+import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -350,47 +351,64 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9F5),
       drawer: const SidebarDrawer(),
-      body: SafeArea(
-        child: Column(
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 0),
+      body: Builder(
+        builder: (context) => Stack(
           children: [
-            _buildHeader(),
-            _buildFieldSelector(),
-            Expanded(
-              child: Column(
-                children: [
-                  // Map Section
-                  Expanded(
-                    flex: 3,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: _buildMap(),
-                    ),
-                  ),
-                  // Carousel Section
-                  Expanded(
-                    flex: 4,
-                    child: Column(
-                      children: [
-                        Expanded(child: _buildCarousel()),
-                        _buildCarouselDots(),
-                        const SizedBox(height: 8),
-                        _buildExpandArrow(),
-                      ],
-                    ),
-                  ),
-                ],
+            // Background Image (Header)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Image.asset(
+                'assets/backsmall.png',
+                fit: BoxFit.fitWidth,
+                alignment: Alignment.topCenter,
               ),
+            ),
+            // Content
+            Column(
+              children: [
+                _buildHeader(context),
+                _buildFieldSelector(),
+                Expanded(
+                  child: Column(
+                    children: [
+                      // Map Section
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: _buildMap(),
+                        ),
+                      ),
+                      // Carousel Section
+                      Expanded(
+                        flex: 4,
+                        child: Column(
+                          children: [
+                            Expanded(child: _buildCarousel()),
+                            _buildCarouselDots(),
+                            const SizedBox(height: 8),
+                            _buildExpandArrow(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -398,49 +416,39 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Stack(
-      children: [
-        Image.asset(
-          'assets/backsmall.png',
-          width: double.infinity,
-          fit: BoxFit.fitWidth,
-          alignment: Alignment.topCenter,
+  Widget _buildHeader(BuildContext context) {
+    // Header content only - background image is in main Stack
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.menu, color: Colors.white, size: 28),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
+            const Expanded(
+              child: Text(
+                "Analytics",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationPage()),
+              ),
+            ),
+          ],
         ),
-        Positioned(
-          top: 50,
-          left: 16,
-          right: 16,
-          child: Row(
-            children: [
-              Builder(
-                builder: (context) => GestureDetector(
-                  onTap: () => Scaffold.of(context).openDrawer(),
-                  child: const Icon(Icons.menu, color: Colors.white, size: 28),
-                ),
-              ),
-              const Expanded(
-                child: Text(
-                  "Analytics",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NotificationPage()),
-                ),
-                child: const Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 

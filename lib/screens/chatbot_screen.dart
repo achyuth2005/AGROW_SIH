@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../services/chatbot_service.dart';
 import 'chat_history_drawer.dart';
+import '../widgets/custom_bottom_nav_bar.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -430,24 +431,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 ),
 
                 // Bottom Nav Bar
-                Container(
-                  height: 80,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildNavItem(Icons.home_outlined, false),
-                      _buildNavItem(Icons.grid_view, false),
-                      _buildNavItem(Icons.calendar_today_outlined, false),
-                      _buildNavItem(Icons.chat_bubble, true),
-                      _buildNavItem(Icons.person_outline, false),
-                    ],
-                  ),
-                ),
+                const CustomBottomNavBar(selectedIndex: 3),
               ],
             ),
           ],

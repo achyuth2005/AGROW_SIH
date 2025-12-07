@@ -105,6 +105,11 @@ flutter:
     - assets/backsmallsetting.png
     - assets/AGROWH.png
     - assets/Frame 5.png
+    - assets/backdown.png
+    - assets/icons/Anlaytics icon.png
+    - assets/icons/Take Action Icon.png
+    - assets/icons/Chatbot.png
+    - assets/icons/Your fields.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

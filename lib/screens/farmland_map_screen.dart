@@ -7,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'add_note_screen.dart';
 import 'view_notes_screen.dart';
+import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
+import 'package:agroww_sih/screens/sidebar_drawer.dart';
 
 class FarmlandMapScreen extends StatefulWidget {
   const FarmlandMapScreen({super.key});
@@ -541,6 +543,10 @@ class _FarmlandMapScreenState extends State<FarmlandMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBody: true,
+      drawer: const SidebarDrawer(),
+      bottomNavigationBar: _isAddingField ? null : const CustomBottomNavBar(selectedIndex: 4),
       body: Stack(
         children: [
           GoogleMap(
@@ -553,10 +559,7 @@ class _FarmlandMapScreenState extends State<FarmlandMapScreen> {
             zoomControlsEnabled: true,
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
-            padding: EdgeInsets.only(
-              top: _isAddingField ? 100 : 120,
-              bottom: _isAddingField ? 100 : 100,
-            ),
+            padding: const EdgeInsets.only(bottom: 180, top: 120),
           ),
 
           // Top Bar
@@ -585,106 +588,127 @@ class _FarmlandMapScreenState extends State<FarmlandMapScreen> {
   }
 
   Widget _buildStandardTopBar() {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Column(
-          children: [
-            Row(
+    return Stack(
+      children: [
+        // Background image
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Image.asset(
+            'assets/backsmall.png',
+            fit: BoxFit.fitWidth,
+            alignment: Alignment.topCenter,
+          ),
+        ),
+        // Header content
+        SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        )
-                      ],
+                // Top row with hamburger menu and title
+                Builder(
+                  builder: (context) => Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.menu, color: Colors.white, size: 28),
+                        onPressed: () => Scaffold.of(context).openDrawer(),
+                      ),
+                    const Expanded(
+                      child: Text(
+                        "Your Fields",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                    child: const Icon(Icons.arrow_back, color: Color(0xFF167339)),
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.white, size: 24),
+                      onPressed: _fetchFarmlands,
+                    ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(27),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        )
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 16),
-                        const Icon(Icons.search, color: Color(0xFF167339)),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: "Search Fields...",
-                              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
-                              border: InputBorder.none,
-                            ),
-                            onChanged: (val) {},
+                const SizedBox(height: 25),
+                // Search bar
+                Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 16),
+                      const Icon(Icons.search, color: Color(0xFF167339)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: "Search Fields...",
+                            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
+                            border: InputBorder.none,
                           ),
+                          onChanged: (val) {},
                         ),
-                        Container(
-                          margin: const EdgeInsets.only(right: 6),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const ViewNotesScreen()),
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE8F5F3),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.notes, color: Color(0xFF167339), size: 18),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      "View Notes",
-                                      style: TextStyle(
-                                        color: Color(0xFF167339),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                      ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(right: 6),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const ViewNotesScreen()),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F5F3),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.notes, color: Color(0xFF167339), size: 18),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    "Notes",
+                                    style: TextStyle(
+                                      color: Color(0xFF167339),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -734,7 +758,7 @@ class _FarmlandMapScreenState extends State<FarmlandMapScreen> {
 
   Widget _buildAddFieldButton() {
     return Positioned(
-      bottom: 40, left: 24, right: 24,
+      bottom: 120, left: 24, right: 24,
       child: Container(
         height: 64,
         decoration: BoxDecoration(

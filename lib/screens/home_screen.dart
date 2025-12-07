@@ -24,6 +24,7 @@ import 'package:agroww_sih/screens/infographics_screen.dart';
 import 'package:agroww_sih/screens/chatbot_screen.dart';
 import 'package:agroww_sih/screens/take_action_screen.dart';
 import 'package:agroww_sih/services/cache_service.dart';
+import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -502,89 +503,80 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFE1EFEF), // Light mint background
       drawer: const SidebarDrawer(),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 2),
+      body: Builder(
+        builder: (context) => Stack(
+          children: [
+            // Background Image (Header)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Image.asset(
+                'assets/backsmall.png',
+                fit: BoxFit.fitWidth,
+                alignment: Alignment.topCenter,
+              ),
+            ),
+            // Content
+            Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 100), // Space for bottom nav
+                    padding: const EdgeInsets.only(bottom: 10),
                     child: Column(
                       children: [
+                        const SizedBox(height: 20),
                         _buildFieldSelector(),
-                        const SizedBox(height: 10),
-                        _buildCacheStatusRow(), // Shows "Data from: DD-MM-YYYY"
-                        _buildStatusCarousel(),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
+                        _buildCacheStatusRow(),
+                        Expanded(child: _buildStatusCarousel()),
+                        const SizedBox(height: 6),
                         _buildPageIndicator(),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
                         _buildActionGrid(),
-                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomNavBar(),
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Stack(
-      children: [
-        Image.asset(
-          'assets/backsmall.png',
-          width: double.infinity,
-          fit: BoxFit.fitWidth,
-          alignment: Alignment.topCenter,
-        ),
-        Positioned(
-          top: 50,
-          left: 16,
-          right: 16,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Menu Button (Left)
-              Builder(
-                builder: (context) => GestureDetector(
-                  onTap: () => Scaffold.of(context).openDrawer(),
-                  child: const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Icon(Icons.menu, color: Colors.white, size: 28),
-                  ),
-                ),
+  Widget _buildHeader(BuildContext context) {
+    // Header content only - background image is in main Stack
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Menu Button (Left)
+            IconButton(
+              icon: const Icon(Icons.menu, color: Colors.white, size: 28),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
+            
+            // Logo (Center)
+            Image.asset('assets/Frame 5.png', height: 40),
+            
+            // Notification Button (Right)
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 28),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationPage()),
               ),
-              
-              // Logo (Center)
-              Image.asset('assets/Frame 5.png', height: 40),
-              
-              // Notification Button (Right)
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NotificationPage()),
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Icon(Icons.notifications_outlined, color: Colors.white, size: 28),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -1926,30 +1918,30 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             children: [
               _buildActionButton(
-                "Locate\nFarmland",
-                Icons.add_location_alt_outlined,
+                "Mapped\nAnalytics",
+                Icons.map_outlined,
                 () => Navigator.pushNamed(context, '/farmland-map'),
               ),
               const SizedBox(width: 12),
               _buildActionButton(
-                "Summarized\nAnalytics",
-                Icons.analytics_outlined,
+                "Visual\nAnalytics",
+                Icons.pie_chart_outline,
                 () => Navigator.pushNamed(context, '/analytics'),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             children: [
               _buildActionButton(
-                "Mapped\nAnalytics",
-                Icons.calendar_today_outlined, // Changed icon to match image (calendar/grid)
+                "Newsletter",
+                Icons.newspaper_outlined,
                 () => Navigator.pushNamed(context, '/coordinate-entry'),
               ),
               const SizedBox(width: 12),
               _buildActionButton(
-                "Take Action\nNow",
-                Icons.hub_outlined, // Changed to hub/network icon
+                "Notes",
+                Icons.note_alt_outlined,
                 () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TakeActionScreen())),
               ),
             ],
@@ -1964,8 +1956,8 @@ class _HomeScreenState extends State<HomeScreen> {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          height: 90, // Slightly more compact
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          height: 70, // Compact to fit on one screen
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),

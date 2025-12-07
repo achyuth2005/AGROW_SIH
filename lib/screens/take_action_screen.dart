@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:agroww_sih/screens/home_screen.dart'; // For navigation or shared widgets if needed
 import 'package:agroww_sih/screens/coming_soon_screen.dart';
+import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
 
 class TakeActionScreen extends StatefulWidget {
   const TakeActionScreen({super.key});
@@ -23,83 +24,75 @@ class _TakeActionScreenState extends State<TakeActionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE1EFEF), // Light mint background
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 100), // Space for bottom nav
-                    child: Column(
-                      children: [
-                        _buildSearchBar(),
-                        const SizedBox(height: 16),
-                        _buildMapSection(),
-                        const SizedBox(height: 20),
-                        _buildActionButtons(),
-                        const SizedBox(height: 20),
-                      ],
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1),
+      body: Builder(
+        builder: (context) => Stack(
+          children: [
+            // Background Image (Header)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Image.asset(
+                'assets/backsmall.png',
+                fit: BoxFit.fitWidth,
+                alignment: Alignment.topCenter,
+              ),
+            ),
+            // Content
+            Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Column(
+                        children: [
+                          _buildSearchBar(),
+                          const SizedBox(height: 16),
+                          _buildMapSection(),
+                          const SizedBox(height: 20),
+                          _buildActionButtons(),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomNavBar(),
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      height: 110,
-      decoration: const BoxDecoration(
-        color: Color(0xFF164534), // Dark green header
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+  Widget _buildHeader(BuildContext context) {
+    // Header content only - background image is in main Stack
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 22),
+              onPressed: () => Navigator.pop(context),
+            ),
+            const Expanded(
+              child: Text(
+                "Take Action Now",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    "Take Action Now",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 40), // Balance the back button
-            ],
-          ),
+            ),
+            const SizedBox(width: 48), // Balance for back button
+          ],
         ),
       ),
     );

@@ -1,7 +1,8 @@
 import 'dart:math' as Math;
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:agroww_sih/services/localization_service.dart';
 import 'manual_coordinate_entry_screen.dart';
 
 class LocateFarmlandScreen extends StatefulWidget {
@@ -115,13 +116,18 @@ class _LocateFarmlandScreenState extends State<LocateFarmlandScreen> {
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Text(
-                    "Locate your Farmland",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  child: Builder(
+                    builder: (context) {
+                      final loc = context.watch<LocalizationProvider>();
+                      return Text(
+                        loc.tr('locate_farmland'),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -143,26 +149,31 @@ class _LocateFarmlandScreenState extends State<LocateFarmlandScreen> {
                   // Instructions
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "How to locate?",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF0F3C33),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _buildInstructionStep(
-                          "1. Tap on the map to select four corners of your farmland.",
-                        ),
-                        const SizedBox(height: 8),
-                        _buildInstructionStep(
-                          "2. Input the geographical coordinates (e.g., latitude/longitude) of your farm boundary manually.",
-                        ),
-                      ],
+                    child: Builder(
+                      builder: (context) {
+                        final loc = context.watch<LocalizationProvider>();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              loc.tr('how_to_locate'),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF0F3C33),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildInstructionStep(
+                              loc.tr('locate_instruction_1'),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildInstructionStep(
+                              loc.tr('locate_instruction_2'),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
 
@@ -173,23 +184,28 @@ class _LocateFarmlandScreenState extends State<LocateFarmlandScreen> {
                     child: SizedBox(
                       width: MediaQuery.of(context).size.width * 0.8,
                       height: 50,
-                      child: ElevatedButton(
-                        onPressed: _navigateToEntry,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFAEF051),
-                          foregroundColor: const Color(0xFF0F3C33),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          "Enter Co-ordinates",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      child: Builder(
+                        builder: (context) {
+                          final loc = context.watch<LocalizationProvider>();
+                          return ElevatedButton(
+                            onPressed: _navigateToEntry,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFAEF051),
+                              foregroundColor: const Color(0xFF0F3C33),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              loc.tr('enter_coordinates'),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),

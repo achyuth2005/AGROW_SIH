@@ -216,6 +216,22 @@ class AppTranslations {
     'safety_score': {'en': 'Safety Score', 'hi': 'सुरक्षा स्कोर', 'bn': 'নিরাপত্তা স্কোর'},
     'knowledge_hub': {'en': 'Knowledge Hub', 'hi': 'ज्ञान केंद्र', 'bn': 'জ্ঞান কেন্দ্র'},
     'select_field': {'en': 'Select Field', 'hi': 'खेत चुनें', 'bn': 'মাঠ নির্বাচন করুন'},
+    
+    // Add Farmlands Screens
+    'locate_farmland': {'en': 'Locate your Farmland', 'hi': 'अपना खेत खोजें', 'bn': 'আপনার জমি খুঁজুন'},
+    'how_to_locate': {'en': 'How to locate?', 'hi': 'कैसे खोजें?', 'bn': 'কিভাবে খুঁজবেন?'},
+    'locate_instruction_1': {'en': '1. Tap on the map to select four corners of your farmland.', 'hi': '1. अपने खेत के चार कोनों को चुनने के लिए मानचित्र पर टैप करें।', 'bn': '1. আপনার জমির চার কোণা নির্বাচন করতে মানচিত্রে ট্যাপ করুন।'},
+    'locate_instruction_2': {'en': '2. Input the geographical coordinates (e.g., latitude/longitude) of your farm boundary manually.', 'hi': '2. अपने खेत की सीमा के भौगोलिक निर्देशांक (जैसे अक्षांश/देशांतर) मैन्युअल रूप से दर्ज करें।', 'bn': '2. আপনার জমির সীমানার ভৌগলিক স্থানাঙ্ক (যেমন অক্ষাংশ/দ্রাঘিমাংশ) ম্যানুয়ালি লিখুন।'},
+    'enter_coordinates': {'en': 'Enter Co-ordinates', 'hi': 'निर्देशांक दर्ज करें', 'bn': 'স্থানাঙ্ক লিখুন'},
+    'your_fields': {'en': 'Your Fields', 'hi': 'आपके खेत', 'bn': 'আপনার মাঠ'},
+    'field_details': {'en': 'Field Details', 'hi': 'खेत का विवरण', 'bn': 'মাঠের বিবরণ'},
+    'enter_field_name': {'en': 'Enter Field Name', 'hi': 'खेत का नाम दर्ज करें', 'bn': 'মাঠের নাম লিখুন'},
+    'select_crop_type': {'en': 'Select Crop Type', 'hi': 'फसल का प्रकार चुनें', 'bn': 'ফসলের ধরন নির্বাচন করুন'},
+    'enter_crop_name': {'en': 'Enter Crop Name', 'hi': 'फसल का नाम दर्ज करें', 'bn': 'ফসলের নাম লিখুন'},
+    'submit': {'en': 'Submit', 'hi': 'जमा करें', 'bn': 'জমা দিন'},
+    'field_added_success': {'en': 'Field added successfully!', 'hi': 'खेत सफलतापूर्वक जोड़ा गया!', 'bn': 'মাঠ সফলভাবে যোগ করা হয়েছে!'},
+    'point': {'en': 'Point', 'hi': 'बिंदु', 'bn': 'পয়েন্ট'},
+    'only_4_corners': {'en': 'You can only select 4 corners.', 'hi': 'आप केवल 4 कोने चुन सकते हैं।', 'bn': 'আপনি শুধুমাত্র ৪টি কোণা নির্বাচন করতে পারেন।'},
   };
 
   static String get(String key, String languageCode) {

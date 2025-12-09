@@ -3,8 +3,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'dart:math' as Math;
 import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
+import 'package:agroww_sih/services/localization_service.dart';
 
 
 class ManualCoordinateEntryScreen extends StatefulWidget {
@@ -232,18 +234,23 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
                           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
                           onPressed: () => Navigator.pop(context),
                         ),
-                        const Expanded(
-                          child: Text(
-                            "Your Fields",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        Expanded(
+                          child: Builder(
+                            builder: (context) {
+                              final loc = context.watch<LocalizationProvider>();
+                              return Text(
+                                loc.tr('your_fields'),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            },
                           ),
                         ),
-                        const SizedBox(width: 48), // Balance for back button
+                        const SizedBox(width: 48),
                       ],
                     ),
                   ),
@@ -263,13 +270,18 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
                         color: const Color(0xFFAEF051),
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      child: const Text(
-                        "Enter Co-ordinates",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F3C33),
-                        ),
+                      child: Builder(
+                        builder: (context) {
+                          final loc = context.watch<LocalizationProvider>();
+                          return Text(
+                            loc.tr('enter_coordinates'),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F3C33),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -301,13 +313,18 @@ class _ManualCoordinateEntryScreenState extends State<ManualCoordinateEntryScree
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  "Field Details",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                Builder(
+                                  builder: (context) {
+                                    final loc = context.watch<LocalizationProvider>();
+                                    return Text(
+                                      loc.tr('field_details'),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    );
+                                  },
                                 ),
                                 const SizedBox(height: 16),
                                 // Name Input

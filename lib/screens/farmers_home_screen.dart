@@ -14,6 +14,7 @@ import 'package:agroww_sih/screens/notification_page.dart';
 import 'package:agroww_sih/services/take_action_service.dart';
 import 'package:agroww_sih/services/localization_service.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 /// Farmers Home Screen - Simplified UI for farmers with soil status indicators
@@ -106,16 +107,38 @@ class _FarmersHomeScreenState extends State<FarmersHomeScreen> {
           .order('created_at', ascending: false);
       
       if (data.isNotEmpty && mounted) {
-        final fields = List<Map<String, dynamic>>.from(data);
+        var fields = List<Map<String, dynamic>>.from(data);
+        
+        // For guest users, filter to only show fields created during this session
+        if (user.isAnonymous) {
+          final prefs = await SharedPreferences.getInstance();
+          final sessionStart = prefs.getString('guest_session_start');
+          if (sessionStart != null) {
+            final sessionDateTime = DateTime.parse(sessionStart);
+            fields = fields.where((field) {
+              final createdAt = field['created_at'];
+              if (createdAt == null) return true; // Show if no timestamp
+              try {
+                final fieldDateTime = DateTime.parse(createdAt.toString());
+                return fieldDateTime.isAfter(sessionDateTime);
+              } catch (e) {
+                return true; // Show if parsing fails
+              }
+            }).toList();
+          }
+        }
+        
         setState(() {
           _fields = fields;
-          _selectedField = fields.first;
+          _selectedField = fields.isNotEmpty ? fields.first : null;
         });
         
         // Fetch data for the selected field
-        _fetchSentinel2Analysis(_selectedField!);
-        _fetchSarAnalysis(_selectedField!);
-        _fetchNutrientAnalysis(_selectedField!);
+        if (_selectedField != null) {
+          _fetchSentinel2Analysis(_selectedField!);
+          _fetchSarAnalysis(_selectedField!);
+          _fetchNutrientAnalysis(_selectedField!);
+        }
       }
     } catch (e) {
       debugPrint('Error loading fields: $e');

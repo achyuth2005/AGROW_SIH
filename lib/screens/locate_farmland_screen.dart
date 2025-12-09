@@ -111,7 +111,7 @@ class _LocateFarmlandScreenState extends State<LocateFarmlandScreen> {
                     ),
                   ),
               ),
-              const Positioned(
+              Positioned(
                 top: 50,
                 left: 0,
                 right: 0,

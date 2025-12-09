@@ -28,6 +28,7 @@ import 'services/notification_service.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/farmers_home_screen.dart';
+import 'screens/locate_farmland_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -166,6 +167,7 @@ class MyApp extends StatelessWidget {
         '/farmland-map': (context) => const FarmlandMapScreen(),
         '/analytics': (context) => const AnalyticsScreen(),
         '/farmers-home': (context) => const FarmersHomeScreen(),
+        '/locate-farmland': (context) => const LocateFarmlandScreen(),
       },
     );
   }

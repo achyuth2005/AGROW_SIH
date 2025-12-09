@@ -244,8 +244,14 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInAnonymously() async {
     try {
       await FirebaseAuth.instance.signInAnonymously();
+      
+      // Save guest session start time to filter out older fields
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('guest_session_start', DateTime.now().toIso8601String());
+      
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/location-permission');
+        // Navigate directly to Locate Farmland for guests
+        Navigator.pushReplacementNamed(context, '/locate-farmland');
       }
     } catch (e) {
       if (mounted) {

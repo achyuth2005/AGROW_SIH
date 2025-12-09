@@ -222,6 +222,7 @@ class ChatbotService {
                   messageId: data['message_id'] ?? '',
                   confidence: (data['confidence'] ?? 0.0).toDouble(),
                   diagnosis: data['diagnosis'],
+                  routingMode: data['routing_mode'], // NEW: Parse routing mode
                   suggestedFollowups: List<String>.from(data['suggested_followups'] ?? []),
                 );
               } else if (type == 'chunk') {
@@ -256,6 +257,7 @@ class ChatResponse {
   final String messageId;
   final double confidence;
   final String? diagnosis;
+  final String? routingMode; // NEW: "FAST_LANE" or "DEEP_DIVE"
   final List<String> suggestedFollowups;
   final String timestamp;
   final Map<String, dynamic>? reasoningTrace;
@@ -266,10 +268,17 @@ class ChatResponse {
     required this.messageId,
     this.confidence = 0.0,
     this.diagnosis,
+    this.routingMode,
     this.suggestedFollowups = const [],
     required this.timestamp,
     this.reasoningTrace,
   });
+
+  /// Check if response used Fast Lane (simple query)
+  bool get isFastLane => routingMode == 'FAST_LANE';
+  
+  /// Check if response used Deep Dive (complex analysis)
+  bool get isDeepDive => routingMode == 'DEEP_DIVE';
 
   factory ChatResponse.fromJson(Map<String, dynamic> json) {
     // Handle both old (response as string) and new (response as object) formats
@@ -294,6 +303,7 @@ class ChatResponse {
       messageId: json['message_id'] ?? '',
       confidence: confidence,
       diagnosis: diagnosis,
+      routingMode: json['routing_mode'], // NEW: Parse routing_mode from API
       suggestedFollowups: List<String>.from(json['suggested_followups'] ?? []),
       timestamp: json['timestamp'] ?? '',
       reasoningTrace: json['reasoning_trace'],
@@ -386,6 +396,7 @@ class ChatStreamEvent {
   final String? messageId;
   final double? confidence;
   final String? diagnosis;
+  final String? routingMode; // NEW: "FAST_LANE" or "DEEP_DIVE"
   final List<String>? suggestedFollowups;
 
   ChatStreamEvent._({
@@ -397,8 +408,15 @@ class ChatStreamEvent {
     this.messageId,
     this.confidence,
     this.diagnosis,
+    this.routingMode,
     this.suggestedFollowups,
   });
+
+  /// Check if response used Fast Lane
+  bool get isFastLane => routingMode == 'FAST_LANE';
+  
+  /// Check if response used Deep Dive
+  bool get isDeepDive => routingMode == 'DEEP_DIVE';
 
   /// Metadata event with response info
   factory ChatStreamEvent.metadata({
@@ -406,6 +424,7 @@ class ChatStreamEvent {
     required String messageId,
     required double confidence,
     String? diagnosis,
+    String? routingMode,
     List<String>? suggestedFollowups,
   }) {
     return ChatStreamEvent._(
@@ -414,6 +433,7 @@ class ChatStreamEvent {
       messageId: messageId,
       confidence: confidence,
       diagnosis: diagnosis,
+      routingMode: routingMode,
       suggestedFollowups: suggestedFollowups,
     );
   }

@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
+import '../services/localization_service.dart';
 import 'main_menu_screen.dart';
+import 'mapped_analytics_home_screen.dart';
 
 class SidebarDrawer extends StatelessWidget {
   const SidebarDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.watch<LocalizationProvider>();
+    
     Future<void> logout() async {
       try {
         await GoogleSignIn().signOut();
@@ -58,10 +63,10 @@ class SidebarDrawer extends StatelessWidget {
                     ),
                   ),
                   // Title
-                  const Text(
-                    "Settings & Activity",
+                  Text(
+                    loc.tr('settings_activity'),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.black,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -77,16 +82,17 @@ class SidebarDrawer extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               children: [
-                _buildMenuItem(context, icon: Icons.person_outline, title: "Profile", onTap: () => Navigator.pushNamed(context, '/profile')),
-                _buildMenuItem(context, icon: Icons.download_outlined, title: "Export Detailed Reports", onTap: () {}),
-                _buildMenuItem(context, icon: Icons.translate, title: "Language Preference", onTap: () => Navigator.pushNamed(context, '/language-selection')),
-                _buildMenuItem(context, icon: Icons.settings_outlined, title: "Permissions", onTap: () {}),
-                _buildMenuItem(context, icon: Icons.shield_outlined, title: "Privacy and Security", onTap: () {}),
-                _buildMenuItem(context, icon: Icons.chat_bubble_outline, title: "Feedback", onTap: () {}),
-                _buildMenuItem(context, icon: Icons.help_outline, title: "Help and Support", onTap: () {}),
-                _buildMenuItem(context, icon: Icons.play_circle_outline, title: "App tutorial", onTap: () {}),
-                _buildMenuItem(context, icon: Icons.help_center_outlined, title: "FAQs", onTap: () {}),
-                _buildMenuItem(context, icon: Icons.history, title: "Legacy Main Menu", onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MainMenuScreen()))),
+                _buildMenuItem(context, icon: Icons.person_outline, title: loc.tr('profile'), onTap: () => Navigator.pushNamed(context, '/profile')),
+                _buildMenuItem(context, icon: Icons.download_outlined, title: loc.tr('export_reports'), onTap: () {}),
+                _buildMenuItem(context, icon: Icons.translate, title: loc.tr('language_preference'), onTap: () => Navigator.pushNamed(context, '/language-selection')),
+                _buildMenuItem(context, icon: Icons.settings_outlined, title: loc.tr('permissions'), onTap: () {}),
+                _buildMenuItem(context, icon: Icons.shield_outlined, title: loc.tr('privacy_security'), onTap: () {}),
+                _buildMenuItem(context, icon: Icons.chat_bubble_outline, title: loc.tr('feedback'), onTap: () {}),
+                _buildMenuItem(context, icon: Icons.help_outline, title: loc.tr('help_support'), onTap: () {}),
+                _buildMenuItem(context, icon: Icons.play_circle_outline, title: loc.tr('app_tutorial'), onTap: () {}),
+                _buildMenuItem(context, icon: Icons.help_center_outlined, title: loc.tr('faqs'), onTap: () {}),
+                _buildMenuItem(context, icon: Icons.map_outlined, title: 'Mapped Analytics', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MappedAnalyticsHomeScreen()))),
+                _buildMenuItem(context, icon: Icons.history, title: 'Legacy Main Menu', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MainMenuScreen()))),
                 
                 // Log out
                 Padding(

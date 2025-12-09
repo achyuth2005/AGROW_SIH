@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:agroww_sih/widgets/adaptive_bottom_nav_bar.dart';
 
 class ExportReportsScreen extends StatelessWidget {
   const ExportReportsScreen({super.key});
@@ -8,6 +9,7 @@ class ExportReportsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F3), // Light mint background
+      bottomNavigationBar: const AdaptiveBottomNavBar(page: ActivePage.home),
       body: Column(
         children: [
           // Header

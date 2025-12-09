@@ -40,20 +40,80 @@ class TimeSeriesCacheService {
   
   /// Get cached data for a field+metric
   /// Returns null if no cache exists
+  /// Uses fuzzy matching if exact file is not found (handles FP precision issues)
   static Future<CachedTimeSeriesResult?> getCached(
     double lat, 
     double lon, 
     String metric
   ) async {
     try {
+      // 1. Try exact match first
       final file = await _getCacheFile(lat, lon, metric);
-      if (!await file.exists()) return null;
+      if (await file.exists()) {
+        try {
+          final contents = await file.readAsString();
+          final json = jsonDecode(contents) as Map<String, dynamic>;
+          print('[Cache] Found exact match for $metric at $lat, $lon');
+          return CachedTimeSeriesResult.fromJson(json);
+        } catch (e) {
+          print('[Cache] Error reading exact match: $e');
+        }
+      }
       
-      final contents = await file.readAsString();
-      final json = jsonDecode(contents) as Map<String, dynamic>;
-      return CachedTimeSeriesResult.fromJson(json);
+      // 2. Fuzzy match: Find closest file within ~11 meters (0.0001 degrees)
+      print('[Cache] Exact match failed, trying fuzzy search for $metric near $lat, $lon');
+      final dir = await _getCacheDirectory();
+      if (!await dir.exists()) return null;
+      
+      final files = dir.listSync().where((f) => f.path.endsWith('.json'));
+      File? closestFile;
+      double minDist = 0.0001; // Threshold ~11m
+      
+      for (final f in files) {
+        final filename = f.uri.pathSegments.last;
+        // Expected format: lat_lon_metric.json (with underscores for decimal points)
+        // e.g. 26_1234_91_5678_NDVI.json
+        if (!filename.contains(metric)) continue;
+        
+        try {
+          final parts = filename.split('_');
+          if (parts.length < 5) continue;
+          
+          // Reconstruct lat/lon from "26_1234" -> 26.1234
+          // Logic: Find the metric part index, everything before is lat/lon
+          // This parsing is tricky with underscores. 
+          // Alternative: Parse the JSON content directly? Slower but safer.
+          // Let's rely on JSON content for safety as filename parsing is fragile.
+          
+          final content = await (f as File).readAsString();
+          final json = jsonDecode(content) as Map<String, dynamic>;
+          
+          if (json['metric'] != metric) continue;
+          
+          final fLat = (json['lat'] as num).toDouble();
+          final fLon = (json['lon'] as num).toDouble();
+          
+          final dist = (fLat - lat).abs() + (fLon - lon).abs(); // Manhattan dist is sufficient here
+          
+          if (dist < minDist) {
+            minDist = dist;
+            closestFile = f as File;
+          }
+        } catch (_) {
+          continue;
+        }
+      }
+      
+      if (closestFile != null) {
+        print('[Cache] Found fuzzy match: ${closestFile.path} (dist: $minDist component-sum)');
+        final contents = await closestFile.readAsString();
+        return CachedTimeSeriesResult.fromJson(jsonDecode(contents));
+      }
+
+      print('[Cache] No cache found for $metric at $lat, $lon');
+      return null;
     } catch (e) {
-      print('Cache read error: $e');
+      print('[Cache] Read error: $e');
       return null;
     }
   }
@@ -172,8 +232,12 @@ class CachedTimeSeriesResult {
   /// Age of cache in human-readable format
   String get ageString => TimeSeriesCacheService.getCacheAgeString(cachedAt);
   
-  /// Check if cache is stale (older than 24 hours)
-  bool get isStale => DateTime.now().difference(cachedAt).inHours > 24;
+  /// Check if cache is stale (older than 5 days)
+  bool get isStale => DateTime.now().difference(cachedAt).inDays >= 5;
+  
+  /// Check if refresh is needed (older than 5 days)
+  /// Industry standard: Satellite data updates ~5 days for Sentinel-2
+  bool get needsRefresh => DateTime.now().difference(cachedAt).inDays >= 5;
   
   factory CachedTimeSeriesResult.fromJson(Map<String, dynamic> json) {
     return CachedTimeSeriesResult(

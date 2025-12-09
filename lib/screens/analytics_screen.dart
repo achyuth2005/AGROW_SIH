@@ -10,8 +10,8 @@ import 'package:agroww_sih/screens/sidebar_drawer.dart';
 import 'package:agroww_sih/screens/notification_page.dart';
 import 'package:agroww_sih/screens/soil_status_detail_screen.dart';
 import 'package:agroww_sih/screens/crop_status_detail_screen.dart';
-import 'package:agroww_sih/screens/bio_risk_status_detail_screen.dart';
-import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
+import 'package:agroww_sih/widgets/adaptive_bottom_nav_bar.dart';
+import 'package:agroww_sih/widgets/timeseries_chart_widget.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -140,7 +140,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       if (mounted) {
         setState(() {
           _s2LlmAnalysis = {
-            ...?result['llm_analysis'],
+            ...?(result['llm_analysis'] ?? result['health_summary']),
             // Include field coordinates for heatmap
             'center_lat': centerLat,
             'center_lon': centerLon,
@@ -351,7 +351,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9F5),
       drawer: const SidebarDrawer(),
-      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 0),
+      bottomNavigationBar: const AdaptiveBottomNavBar(page: ActivePage.analytics),
       body: Builder(
         builder: (context) => Stack(
           children: [
@@ -615,7 +615,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       children: [
         _buildStatusCard("Soil Status", "Soil Moisture Trend", _getSoilStatus(), "soil_moisture"),
         _buildStatusCard("Crop Status", "Crop Health Trend (NDVI)", _getPestStatus(), "ndvi"),
-        _buildStatusCard("Bio-risk Status", "Pest Risk Trend", _getBioRiskStatus(), "pest_risk"),
       ],
     );
   }
@@ -745,66 +744,44 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   Widget _buildTrendChart(String metricKey) {
-    final trendData = _trends?[metricKey] as List?;
-    if (trendData == null || trendData.isEmpty) {
-      return const Center(child: Text("No trend data available"));
+    // Get field coordinates for TimeSeriesChartWidget
+    final double lat = _s2LlmAnalysis?['center_lat'] ?? 26.1885;
+    final double lon = _s2LlmAnalysis?['center_lon'] ?? 91.6894;
+    final double fieldSize = _s2LlmAnalysis?['field_size_hectares'] ?? 10.0;
+    
+    // Use cached TimeSeriesChartWidget for better visualization
+    // SMI for soil_moisture, NDVI for crop status (ndvi)
+    String timeSeriesMetric;
+    String chartTitle;
+    
+    if (metricKey == 'soil_moisture') {
+      timeSeriesMetric = 'SMI';  // Soil Moisture Index
+      chartTitle = 'Soil Moisture (SMI)';
+    } else if (metricKey == 'ndvi') {
+      timeSeriesMetric = 'NDVI';  // Normalized Difference Vegetation Index
+      chartTitle = 'Greenness (NDVI)';
+    } else {
+      timeSeriesMetric = metricKey.toUpperCase();
+      chartTitle = metricKey;
     }
-
-    List<FlSpot> spots = [];
-    for (int i = 0; i < trendData.length; i++) {
-      final val = (trendData[i]['value'] as num).toDouble();
-      spots.add(FlSpot(i.toDouble(), val));
-    }
-
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(show: false),
-        titlesData: FlTitlesData(show: false),
-        borderData: FlBorderData(show: false),
-        minX: 0,
-        maxX: (trendData.length - 1).toDouble(),
-        minY: 0,
-        maxY: 1.0,
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            color: const Color(0xFF167339),
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(show: true),
-            belowBarData: BarAreaData(
-              show: true,
-              color: const Color(0xFF167339).withOpacity(0.1),
-            ),
-          ),
-        ],
-        lineTouchData: LineTouchData(
-          touchTooltipData: LineTouchTooltipData(
-            getTooltipItems: (touchedSpots) {
-              return touchedSpots.map((spot) {
-                final index = spot.x.toInt();
-                if (index >= 0 && index < trendData.length) {
-                  final date = DateTime.parse(trendData[index]['date']);
-                  final dateStr = "${date.day}/${date.month}";
-                  return LineTooltipItem(
-                    "$dateStr\n${spot.y.toStringAsFixed(2)}",
-                    const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  );
-                }
-                return null;
-              }).toList();
-            },
-          ),
-        ),
-      ),
+    
+    // Return TimeSeriesChartWidget which uses cached data
+    return TimeSeriesChartWidget(
+      centerLat: lat,
+      centerLon: lon,
+      fieldSizeHectares: fieldSize,
+      metric: timeSeriesMetric,
+      title: chartTitle,
+      height: 120,  // Compact height for analytics preview
+      historicalColor: const Color(0xFF167339),
+      forecastColor: const Color(0xFF2196F3),
     );
   }
 
   Widget _buildCarouselDots() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(3, (index) {
+      children: List.generate(2, (index) {
         return Container(
           width: _currentCardIndex == index ? 12 : 8,
           height: 8,
@@ -838,14 +815,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => CropStatusDetailScreen(s2Data: {...?_s2LlmAnalysis, ...fieldData}),
-            ),
-          );
-        } else if (_currentCardIndex == 2) { // Bio-risk Status
-          final fieldData = _getFieldCoordinates();
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BioRiskStatusDetailScreen(s2Data: {...?_s2LlmAnalysis, ...fieldData}),
             ),
           );
         }
@@ -899,28 +868,4 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return {'score': score, 'trend': [0.5, 0.55, 0.5, 0.6, score, 0.55, 0.58]};
   }
 
-  Map<String, dynamic> _getBioRiskStatus() {
-    final llm = _s2LlmAnalysis;
-    double score = 0.5;
-    if (llm != null) {
-      int count = 0;
-      int total = 0;
-      for (var key in ['Pest Rsk', 'pest_risk', 'Nutrient Stress', 'nutrient_stress', 'Disease Risk', 'disease_risk', 'Stress Zone', 'stress_zone']) {
-        if (llm[key]?['level'] != null) {
-          String level = llm[key]['level'].toString().toLowerCase();
-          // For risk, low is good
-          if (level == 'low') total += 3;
-          else if (level == 'moderate') total += 2;
-          else total += 1;
-          count++;
-        }
-      }
-      if (count > 0) score = (total / (count * 3)).clamp(0.0, 1.0);
-    }
-    return {'score': score, 'trend': [0.45, 0.5, 0.48, 0.55, score, 0.52, 0.55]};
-  }
-
-
 }
-
-

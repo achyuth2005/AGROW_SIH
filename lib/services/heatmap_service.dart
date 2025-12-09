@@ -42,6 +42,7 @@ class HeatmapService {
   };
 
   /// Fetch heatmap for a given location and metric
+  /// Optionally include time series data and weather data for LLM context
   static Future<HeatmapResult> fetchHeatmap({
     required double centerLat,
     required double centerLon,
@@ -49,19 +50,35 @@ class HeatmapService {
     required String metric,
     double gaussianSigma = 1.5,
     bool showFieldBoundary = true,
+    bool overlayMode = false, // If true, returns clean heatmap without colorbar/title
+    Map<String, dynamic>? timeSeriesData,  // Optional: all indices time series for LLM
+    Map<String, dynamic>? weatherData,     // Optional: weather data for LLM
   }) async {
     try {
+      final requestBody = {
+        'center_lat': centerLat,
+        'center_lon': centerLon,
+        'field_size_hectares': fieldSizeHectares,
+        'metric': metric,
+        'gaussian_sigma': gaussianSigma,
+        'show_field_boundary': showFieldBoundary,
+        'overlay_mode': overlayMode,
+      };
+      
+      // Add time series data if provided (for LLM context)
+      if (timeSeriesData != null) {
+        requestBody['time_series_data'] = timeSeriesData;
+      }
+      
+      // Add weather data if provided (for LLM context)
+      if (weatherData != null) {
+        requestBody['weather_data'] = weatherData;
+      }
+      
       final response = await http.post(
         Uri.parse('$_baseUrl/generate-heatmap'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'center_lat': centerLat,
-          'center_lon': centerLon,
-          'field_size_hectares': fieldSizeHectares,
-          'metric': metric,
-          'gaussian_sigma': gaussianSigma,
-          'show_field_boundary': showFieldBoundary,
-        }),
+        body: jsonEncode(requestBody),
       ).timeout(const Duration(seconds: 90));  // Longer timeout for LLM
 
       if (response.statusCode == 200) {
@@ -125,6 +142,11 @@ class HeatmapResult {
   final String? imageDate;
   final String? imageSize;
   
+  // Bounding box for geo-alignment [sw_lon, sw_lat, ne_lon, ne_lat]
+  final List<double>? bbox;
+  // Separate colorbar image for UI display
+  final String? colorbarBase64;
+  
   // Pixel-wise specific
   final int? numPatches;
   final Map<String, dynamic>? healthSummary;
@@ -132,6 +154,7 @@ class HeatmapResult {
   // LLM specific
   final String? level;
   final String? analysis;
+  final String? detailedAnalysis; // Detailed reasoning from LLM
   final double? stressScore;
   final Map<String, dynamic>? clusterDistribution;
   final List<String>? recommendations;
@@ -148,10 +171,13 @@ class HeatmapResult {
     required this.timestamp,
     this.imageDate,
     this.imageSize,
+    this.bbox,
+    this.colorbarBase64,
     this.numPatches,
     this.healthSummary,
     this.level,
     this.analysis,
+    this.detailedAnalysis,
     this.stressScore,
     this.clusterDistribution,
     this.recommendations,
@@ -170,10 +196,13 @@ class HeatmapResult {
       timestamp: json['timestamp'] ?? DateTime.now().toIso8601String(),
       imageDate: json['image_date'],
       imageSize: json['image_size'],
+      bbox: (json['bbox'] as List?)?.map((e) => (e as num).toDouble()).toList(),
+      colorbarBase64: json['colorbar_base64'],
       numPatches: json['num_patches'],
       healthSummary: json['health_summary'],
       level: json['level'],
       analysis: json['analysis'],
+      detailedAnalysis: json['detailed_analysis'],
       stressScore: (json['stress_score'] as num?)?.toDouble(),
       clusterDistribution: json['cluster_distribution'],
       recommendations: (json['recommendations'] as List?)?.cast<String>(),
@@ -182,6 +211,9 @@ class HeatmapResult {
 
   /// Get image bytes from base64
   List<int> get imageBytes => base64Decode(imageBase64);
+  
+  /// Get colorbar bytes from base64
+  List<int>? get colorbarBytes => colorbarBase64 != null ? base64Decode(colorbarBase64!) : null;
   
   /// Is this a LLM-analyzed result?
   bool get isLlmResult => mode == 'llm';

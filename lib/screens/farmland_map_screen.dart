@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'add_note_screen.dart';
 import 'view_notes_screen.dart';
-import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
+import 'package:agroww_sih/widgets/adaptive_bottom_nav_bar.dart';
 import 'package:agroww_sih/screens/sidebar_drawer.dart';
 
 class FarmlandMapScreen extends StatefulWidget {
@@ -546,7 +546,7 @@ class _FarmlandMapScreenState extends State<FarmlandMapScreen> {
       backgroundColor: Colors.transparent,
       extendBody: true,
       drawer: const SidebarDrawer(),
-      bottomNavigationBar: _isAddingField ? null : const CustomBottomNavBar(selectedIndex: 4),
+      bottomNavigationBar: _isAddingField ? null : const AdaptiveBottomNavBar(page: ActivePage.fields),
       body: Stack(
         children: [
           GoogleMap(
@@ -559,7 +559,7 @@ class _FarmlandMapScreenState extends State<FarmlandMapScreen> {
             zoomControlsEnabled: true,
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
-            padding: const EdgeInsets.only(bottom: 180, top: 120),
+            padding: const EdgeInsets.only(bottom: 180, top: 150),
           ),
 
           // Top Bar

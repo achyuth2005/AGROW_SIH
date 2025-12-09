@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:provider/provider.dart';
+import '../services/localization_service.dart';
 import '../services/chatbot_service.dart';
 import 'chat_history_drawer.dart';
-import '../widgets/custom_bottom_nav_bar.dart';
-
+import '../widgets/adaptive_bottom_nav_bar.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
 
@@ -22,11 +27,24 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   String? _userId;
   bool _isLoading = false;
   bool _isInitializing = true;
+  
+  // Audio Recording
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  bool _isRecording = false;
+  bool _isProcessingAudio = false;
 
   @override
   void initState() {
     super.initState();
     _initialize();
+  }
+
+  @override
+  void dispose() {
+    _audioRecorder.dispose();
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _initialize() async {
@@ -248,10 +266,65 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     }
   }
 
+  // Audio Recording Logic
+  Future<void> _startRecording() async {
+    try {
+      if (await _audioRecorder.hasPermission()) {
+        final dir = await getTemporaryDirectory();
+        final filePath = '${dir.path}/audio_temp_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        
+        await _audioRecorder.start(const RecordConfig(), path: filePath);
+        
+        setState(() {
+          _isRecording = true;
+        });
+        debugPrint("Started recording to $filePath");
+      }
+    } catch (e) {
+      debugPrint("Error starting record: $e");
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    try {
+      final path = await _audioRecorder.stop();
+      setState(() {
+        _isRecording = false;
+        _isProcessingAudio = true;
+      });
+      
+      if (path != null) {
+        debugPrint("Recorded to $path");
+        // Transcribe
+        final text = await ChatbotService.transcribeAudio(path);
+        if (mounted) {
+          setState(() {
+             _controller.text = text;
+             _isProcessingAudio = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isProcessingAudio = false);
+      }
+    } catch (e) {
+      debugPrint("Error stopping record: $e");
+      if (mounted) {
+        setState(() => _isProcessingAudio = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Transcription failed: ${e.toString().substring(0, e.toString().length > 50 ? 50 : e.toString().length)}...'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F3),
+      bottomNavigationBar: const AdaptiveBottomNavBar(page: ActivePage.chatbot),
       drawer: ChatHistoryDrawer(
         userId: _userId,
         onSessionSelected: _loadSession,
@@ -313,28 +386,29 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : _messages.isEmpty
                           ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.agriculture,
-                                    size: 48,
-                                    color: Color(0xFF167339),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    "Hi $_userName!",
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      color: Colors.black87,
+                              child: Consumer<LocalizationProvider>(
+                                builder: (context, loc, _) => Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.agriculture,
+                                      size: 48,
+                                      color: Color(0xFF167339),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    "How can I help you today?",
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      "${loc.tr('welcome')} $_userName!",
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      loc.tr('how_can_help'),
+                                      style: const TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
                                       color: Colors.black,
                                     ),
                                   ),
@@ -352,7 +426,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                                   ),
                                 ],
                               ),
-                            )
+                            ),
+                          )
                           : ListView.builder(
                               controller: _scrollController,
                               padding: const EdgeInsets.fromLTRB(16, 40, 16, 20),
@@ -398,7 +473,22 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                               hintStyle: const TextStyle(color: Colors.grey),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                              suffixIcon: const Icon(Icons.mic, color: Color(0xFF0F3C33)),
+
+                              suffixIcon: GestureDetector(
+                                onLongPressStart: (_) => _startRecording(),
+                                onLongPressEnd: (_) => _stopRecording(),
+                                child: Container(
+                                  margin: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: _isRecording ? Colors.red : (_isProcessingAudio ? Colors.orange : Colors.transparent),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(8),
+                                  child: _isProcessingAudio 
+                                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
+                                      : Icon(Icons.mic, color: _isRecording ? Colors.white : const Color(0xFF0F3C33)),
+                                ),
+                              ),
                             ),
                             onSubmitted: (_) => _sendMessage(),
                           ),
@@ -430,8 +520,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
                 ),
 
-                // Bottom Nav Bar
-                const CustomBottomNavBar(selectedIndex: 3),
               ],
             ),
           ],

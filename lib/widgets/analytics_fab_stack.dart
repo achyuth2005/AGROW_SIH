@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/mapped_analytics_home_screen.dart';
 
 class AnalyticsFabStack extends StatelessWidget {
   const AnalyticsFabStack({super.key});
@@ -22,31 +23,36 @@ class AnalyticsFabStack extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _buildFloatingButton("Visual Analytics"),
+          _buildFloatingButton(context, "Visual Analytics", null),
           const SizedBox(height: 6),
-          _buildFloatingButton("Take Action Now"),
+          _buildFloatingButton(context, "Take Action Now", null),
           const SizedBox(height: 6),
-          _buildFloatingButton("Mapped Analytics"),
+          _buildFloatingButton(context, "Mapped Analytics", () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const MappedAnalyticsHomeScreen()));
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildFloatingButton(String label) {
-    return Container(
-      width: 135, // Reduced width from 150
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFC6E96A), // Light green button
-        borderRadius: BorderRadius.circular(20),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFF1B4D3E),
-          fontWeight: FontWeight.bold,
-          fontSize: 12, // Slightly smaller font to fit
+  Widget _buildFloatingButton(BuildContext context, String label, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 135, // Reduced width from 150
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFC6E96A), // Light green button
+          borderRadius: BorderRadius.circular(20),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF1B4D3E),
+            fontWeight: FontWeight.bold,
+            fontSize: 12, // Slightly smaller font to fit
+          ),
         ),
       ),
     );

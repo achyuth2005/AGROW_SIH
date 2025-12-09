@@ -2,6 +2,7 @@ import 'package:agroww_sih/screens/camera_screen.dart';
 import 'package:agroww_sih/screens/gallery_screen.dart';
 import 'package:agroww_sih/screens/news_screen.dart';
 import 'package:agroww_sih/screens/export_reports_screen.dart';
+import 'package:agroww_sih/screens/mapped_analytics_home_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -317,7 +318,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         ),
       );
     } else if (item == "Mapped Analytics") {
-      Navigator.pushNamed(context, '/coordinate-entry');
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const MappedAnalyticsHomeScreen()));
     } else if (item == "Settings") {
       Navigator.push(
         context,

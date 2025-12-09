@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:agroww_sih/widgets/adaptive_bottom_nav_bar.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -64,6 +65,7 @@ class _NotificationPageState extends State<NotificationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F3), // Light greenish-white background
+      bottomNavigationBar: const AdaptiveBottomNavBar(page: ActivePage.home),
       body: Stack(
         children: [
           // Header Background

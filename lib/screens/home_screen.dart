@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:agroww_sih/services/localization_service.dart';
 import 'package:agroww_sih/screens/sidebar_drawer.dart';
 import 'package:agroww_sih/screens/notification_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,7 +24,9 @@ import 'package:agroww_sih/screens/export_reports_screen.dart';
 import 'package:agroww_sih/screens/settings_screen.dart';
 import 'package:agroww_sih/screens/infographics_screen.dart';
 import 'package:agroww_sih/screens/chatbot_screen.dart';
+import 'package:agroww_sih/screens/mapped_analytics_home_screen.dart';
 import 'package:agroww_sih/screens/take_action_screen.dart';
+import 'package:agroww_sih/screens/view_notes_screen.dart';
 import 'package:agroww_sih/services/cache_service.dart';
 import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
 
@@ -45,6 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? _healthSummary;
   List<dynamic>? _stressedPatches;
   List<dynamic>? _weatherData;
+  bool _isLoadingWeather = false; // Added missing state variable
+  String? _weatherError; // Added missing state variable
   String? _sarError;
 
   // Sentinel-2 Data State
@@ -464,7 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } else if (item == "Mapped Analytics") {
-      Navigator.pushNamed(context, '/coordinate-entry');
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const MappedAnalyticsHomeScreen()));
     } else if (item == "Settings") {
       Navigator.push(
         context,
@@ -500,6 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.watch<LocalizationProvider>();
     return Scaffold(
       backgroundColor: const Color(0xFFE1EFEF), // Light mint background
       drawer: const SidebarDrawer(),
@@ -523,20 +530,22 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildHeader(context),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
-                        _buildFieldSelector(),
-                        const SizedBox(height: 8),
-                        _buildCacheStatusRow(),
-                        Expanded(child: _buildStatusCarousel()),
-                        const SizedBox(height: 6),
-                        _buildPageIndicator(),
-                        const SizedBox(height: 12),
-                        _buildActionGrid(),
-                      ],
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 20),
+                          _buildFieldSelector(),
+                          const SizedBox(height: 8),
+                          _buildCacheStatusRow(),
+                          _buildStatusCarousel(),
+                          const SizedBox(height: 10),
+                          _buildPageIndicator(),
+                          const SizedBox(height: 20),
+                          _buildActionGrid(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -658,6 +667,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 20),
             // Skip hint
+            _buildActionButton(
+              context.watch<LocalizationProvider>().tr('notes'),
+              Icons.note_alt_outlined,
+              () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${context.watch<LocalizationProvider>().tr('notes')} - ${context.watch<LocalizationProvider>().tr('coming_soon')}')),
+                );
+              },
+            ),
             TextButton(
               onPressed: () {
                 // User can still explore the app
@@ -1119,6 +1137,37 @@ class _HomeScreenState extends State<HomeScreen> {
     // Get Sentinel-2 LLM analysis data
     final llm = _s2LlmAnalysis;
     
+    // Show error state if API failed
+    if (_s2Error != null && llm == null) {
+      return _buildCard(
+        title: "Soil Status",
+        headerColor: const Color(0xFFC6F68D),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+              const SizedBox(height: 12),
+              const Text(
+                "Unable to fetch soil data",
+                style: TextStyle(color: Color(0xFF0F3C33), fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () {
+                  if (_selectedField != null) {
+                    _fetchSentinel2Analysis(_selectedField!);
+                  }
+                },
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text("Retry"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     // Extract soil data from LLM analysis
     final soilMoisture = llm?['soil_moisture'];
     final soilSalinity = llm?['soil_salinity'];
@@ -1145,8 +1194,9 @@ class _HomeScreenState extends State<HomeScreen> {
       if (count > 0) soilHealthScore = (score / (count * 3)).clamp(0.0, 1.0);
     }
 
+    final loc = Provider.of<LocalizationProvider>(context);
     return _buildCard(
-      title: "Soil Status",
+      title: loc.tr('soil_status'),
       headerColor: const Color(0xFFC6F68D),
       isCached: _isCachedData,
       child: Column(
@@ -1237,35 +1287,62 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildWeatherStatusCard() {
-  if (_isLoadingSar) {
-    return _buildCard(
-      title: "Weather Status",
-      headerColor: const Color(0xFFC6F68D),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(color: Color(0xFF167339)),
-            const SizedBox(height: 12), // Reduced spacing
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16), // Reduced padding
-              child: Text(
-                _loadingMessages[_currentLoadingMessageIndex],
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF0F3C33),
-                  fontSize: 13, // Reduced font size
-                  fontStyle: FontStyle.italic,
+    final loc = Provider.of<LocalizationProvider>(context);
+    
+    // Check cache status
+    if (_isLoadingWeather) {
+      return _buildCard(
+        title: loc.tr('weather_status'),
+        headerColor: const Color(0xFFC6F68D),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: Color(0xFF167339)),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  _loadingMessages[_currentLoadingMessageIndex],
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF0F3C33),
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2, // Limit lines
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
+    }
+
+    if (_weatherError != null && (_weatherData == null || _weatherData!.isEmpty)) {
+      return _buildCard(
+        title: loc.tr('weather_status'),
+        headerColor: const Color(0xFFC6F68D),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.cloud_off, color: Colors.red, size: 40),
+                const SizedBox(height: 10),
+                Text(
+                  loc.tr('error'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     // Use the last day of weather data if available
     final weather = (_weatherData != null && _weatherData!.isNotEmpty) 
@@ -1278,7 +1355,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return _buildCard(
-      title: "Weather Status$dateStr",
+      title: "${loc.tr('weather_status')}$dateStr",
       headerColor: const Color(0xFFC6F68D),
       isCached: _isCachedData,
       child: Column(
@@ -1288,7 +1365,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               children: [
                 _buildDetailedStatItem(
-                  "Temperature", 
+                  loc.tr('temperature'), 
                   weather != null ? "${weather['temp_mean']?.toStringAsFixed(1) ?? '--'}°C" : "--", 
                   Icons.thermostat, 
                   weather != null ? "Max ${weather['temp_max']}°C" : "--", 
@@ -1296,10 +1373,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 8),
                 _buildDetailedStatItem(
-                  "Humidity", 
+                  loc.tr('humidity'), 
                   weather != null ? "${weather['humidity']?.toStringAsFixed(1) ?? '--'}%" : "--", 
                   Icons.water_drop, 
-                  "Avg daily", 
+                  loc.tr('avg_daily'), 
                   ""
                 ),
               ],
@@ -1311,18 +1388,18 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               children: [
                 _buildDetailedStatItem(
-                  "Wind Speed", 
+                  loc.tr('wind_speed'), 
                   weather != null ? "${weather['wind_speed']?.toStringAsFixed(1) ?? '--'} km/h" : "--", 
                   Icons.air, 
-                  "Max daily", 
+                  loc.tr('max_daily'), 
                   ""
                 ),
                 const SizedBox(width: 8),
                 _buildDetailedStatItem(
-                  "UV Index", 
+                  loc.tr('uv_index'), 
                   weather != null ? "${weather['uv_index']?.toStringAsFixed(1) ?? '--'}" : "--", 
                   Icons.wb_sunny_outlined, 
-                  "Max daily", 
+                  loc.tr('max_daily'), 
                   ""
                 ),
               ],
@@ -1334,15 +1411,15 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               children: [
                 _buildDetailedStatItem(
-                  "Precipitation", 
+                  loc.tr('precipitation'), 
                   weather != null ? "${weather['precipitation']?.toStringAsFixed(1) ?? '--'} mm" : "--", 
                   Icons.cloudy_snowing, 
-                  "Total sum", 
+                  loc.tr('total_sum'), 
                   ""
                 ),
                 const SizedBox(width: 8),
                 _buildDetailedStatItem(
-                  "Evapotrans.", 
+                  loc.tr('evapotranspiration'), 
                   weather != null ? "${weather['evapotranspiration']?.toStringAsFixed(2) ?? '--'} mm" : "--", 
                   Icons.cloud, 
                   "ET0 FAO", 
@@ -1357,27 +1434,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCropStatusCard() {
+  final loc = Provider.of<LocalizationProvider>(context);
   if (_isLoadingSar) {
     return _buildCard(
-      title: "Crop Status",
+      title: loc.tr('crop_status'),
       headerColor: const Color(0xFFC6F68D),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const CircularProgressIndicator(color: Color(0xFF167339)),
-            const SizedBox(height: 12), // Reduced spacing
+            const SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16), // Reduced padding
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _loadingMessages[_currentLoadingMessageIndex],
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Color(0xFF0F3C33),
-                  fontSize: 13, // Reduced font size
+                  fontSize: 13,
                   fontStyle: FontStyle.italic,
                 ),
-                maxLines: 2, // Limit lines
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -1389,7 +1467,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final summary = _healthSummary;
     if (summary == null) {
        return _buildCard(
-        title: "Crop Status",
+        title: loc.tr('crop_status'),
         headerColor: const Color(0xFFC6F68D),
         child: Center(
           child: Padding(
@@ -1412,7 +1490,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return _buildCard(
-      title: "Crop Status",
+      title: loc.tr('crop_status'),
       headerColor: const Color(0xFFC6F68D),
       isCached: _isCachedData,
       child: Column(
@@ -1523,10 +1601,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPestRiskCard() {
+    final loc = Provider.of<LocalizationProvider>(context);
     // Show loading state while Sentinel-2 data is being fetched
     if (_isLoadingS2 || _isLoadingSar) {
       return _buildCard(
-        title: "Bio Risk Status",
+        title: loc.tr('pest_risk'),
         headerColor: const Color(0xFFC6F68D),
         child: Center(
           child: Column(
@@ -1555,6 +1634,37 @@ class _HomeScreenState extends State<HomeScreen> {
     // Get Sentinel-2 LLM analysis data for bio risk
     final llm = _s2LlmAnalysis;
     
+    // Show error state if API failed and no cached data
+    if (_s2Error != null && llm == null) {
+      return _buildCard(
+        title: loc.tr('pest_risk'),
+        headerColor: const Color(0xFFC6F68D),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+              const SizedBox(height: 12),
+              const Text(
+                "Unable to fetch bio-risk data",
+                style: TextStyle(color: Color(0xFF0F3C33), fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () {
+                  if (_selectedField != null) {
+                    _fetchSentinel2Analysis(_selectedField!);
+                  }
+                },
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text("Retry"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     // Extract bio risk data - handle different possible key names from the API
     final pestRisk = llm?['Pest Rsk'] ?? llm?['pest_risk'];
     final nutrientStress = llm?['Nutrient Stress'] ?? llm?['nutrient_stress'];
@@ -1582,7 +1692,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return _buildCard(
-      title: "Bio Risk Status",
+      title: loc.tr('pest_risk'),
       headerColor: const Color(0xFFC6F68D),
       isCached: _isCachedData,
       child: Column(
@@ -1911,6 +2021,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildActionGrid() {
+    final loc = Provider.of<LocalizationProvider>(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -1918,31 +2029,31 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             children: [
               _buildActionButton(
-                "Mapped\nAnalytics",
+                loc.tr('mapped_analytics'),
                 Icons.map_outlined,
-                () => Navigator.pushNamed(context, '/farmland-map'),
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MappedAnalyticsHomeScreen())),
               ),
               const SizedBox(width: 12),
               _buildActionButton(
-                "Visual\nAnalytics",
+                loc.tr('visual_analytics'),
                 Icons.pie_chart_outline,
                 () => Navigator.pushNamed(context, '/analytics'),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
               _buildActionButton(
-                "Newsletter",
+                loc.tr('newsletter'),
                 Icons.newspaper_outlined,
-                () => Navigator.pushNamed(context, '/coordinate-entry'),
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NewsScreen())),
               ),
               const SizedBox(width: 12),
               _buildActionButton(
-                "Notes",
+                loc.tr('notes'),
                 Icons.note_alt_outlined,
-                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TakeActionScreen())),
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ViewNotesScreen())),
               ),
             ],
           ),
@@ -1956,7 +2067,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          height: 70, // Compact to fit on one screen
+          height: 90,
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -2012,21 +2123,27 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 12),
               _buildNavCircle(Colors.white.withOpacity(0.8)),
               const SizedBox(width: 12),
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF167339),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF167339).withOpacity(0.4),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+              GestureDetector(
+                onTap: () {
+                  // Navigate to home, clearing the navigation stack
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF167339),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF167339).withOpacity(0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.home, color: Colors.white, size: 30),
                 ),
-                child: const Icon(Icons.home, color: Colors.white, size: 30),
               ),
               const SizedBox(width: 12),
               _buildNavCircle(Colors.white.withOpacity(0.8)),

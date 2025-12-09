@@ -51,6 +51,8 @@
 	<string>Agrow needs access to your camera to capture profile photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Agrow needs access to your photo library to select profile photos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Agrow needs access to your microphone to record audio for voice chat.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

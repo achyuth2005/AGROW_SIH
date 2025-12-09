@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'services/localization_service.dart';
+import 'services/user_role_provider.dart';
 import 'screens/video_splash_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/main_menu_screen.dart';
@@ -24,6 +27,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/notification_service.dart';
 
 import 'screens/home_screen.dart';
+import 'screens/farmers_home_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -53,7 +57,15 @@ Future<void> main() async {
   await notificationService.initialize();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => LocalizationProvider()),
+        ChangeNotifierProvider(create: (_) => UserRoleProvider()..loadRole()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -61,6 +73,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to language changes to rebuild app
+    context.watch<LocalizationProvider>();
+    
     return MaterialApp(
       title: 'Agrow',
       debugShowCheckedModeBanner: false,
@@ -150,6 +165,7 @@ class MyApp extends StatelessWidget {
         '/language-selection': (context) => const LanguageSelectionScreen(),
         '/farmland-map': (context) => const FarmlandMapScreen(),
         '/analytics': (context) => const AnalyticsScreen(),
+        '/farmers-home': (context) => const FarmersHomeScreen(),
       },
     );
   }

@@ -19,6 +19,7 @@ class _ViewNotesScreenState extends State<ViewNotesScreen> {
   List<Map<String, dynamic>> _notes = [];
   List<Map<String, dynamic>> _filteredNotes = [];
   bool _isLoading = true;
+  Set<int> _expandedNotes = {}; // Track which notes are expanded
 
   @override
   void initState() {
@@ -37,7 +38,7 @@ class _ViewNotesScreenState extends State<ViewNotesScreen> {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredNotes = _notes.where((note) {
-        final fieldName = (note['coordinates_quad']?['name'] as String?)?.toLowerCase() ?? '';
+        final fieldName = (note['title'] as String?)?.toLowerCase() ?? (note['field_name'] as String?)?.toLowerCase() ?? '';
         final content = (note['content'] as String?)?.toLowerCase() ?? '';
         return fieldName.contains(query) || content.contains(query);
       }).toList();
@@ -49,16 +50,41 @@ class _ViewNotesScreenState extends State<ViewNotesScreen> {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      // Fetch notes with joined field data
-      final data = await _supabase
+      // Fetch notes
+      final notesData = await _supabase
           .from('field_notes')
-          .select('*, coordinates_quad(name)')
+          .select()
           .eq('user_id', user.uid)
           .order('created_at', ascending: false);
 
+      // Fetch all user's fields to map field_id to field names
+      final fieldsData = await _supabase
+          .from('coordinates_quad')
+          .select('id, name')
+          .eq('user_id', user.uid);
+
+      // Create a map of field_id -> field_name
+      final Map<String, String> fieldNames = {};
+      for (final field in fieldsData) {
+        final id = field['id']?.toString();
+        final name = field['name'] as String?;
+        if (id != null && name != null) {
+          fieldNames[id] = name;
+        }
+      }
+
+      // Attach field names to notes
+      final notes = List<Map<String, dynamic>>.from(notesData).map((note) {
+        final fieldId = note['field_id']?.toString();
+        return {
+          ...note,
+          'field_name': fieldId != null ? fieldNames[fieldId] ?? 'General Note' : 'General Note',
+        };
+      }).toList();
+
       if (mounted) {
         setState(() {
-          _notes = List<Map<String, dynamic>>.from(data);
+          _notes = notes;
           _filteredNotes = _notes;
           _isLoading = false;
         });
@@ -76,6 +102,16 @@ class _ViewNotesScreenState extends State<ViewNotesScreen> {
     try {
       final date = DateTime.parse(dateString).toLocal();
       return DateFormat('MMM d').format(date);
+    } catch (e) {
+      return '';
+    }
+  }
+
+  String _formatFullDate(String? dateString) {
+    if (dateString == null) return '';
+    try {
+      final date = DateTime.parse(dateString).toLocal();
+      return DateFormat('MMM d, yyyy • h:mm a').format(date);
     } catch (e) {
       return '';
     }
@@ -177,53 +213,155 @@ class _ViewNotesScreenState extends State<ViewNotesScreen> {
                             itemCount: _filteredNotes.length,
                             itemBuilder: (context, index) {
                               final note = _filteredNotes[index];
-                              final fieldName = note['coordinates_quad']?['name'] ?? 'General Note';
+                              final fieldName = note['title'] ?? note['field_name'] ?? 'Note';
                               final date = _formatDate(note['created_at']);
+                              final fullDate = _formatFullDate(note['created_at']);
                               final content = note['content'] ?? '';
 
                               return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
+                                margin: const EdgeInsets.only(bottom: 16),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF7D9E95), // Muted green from image
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Theme(
-                                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                                  child: ExpansionTile(
-                                    tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    title: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          fieldName,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          date,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.08),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
                                     ),
-                                    iconColor: Colors.white,
-                                    collapsedIconColor: Colors.white,
+                                  ],
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                        child: Text(
-                                          content,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 15,
-                                            height: 1.4,
+                                      // Header row: Field name + date badge
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // Field icon
+                                          Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: const Icon(
+                                              Icons.grass,
+                                              color: Color(0xFF1B4D3E),
+                                              size: 24,
+                                            ),
                                           ),
+                                          const SizedBox(width: 12),
+                                          // Field name and date
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  fieldName,
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF1B4D3E),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.access_time,
+                                                      size: 14,
+                                                      color: Colors.grey.shade500,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      fullDate,
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey.shade600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          // Date badge
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFAEF051).withOpacity(0.3),
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            child: Text(
+                                              date,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF1B4D3E),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 14),
+                                      // Divider
+                                      Container(
+                                        height: 1,
+                                        color: Colors.grey.shade200,
+                                      ),
+                                      const SizedBox(height: 14),
+                                      // Note content - expandable
+                                      GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            if (_expandedNotes.contains(index)) {
+                                              _expandedNotes.remove(index);
+                                            } else {
+                                              _expandedNotes.add(index);
+                                            }
+                                          });
+                                        },
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              content,
+                                              maxLines: _expandedNotes.contains(index) ? null : 2,
+                                              overflow: _expandedNotes.contains(index) ? null : TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                color: Colors.grey.shade800,
+                                                height: 1.5,
+                                              ),
+                                            ),
+                                            if (content.length > 100) ...[
+                                              const SizedBox(height: 8),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    _expandedNotes.contains(index)
+                                                        ? Icons.keyboard_arrow_up
+                                                        : Icons.keyboard_arrow_down,
+                                                    color: const Color(0xFF1B4D3E),
+                                                    size: 20,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    _expandedNotes.contains(index) ? 'Show less' : 'Show more',
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Color(0xFF1B4D3E),
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                       ),
                                     ],

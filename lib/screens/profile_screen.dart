@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:agroww_sih/widgets/adaptive_bottom_nav_bar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -278,6 +279,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: backgroundLight,
+      bottomNavigationBar: const AdaptiveBottomNavBar(page: ActivePage.profile),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: primaryDark))
           : SingleChildScrollView(
@@ -317,16 +319,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               height: 60, // Approximate height for header content
                               child: Stack(
                                 children: [
-                                  // Back Button (Top Left, White)
+                                  // Back Button Removed
                                   Align(
                                     alignment: Alignment.centerLeft,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 8),
-                                      child: IconButton(
-                                        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 24),
-                                        onPressed: () => Navigator.pop(context),
-                                      ),
-                                    ),
+                                    child: const SizedBox(height: 24),
                                   ),
                                   
                                   // Title (Centered, Lower, Black)

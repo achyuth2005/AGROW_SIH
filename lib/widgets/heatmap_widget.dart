@@ -11,6 +11,7 @@ class HeatmapWidget extends StatefulWidget {
   final String title;
   final double width;
   final double height;
+  final Map<String, dynamic>? timeSeriesData;  // Optional: for LLM context
 
   const HeatmapWidget({
     super.key,
@@ -21,6 +22,7 @@ class HeatmapWidget extends StatefulWidget {
     this.title = 'Heatmap',
     this.width = 100,
     this.height = 80,
+    this.timeSeriesData,
   });
   
   /// Legacy constructor for backward compatibility with indexType
@@ -86,6 +88,7 @@ class _HeatmapWidgetState extends State<HeatmapWidget> {
         centerLon: widget.centerLon,
         fieldSizeHectares: widget.fieldSizeHectares,
         metric: widget.metric,
+        timeSeriesData: widget.timeSeriesData,
       );
       if (mounted) {
         setState(() {

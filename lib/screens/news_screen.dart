@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:agroww_sih/widgets/adaptive_bottom_nav_bar.dart';
 
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
@@ -47,6 +48,7 @@ class _NewsScreenState extends State<NewsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F3), // Light mint background
+      bottomNavigationBar: const AdaptiveBottomNavBar(page: ActivePage.home),
       body: Column(
         children: [
           // Custom Header
@@ -168,8 +170,8 @@ class _NewsScreenState extends State<NewsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.menu, color: Colors.white),
-                  onPressed: () => Navigator.pop(context), // Or open drawer
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
                 ),
                 const Text(
                   'Newsletter',

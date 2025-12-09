@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/research_data.dart';
+import '../services/user_role_provider.dart';
 
 class ResearchProfileScreen extends StatefulWidget {
   const ResearchProfileScreen({super.key});
@@ -23,7 +24,7 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
     super.dispose();
   }
 
-  void _handleNext() {
+  Future<void> _handleNext() async {
     final currentQuestion = listResearchQuestions[_currentIndex];
     final key = currentQuestion['key'] as String;
 
@@ -103,9 +104,21 @@ class _ResearchProfileScreenState extends State<ResearchProfileScreen> {
         _loadSavedAnswer();
       });
     } else {
-      // Finished
+      // Finished - Save answers and redirect based on role
       _saveAnswers();
-      Navigator.pushReplacementNamed(context, '/main-menu');
+      
+      final role = _answers['role'] as String?;
+      
+      // Set role in provider for app-wide access
+      await UserRoleProvider().setRole(role ?? 'unknown');
+      
+      if (role == 'Farmer') {
+        // Redirect to Farmers Home Screen
+        if (mounted) Navigator.pushReplacementNamed(context, '/farmers-home');
+      } else {
+        // Redirect to Agronomist/Researcher Home Screen (existing main menu)
+        if (mounted) Navigator.pushReplacementNamed(context, '/main-menu');
+      }
     }
   }
 

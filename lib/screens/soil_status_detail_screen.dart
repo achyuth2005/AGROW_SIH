@@ -3,6 +3,9 @@ import 'package:agroww_sih/widgets/trend_chart.dart';
 import 'package:agroww_sih/widgets/heatmap_widget.dart';
 import 'package:agroww_sih/widgets/analytics_fab_stack.dart';
 import 'package:agroww_sih/widgets/timeseries_chart_widget.dart';
+import 'package:agroww_sih/widgets/heatmap_detail_card.dart';
+
+import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
 
 class SoilStatusDetailScreen extends StatelessWidget {
   final Map<String, dynamic>? s2Data;
@@ -13,72 +16,58 @@ class SoilStatusDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE1EFEF),
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 2),
       body: Stack(
         children: [
-          SafeArea(
-            top: false,
-            child: Column(
-              children: [
-                _buildHeader(context),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        _buildDetailSection(
-                          "Soil Moisture",
-                          "64%",
-                          "Moderate",
-                          true, // isPositive (Green arrow)
-                          "12% in the past week",
-                          [0.4, 0.5, 0.45, 0.6, 0.64, 0.58, 0.62],
-                          [0.62, 0.65, 0.7, 0.68, 0.72, 0.65, 0.75], // Forecast
-                          metric: 'soil_moisture',
-                          satelliteMetric: 'VV', // SAR VV for soil moisture
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailSection(
-                          "Soil Organic Matter",
-                          "2.8%",
-                          "Low",
-                          false, // isPositive (Red arrow)
-                          "0.2% in the past week",
-                          [0.3, 0.28, 0.32, 0.3, 0.28, 0.25, 0.28],
-                          [0.28, 0.27, 0.26, 0.25, 0.24, 0.23, 0.22], // Forecast
-                          metric: 'soil_organic_matter',
-                          satelliteMetric: 'B08', // NIR band for organic matter
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailSection(
-                          "Soil Fertility",
-                          "High",
-                          "Optimal",
-                          true,
-                          "Stable",
-                          [0.7, 0.72, 0.75, 0.78, 0.8, 0.82, 0.8],
-                          [0.8, 0.81, 0.82, 0.83, 0.84, 0.85, 0.86],
-                          metric: 'soil_fertility',
-                          satelliteMetric: 'B04', // Red band for fertility
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailSection(
-                          "Soil Salinity",
-                          "0.8 dS/m",
-                          "Normal",
-                          true,
-                          "No significant change",
-                          [0.2, 0.22, 0.21, 0.23, 0.2, 0.19, 0.2],
-                          [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
-                          metric: 'soil_salinity',
-                          satelliteMetric: 'VH', // SAR VH for salinity
-                        ),
-                        const SizedBox(height: 200), // Space for FABs
-                      ],
-                    ),
+          // Background Image (Header)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/backsmall.png',
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.topCenter,
+            ),
+          ),
+          // Content
+          Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildHeatmapCard(
+                        "Soil Moisture",
+                        'soil_moisture',
+                        'SMI',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildHeatmapCard(
+                        "Soil Organic Matter",
+                        'soil_organic_matter',
+                        'SOMI',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildHeatmapCard(
+                        "Soil Fertility",
+                        'soil_fertility',
+                        'SFI',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildHeatmapCard(
+                        "Soil Salinity",
+                        'soil_salinity',
+                        'SASI',
+                      ),
+                      const SizedBox(height: 200), // Space for FABs
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const Positioned(
             bottom: 24,
@@ -91,48 +80,173 @@ class SoilStatusDetailScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Stack(
-      children: [
-        Image.asset(
-          'assets/backsmall.png',
-          width: double.infinity,
-          fit: BoxFit.fitWidth,
-          alignment: Alignment.topCenter,
-        ),
-        Positioned(
-          top: 50,
-          left: 16,
-          right: 16,
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 22),
+              onPressed: () => Navigator.pop(context),
+            ),
+            const Expanded(
+              child: Text(
+                "Soil Status",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const Expanded(
-                child: Text(
-                  "Soil Status",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 40), // Balance the back button
-            ],
-          ),
+            ),
+            const SizedBox(width: 48), // Balance the back button
+          ],
         ),
-      ],
+      ),
     );
+  }
+
+  // ============================================================================
+  // HEATMAP CARD BUILDER - Uses new HeatmapDetailCard widget
+  // ============================================================================
+  
+  Widget _buildHeatmapCard(String title, String metric, String satelliteMetric) {
+    final double lat = s2Data?['center_lat'] ?? 26.1885;
+    final double lon = s2Data?['center_lon'] ?? 91.6894;
+    final double fieldSize = s2Data?['field_size_hectares'] ?? 10.0;
+    
+    return HeatmapDetailCard(
+      title: title,
+      metric: metric,
+      satelliteMetric: satelliteMetric,
+      centerLat: lat,
+      centerLon: lon,
+      fieldSizeHectares: fieldSize,
+    );
+  }
+
+  // ============================================================================
+  // DYNAMIC DATA HELPERS - Extract values from s2Data
+  // ============================================================================
+  
+  String _getDataValue(String key, String fallback) {
+    if (s2Data == null) return fallback;
+    
+    // NEW: Check for mean_value from heatmap API response (average index value)
+    if (s2Data!.containsKey('mean_value')) {
+      final mean = s2Data!['mean_value'];
+      if (mean is num) {
+        return _formatIndexValue(key, mean.toDouble());
+      }
+    }
+    
+    // Check in health_summary first
+    if (s2Data!['health_summary'] != null) {
+      final summary = s2Data!['health_summary'];
+      if (summary is Map) {
+        // Try direct key
+        if (summary.containsKey(key)) {
+          final val = summary[key];
+          if (val is Map && val.containsKey('score')) {
+            return '${val['score']}%';
+          }
+          return val.toString();
+        }
+        // Try key_level
+        if (summary.containsKey('${key}_level')) {
+          return summary['${key}_level'].toString();
+        }
+      }
+    }
+    
+    // Check top level
+    if (s2Data!.containsKey(key)) {
+      return s2Data![key].toString();
+    }
+    
+    return fallback;
+  }
+  
+  /// Format index value with appropriate unit based on metric type
+  String _formatIndexValue(String key, double value) {
+    switch (key) {
+      case 'soil_salinity':
+        return '${value.toStringAsFixed(2)} dS/m';
+      case 'soil_moisture':
+        return '${(value * 100).toStringAsFixed(1)}%';
+      case 'organic_matter':
+      case 'soil_organic_matter':
+        return '${value.toStringAsFixed(2)}';
+      case 'soil_fertility':
+        return '${value.toStringAsFixed(2)}';
+      default:
+        return value.toStringAsFixed(2);
+    }
+  }
+
+  String _getDataStatusText(String key, String fallback) {
+    if (s2Data == null) return fallback;
+    
+    // Check health_summary
+    if (s2Data!['health_summary'] != null) {
+      final summary = s2Data!['health_summary'];
+      if (summary is Map) {
+        if (summary.containsKey(key)) {
+          final val = summary[key];
+          if (val is Map && val.containsKey('status')) {
+            return val['status'].toString();
+          }
+        }
+        if (summary.containsKey('${key}_status')) {
+          return summary['${key}_status'].toString();
+        }
+        if (summary.containsKey('${key}_level')) {
+          return summary['${key}_level'].toString();
+        }
+      }
+    }
+    
+    return fallback;
+  }
+
+  bool _isPositiveTrend(String key) {
+    if (s2Data == null) return true;
+    
+    // Check health_summary for trend info
+    if (s2Data!['health_summary'] != null) {
+      final summary = s2Data!['health_summary'];
+      if (summary is Map && summary.containsKey(key)) {
+        final val = summary[key];
+        if (val is Map && val.containsKey('trend')) {
+          return val['trend'] == 'improving' || val['trend'] == 'stable';
+        }
+      }
+    }
+    
+    return true; // Default positive
+  }
+
+  String _getTrendDescription(String key) {
+    if (s2Data == null) return 'Data pending';
+    
+    // Check health_summary for trend info
+    if (s2Data!['health_summary'] != null) {
+      final summary = s2Data!['health_summary'];
+      if (summary is Map && summary.containsKey(key)) {
+        final val = summary[key];
+        if (val is Map && val.containsKey('trend_description')) {
+          return val['trend_description'].toString();
+        }
+        if (val is Map && val.containsKey('trend')) {
+          final trend = val['trend'].toString();
+          return trend == 'improving' ? 'Improving' : trend == 'declining' ? 'Declining' : 'Stable';
+        }
+      }
+    }
+    
+    return 'Stable';
   }
 
   Widget _buildDetailSection(

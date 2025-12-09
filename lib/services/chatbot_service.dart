@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 /// Service for AI chatbot with Supabase conversation storage
 class ChatbotService {
   static const String _baseUrl = 'https://Aniket2006-Chatbot.hf.space';
+  static const String _voiceUrl = 'https://aniket2006-agrow-voice.hf.space'; // Voice Backend
+
   
   /// Send a message and get AI response
   static Future<ChatResponse> sendMessage({
@@ -36,6 +38,36 @@ class ChatbotService {
       rethrow;
     }
   }
+
+  /// Transcribe audio file using AGROW Voice Service
+  static Future<String> transcribeAudio(String filePath) async {
+    try {
+      debugPrint('[VoiceService] Starting transcription for: $filePath');
+      var request = http.MultipartRequest('POST', Uri.parse('$_voiceUrl/transcribe'));
+      request.files.add(await http.MultipartFile.fromPath('file', filePath));
+      
+      debugPrint('[VoiceService] Sending request to $_voiceUrl/transcribe');
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw Exception('Transcription timeout after 30s'),
+      );
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      debugPrint('[VoiceService] Response status: ${response.statusCode}');
+      debugPrint('[VoiceService] Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['transcription'] ?? '';
+      } else {
+        throw Exception('Transcription failed: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('[VoiceService] Transcription error: $e');
+      rethrow;
+    }
+  }
+
   
   /// Create a new chat session
   static Future<ChatSession> createSession({

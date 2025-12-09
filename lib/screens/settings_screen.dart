@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'coming_soon_screen.dart';
 import 'main_menu_screen.dart';
+import '../widgets/adaptive_bottom_nav_bar.dart';
+import '../services/user_role_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -54,8 +56,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final roleProvider = UserRoleProvider();
+    final roleText = roleProvider.isFarmer ? 'Farmer' : 'Agro-tech Researcher';
+    
     return Scaffold(
       backgroundColor: const Color(0xFF0D986A),
+      bottomNavigationBar: const AdaptiveBottomNavBar(page: ActivePage.profile),
       body: Column(
         children: [
           // Custom Header
@@ -138,7 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            "Farmer", // Placeholder or load from prefs if we had role
+                            "Farmer", // Display role from questionnaire
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 14,
@@ -225,23 +231,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Bottom home chip (static)
-                    Center(
-                      child: Container(
-                        height: 56,
-                        width: 96,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF003A2A), Color(0xFF167339)],
-                          ),
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.home, color: Colors.white, size: 28),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),

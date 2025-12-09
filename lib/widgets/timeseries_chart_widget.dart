@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/timeseries_service.dart';
+import '../services/timeseries_cache_service.dart';
 
 /// Interactive Time Series Chart Widget
 /// Shows cached data immediately while fetching fresh predictions in background
@@ -13,6 +14,7 @@ class TimeSeriesChartWidget extends StatefulWidget {
   final double height;
   final Color historicalColor;
   final Color forecastColor;
+  final bool isCompact;  // Minimal layout for small spaces
 
   const TimeSeriesChartWidget({
     super.key,
@@ -24,6 +26,7 @@ class TimeSeriesChartWidget extends StatefulWidget {
     this.height = 200,
     this.historicalColor = const Color(0xFF167339),
     this.forecastColor = const Color(0xFF2196F3),
+    this.isCompact = false,  // Default to full layout
   });
 
   @override
@@ -39,6 +42,9 @@ class _TimeSeriesChartWidgetState extends State<TimeSeriesChartWidget>
   String? _cacheAge;           // "2h ago" style string
   String? _error;
   int? _selectedIndex;
+  
+  // Timespan view mode: false = 30 days before/after, true = full history
+  bool _showFullHistory = false;
   
   // Loading state
   String _loadingStage = 'Connecting to server...';
@@ -64,6 +70,8 @@ class _TimeSeriesChartWidgetState extends State<TimeSeriesChartWidget>
   }
 
   Future<void> _fetchData({bool forceRefresh = false}) async {
+    debugPrint('[TimeSeriesWidget] _fetchData called: metric=${widget.metric}, forceRefresh=$forceRefresh');
+    
     // If force refresh, show refreshing indicator but keep current data
     if (forceRefresh && _result != null) {
       setState(() {
@@ -89,25 +97,65 @@ class _TimeSeriesChartWidgetState extends State<TimeSeriesChartWidget>
         onFreshData: _onFreshDataReceived,
       );
       
+      debugPrint('[TimeSeriesWidget] Cache result: hasCachedData=${cacheResult.hasCachedData}, isFetching=${cacheResult.isFetching}, cacheAge=${cacheResult.cacheAge}');
+      
       if (mounted) {
         if (cacheResult.hasCachedData) {
           // Show cached data immediately
+          final result = cacheResult.result;
+          debugPrint('[TimeSeriesWidget] Using cached data: result=${result != null}, historical=${result?.historical.length ?? 0} points');
           setState(() {
-            _result = cacheResult.result;
+            _result = result;
             _isFromCache = true;
             _cacheAge = cacheResult.cacheAge;
             _isLoading = false;
-            _isRefreshing = true; // API fetch is running in background
+            // Only show refreshing indicator if actually fetching from API
+            _isRefreshing = cacheResult.isFetching;
           });
         } else {
-          // No cache, show loading state
+          // No cache exists - fetch directly from API (await the result)
+          debugPrint('[TimeSeriesWidget] No cache found, fetching from API directly...');
           _updateLoadingState('Fetching satellite data...', 25);
-          setState(() {
-            _isRefreshing = true;
-          });
+          
+          try {
+            final result = await TimeSeriesService.fetchTimeSeries(
+              centerLat: widget.centerLat,
+              centerLon: widget.centerLon,
+              fieldSizeHectares: widget.fieldSizeHectares,
+              metric: widget.metric,
+            );
+            
+            // Save to cache for next time
+            await TimeSeriesCacheService.saveToCache(
+              widget.centerLat,
+              widget.centerLon,
+              widget.metric,
+              result,
+            );
+            
+            if (mounted) {
+              setState(() {
+                _result = result;
+                _isFromCache = false;
+                _cacheAge = 'just now';
+                _isLoading = false;
+                _isRefreshing = false;
+              });
+            }
+          } catch (apiError) {
+            debugPrint('[TimeSeriesWidget] API error: $apiError');
+            if (mounted) {
+              setState(() {
+                _error = apiError.toString();
+                _isLoading = false;
+                _isRefreshing = false;
+              });
+            }
+          }
         }
       }
     } catch (e) {
+      debugPrint('[TimeSeriesWidget] Error: $e');
       if (mounted) {
         setState(() {
           _error = e.toString();
@@ -142,6 +190,15 @@ class _TimeSeriesChartWidgetState extends State<TimeSeriesChartWidget>
 
   @override
   Widget build(BuildContext context) {
+    // Auto-detect compact mode based on height
+    final bool isCompact = widget.isCompact || widget.height < 150;
+    
+    // Compact mode: Just show the chart with minimal chrome
+    if (isCompact) {
+      return _buildCompactLayout();
+    }
+    
+    // Full layout with all features
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -270,14 +327,64 @@ class _TimeSeriesChartWidgetState extends State<TimeSeriesChartWidget>
             child: _buildContent(),
           ),
           
-          // Legend
+          // Timespan toggle and Legend row
           if (_result != null) ...[
             const SizedBox(height: 8),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Expand/Collapse button
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showFullHistory = !_showFullHistory;
+                      _selectedIndex = null; // Reset selection on view change
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: _showFullHistory 
+                          ? widget.historicalColor.withValues(alpha: 0.1)
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _showFullHistory 
+                            ? widget.historicalColor 
+                            : Colors.grey.shade300,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _showFullHistory 
+                              ? Icons.zoom_in_map 
+                              : Icons.zoom_out_map,
+                          size: 14,
+                          color: _showFullHistory 
+                              ? widget.historicalColor 
+                              : Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _showFullHistory ? '30 Days' : 'Full History',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: _showFullHistory 
+                                ? widget.historicalColor 
+                                : Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Legend
                 _buildLegendItem('Historical', widget.historicalColor, false),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 _buildLegendItem('Forecast', widget.forecastColor, true),
               ],
             ),
@@ -290,6 +397,31 @@ class _TimeSeriesChartWidgetState extends State<TimeSeriesChartWidget>
           ],
         ],
       ),
+    );
+  }
+
+  /// Compact layout for small spaces (analytics preview)
+  Widget _buildCompactLayout() {
+    return SizedBox(
+      height: widget.height,
+      child: _isLoading
+          ? Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: widget.historicalColor,
+                ),
+              ),
+            )
+          : _error != null
+              ? Center(
+                  child: Icon(Icons.error_outline, color: Colors.red.shade300, size: 20),
+                )
+              : _result == null || _result!.historical.isEmpty
+                  ? const Center(child: Text('No data', style: TextStyle(color: Colors.grey, fontSize: 11)))
+                  : _buildChart(),
     );
   }
 
@@ -431,19 +563,80 @@ class _TimeSeriesChartWidgetState extends State<TimeSeriesChartWidget>
   }
 
   Widget _buildChart() {
-    final allPoints = _result!.allPoints;
-    final histLength = _result!.historical.length;
+    final fullPoints = _result!.allPoints;
+    final fullHistLength = _result!.historical.length;
+    
+    // Filter points based on timespan view mode
+    List<DataPoint> displayPoints;
+    int displayHistLength;
+    
+    if (_showFullHistory) {
+      // Show all data
+      displayPoints = fullPoints;
+      displayHistLength = fullHistLength;
+    } else {
+      // Show 30 days before and 30 days after the current date
+      final now = DateTime.now();
+      final thirtyDaysAgo = now.subtract(const Duration(days: 30));
+      final thirtyDaysAhead = now.add(const Duration(days: 30));
+      
+      // Filter historical points (last 30 days)
+      final filteredHistorical = _result!.historical
+          .where((p) => p.date.isAfter(thirtyDaysAgo) && p.date.isBefore(now.add(const Duration(days: 1))))
+          .toList();
+      
+      // Filter forecast points (next 30 days)
+      final filteredForecast = _result!.forecast
+          .where((p) => p.date.isAfter(now.subtract(const Duration(days: 1))) && p.date.isBefore(thirtyDaysAhead))
+          .toList();
+      
+      // Combine filtered points
+      displayPoints = [
+        ...filteredHistorical,
+        ...filteredForecast.map((f) => DataPoint(date: f.date, value: f.value)),
+      ];
+      displayHistLength = filteredHistorical.length;
+    }
+    
+    // Handle case where no points are in the filtered range
+    if (displayPoints.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.calendar_today, color: Colors.grey.shade400, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              'No data in the last 30 days',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => setState(() => _showFullHistory = true),
+              child: const Text('View Full History'),
+            ),
+          ],
+        ),
+      );
+    }
     
     // Convert to FlSpot
     final spots = <FlSpot>[];
-    for (int i = 0; i < allPoints.length; i++) {
-      spots.add(FlSpot(i.toDouble(), allPoints[i].value));
+    for (int i = 0; i < displayPoints.length; i++) {
+      spots.add(FlSpot(i.toDouble(), displayPoints[i].value));
     }
     
-    // Calculate min/max for y-axis
-    final values = allPoints.map((p) => p.value).toList();
-    final minY = values.reduce((a, b) => a < b ? a : b) - 1;
-    final maxY = values.reduce((a, b) => a > b ? a : b) + 1;
+    // Calculate min/max for y-axis with smart scaling
+    final values = displayPoints.map((p) => p.value).toList();
+    final dataMin = values.reduce((a, b) => a < b ? a : b);
+    final dataMax = values.reduce((a, b) => a > b ? a : b);
+    final dataRange = dataMax - dataMin;
+    
+    // Dynamic padding: 10% of range, but at least 0.01 for very flat data
+    // This ensures vegetation indices (small variations) still show clear graphs
+    final padding = dataRange > 0.001 ? dataRange * 0.1 : 0.02;
+    final minY = dataMin - padding;
+    final maxY = dataMax + padding;
 
     return LineChart(
       LineChartData(
@@ -462,21 +655,25 @@ class _TimeSeriesChartWidgetState extends State<TimeSeriesChartWidget>
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 40,
-              getTitlesWidget: (value, meta) => Text(
-                value.toStringAsFixed(1),
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
-              ),
+              reservedSize: 45,
+              getTitlesWidget: (value, meta) {
+                // Use 2 decimal places for small ranges (vegetation indices)
+                final decimals = dataRange < 0.5 ? 2 : 1;
+                return Text(
+                  value.toStringAsFixed(decimals),
+                  style: const TextStyle(fontSize: 9, color: Colors.grey),
+                );
+              },
             ),
           ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              interval: allPoints.length / 5,
+              interval: displayPoints.length > 5 ? displayPoints.length / 5 : 1,
               getTitlesWidget: (value, meta) {
                 final idx = value.toInt();
-                if (idx < 0 || idx >= allPoints.length) return const SizedBox.shrink();
-                final date = allPoints[idx].date;
+                if (idx < 0 || idx >= displayPoints.length) return const SizedBox.shrink();
+                final date = displayPoints[idx].date;
                 return Text(
                   '${date.month}/${date.day}',
                   style: const TextStyle(fontSize: 9, color: Colors.grey),
@@ -498,17 +695,29 @@ class _TimeSeriesChartWidgetState extends State<TimeSeriesChartWidget>
             }
           },
           touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (touchedSpot) => const Color(0xFF1E1E1E), // Dark background
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 final idx = spot.spotIndex;
-                final point = allPoints[idx];
-                final isForecast = idx >= histLength;
+                final point = displayPoints[idx];
+                final isForecast = idx >= displayHistLength;
                 return LineTooltipItem(
-                  '${point.date.toString().split(' ')[0]}\n${point.value.toStringAsFixed(2)}',
-                  TextStyle(
-                    color: isForecast ? widget.forecastColor : widget.historicalColor,
+                  '${point.date.toString().split(' ')[0]}\n${point.value.toStringAsFixed(3)}',
+                  const TextStyle(
+                    color: Colors.white, // White text for contrast
                     fontWeight: FontWeight.bold,
+                    fontSize: 12,
                   ),
+                  children: [
+                    TextSpan(
+                      text: isForecast ? '\n(Forecast)' : '\n(Historical)',
+                      style: TextStyle(
+                        color: isForecast ? const Color(0xFF64B5F6) : const Color(0xFF81C784), // Light blue/green
+                        fontSize: 10,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
                 );
               }).toList();
             },
@@ -516,21 +725,22 @@ class _TimeSeriesChartWidgetState extends State<TimeSeriesChartWidget>
         ),
         lineBarsData: [
           // Historical line
-          LineChartBarData(
-            spots: spots.sublist(0, histLength),
-            isCurved: true,
-            color: widget.historicalColor,
-            barWidth: 2,
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: true,
-              color: widget.historicalColor.withValues(alpha: 0.1),
-            ),
-          ),
-          // Forecast line (dashed)
-          if (histLength < spots.length)
+          if (displayHistLength > 0)
             LineChartBarData(
-              spots: spots.sublist(histLength - 1), // Overlap for continuity
+              spots: spots.sublist(0, displayHistLength.clamp(0, spots.length)),
+              isCurved: true,
+              color: widget.historicalColor,
+              barWidth: 2,
+              dotData: const FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                color: widget.historicalColor.withValues(alpha: 0.1),
+              ),
+            ),
+          // Forecast line (dashed)
+          if (displayHistLength < spots.length)
+            LineChartBarData(
+              spots: spots.sublist((displayHistLength - 1).clamp(0, spots.length - 1)), // Overlap for continuity
               isCurved: true,
               color: widget.forecastColor,
               barWidth: 2,

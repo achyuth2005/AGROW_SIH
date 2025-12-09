@@ -3,6 +3,10 @@ import 'package:agroww_sih/widgets/trend_chart.dart';
 import 'package:agroww_sih/screens/soil_status_detail_screen.dart'; // For ForecastChartPainter
 import 'package:agroww_sih/widgets/analytics_fab_stack.dart';
 import 'package:agroww_sih/widgets/heatmap_widget.dart';
+import 'package:agroww_sih/widgets/timeseries_chart_widget.dart';
+import 'package:agroww_sih/widgets/heatmap_detail_card.dart';
+
+import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
 
 class BioRiskStatusDetailScreen extends StatelessWidget {
   final Map<String, dynamic>? s2Data;
@@ -13,59 +17,51 @@ class BioRiskStatusDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE1EFEF),
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 2),
       body: Stack(
         children: [
-          SafeArea(
-            top: false,
-            child: Column(
-              children: [
-                _buildHeader(context),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        _buildDetailSection(
-                          "Pest Risk",
-                          "32°C",
-                          "Mild",
-                          false, // Negative/Neutral change
-                          "High risk detected", // Placeholder text
-                          [0.3, 0.4, 0.35, 0.5, 0.45, 0.4, 0.42],
-                          [0.42, 0.45, 0.48, 0.5, 0.48, 0.52, 0.55],
-                          metric: 'pest_risk',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailSection(
-                          "Disease Risk",
-                          "84",
-                          "High",
-                          true, // Positive change (or high risk is bad?) - Mockup shows green arrow for High? Assuming green arrow means "Trend is up"
-                          "15% rate per week",
-                          [0.4, 0.5, 0.6, 0.7, 0.84, 0.8, 0.85],
-                          [0.85, 0.88, 0.9, 0.92, 0.9, 0.95, 0.98],
-                          metric: 'disease_risk',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailSection(
-                          "Nutrient Stress",
-                          "5.9",
-                          "Slightly Acidic",
-                          false,
-                          "Mild decrease",
-                          [0.6, 0.55, 0.58, 0.52, 0.5, 0.48, 0.5],
-                          [0.5, 0.48, 0.45, 0.42, 0.4, 0.38, 0.35],
-                          metric: 'nutrient_stress',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildStressZoneSection(),
-                        const SizedBox(height: 200), // Space for FABs
-                      ],
-                    ),
+          // Background Image (Header)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/backsmall.png',
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.topCenter,
+            ),
+          ),
+          // Content
+          Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildHeatmapCard(
+                        "Pest Risk",
+                        'pest_risk',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildHeatmapCard(
+                        "Disease Risk",
+                        'disease_risk',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildHeatmapCard(
+                        "Nutrient Stress",
+                        'nutrient_stress',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildStressZoneSection(),
+                      const SizedBox(height: 200), // Space for FABs
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const Positioned(
             bottom: 24,
@@ -78,48 +74,164 @@ class BioRiskStatusDetailScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Stack(
-      children: [
-        Image.asset(
-          'assets/backsmall.png',
-          width: double.infinity,
-          fit: BoxFit.fitWidth,
-          alignment: Alignment.topCenter,
-        ),
-        Positioned(
-          top: 50,
-          left: 16,
-          right: 16,
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 22),
+              onPressed: () => Navigator.pop(context),
+            ),
+            const Expanded(
+              child: Text(
+                "Bio-Risk Status",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const Expanded(
-                child: Text(
-                  "Bio-Risk Status",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 40), // Balance the back button
-            ],
-          ),
+            ),
+            const SizedBox(width: 48), // Balance the back button
+          ],
         ),
-      ],
+      ),
     );
+  }
+
+  // ============================================================================
+  // HEATMAP CARD BUILDER - Uses new HeatmapDetailCard widget
+  // ============================================================================
+  
+  Widget _buildHeatmapCard(String title, String metric) {
+    final double lat = s2Data?['center_lat'] ?? 26.1885;
+    final double lon = s2Data?['center_lon'] ?? 91.6894;
+    final double fieldSize = s2Data?['field_size_hectares'] ?? 10.0;
+    
+    return HeatmapDetailCard(
+      title: title,
+      metric: metric,
+      centerLat: lat,
+      centerLon: lon,
+      fieldSizeHectares: fieldSize,
+    );
+  }
+
+  // ============================================================================
+  // DYNAMIC DATA HELPERS - Extract values from s2Data
+  // ============================================================================
+  
+  String _getDataValue(String key, String fallback) {
+    if (s2Data == null) return fallback;
+    
+    // NEW: Check for mean_value from heatmap API response (average index value)
+    if (s2Data!.containsKey('mean_value')) {
+      final mean = s2Data!['mean_value'];
+      if (mean is num) {
+        return _formatIndexValue(key, mean.toDouble());
+      }
+    }
+    
+    // Check in health_summary first
+    if (s2Data!['health_summary'] != null) {
+      final summary = s2Data!['health_summary'];
+      if (summary is Map) {
+        if (summary.containsKey(key)) {
+          final val = summary[key];
+          if (val is Map && val.containsKey('score')) {
+            return '${val['score']}%';
+          }
+          return val.toString();
+        }
+        if (summary.containsKey('${key}_level')) {
+          return summary['${key}_level'].toString();
+        }
+      }
+    }
+    
+    // Check top level
+    if (s2Data!.containsKey(key)) {
+      return s2Data![key].toString();
+    }
+    
+    return fallback;
+  }
+  
+  /// Format index value with appropriate unit based on metric type
+  String _formatIndexValue(String key, double value) {
+    switch (key) {
+      case 'pest_risk':
+      case 'disease_risk':
+      case 'nutrient_stress':
+        return '${(value * 100).toStringAsFixed(0)}%'; // Stress as percentage
+      case 'stress_zones':
+        return value.toStringAsFixed(2);
+      default:
+        return value.toStringAsFixed(2);
+    }
+  }
+
+  String _getDataStatusText(String key, String fallback) {
+    if (s2Data == null) return fallback;
+    
+    if (s2Data!['health_summary'] != null) {
+      final summary = s2Data!['health_summary'];
+      if (summary is Map) {
+        if (summary.containsKey(key)) {
+          final val = summary[key];
+          if (val is Map && val.containsKey('status')) {
+            return val['status'].toString();
+          }
+        }
+        if (summary.containsKey('${key}_status')) {
+          return summary['${key}_status'].toString();
+        }
+        if (summary.containsKey('${key}_level')) {
+          return summary['${key}_level'].toString();
+        }
+      }
+    }
+    
+    return fallback;
+  }
+
+  bool _isPositiveTrend(String key) {
+    if (s2Data == null) return true;
+    
+    if (s2Data!['health_summary'] != null) {
+      final summary = s2Data!['health_summary'];
+      if (summary is Map && summary.containsKey(key)) {
+        final val = summary[key];
+        if (val is Map && val.containsKey('trend')) {
+          return val['trend'] == 'improving' || val['trend'] == 'stable';
+        }
+      }
+    }
+    
+    return true;
+  }
+
+  String _getTrendDescription(String key) {
+    if (s2Data == null) return 'Data pending';
+    
+    if (s2Data!['health_summary'] != null) {
+      final summary = s2Data!['health_summary'];
+      if (summary is Map && summary.containsKey(key)) {
+        final val = summary[key];
+        if (val is Map && val.containsKey('trend_description')) {
+          return val['trend_description'].toString();
+        }
+        if (val is Map && val.containsKey('trend')) {
+          final trend = val['trend'].toString();
+          return trend == 'improving' ? 'Improving' : trend == 'declining' ? 'Declining' : 'Stable';
+        }
+      }
+    }
+    
+    return 'Stable';
   }
 
   Widget _buildDetailSection(
@@ -131,6 +243,7 @@ class BioRiskStatusDetailScreen extends StatelessWidget {
     List<double> trendData,
     List<double> forecastData, {
     String metric = 'pest_risk',
+    String? satelliteMetric, // VV, VH, B04, B05 etc. for TimeSeries API
   }) {
     // Get coordinates from s2Data or use defaults
     final double lat = s2Data?['center_lat'] ?? 26.1885;
@@ -232,66 +345,66 @@ class BioRiskStatusDetailScreen extends StatelessWidget {
           
           const SizedBox(height: 24),
 
-          // Trend Chart
-          Text(
-            "$title Trend",
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F3C33),
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 120,
-            child: TrendChart(
-              dataPoints: trendData,
-              color: const Color(0xFF167339),
-            ),
-          ),
           const SizedBox(height: 24),
 
-          // Forecast Chart
-          Row(
-            children: [
-              Text(
-                "$title Forecast",
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F3C33),
+          // Interactive Time Series Chart (if satellite metric available)
+          if (satelliteMetric != null) ...[
+            TimeSeriesChartWidget(
+              centerLat: lat,
+              centerLon: lon,
+              fieldSizeHectares: fieldSize,
+              metric: satelliteMetric,
+              title: '$title Time Series',
+              height: 200,
+            ),
+          ] else ...[
+            // Fallback: Static Trend Chart
+            Text(
+              "$title Trend",
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F3C33),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 120,
+              child: TrendChart(
+                dataPoints: trendData,
+                color: const Color(0xFF167339),
+              ),
+            ),
+          ],
+          
+          const SizedBox(height: 24),
+          
+          // Forecast Chart (Always show in fallback mode or if logic demands)
+           if (satelliteMetric == null) ...[
+              Row(
+                children: [
+                  Text(
+                    "$title Forecast",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F3C33),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.info_outline, size: 14, color: Colors.grey),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 120,
+                child: TrendChart(
+                  dataPoints: forecastData,
+                  color: const Color(0xFF167339),
                 ),
               ),
-              const SizedBox(width: 4),
-              const Icon(Icons.info_outline, size: 14, color: Colors.grey),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 120,
-            child: TrendChart(
-              dataPoints: forecastData,
-              color: const Color(0xFF167339),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Analysis Text
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F5F3),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              "The pest risk level is currently 7% in the past week which is a moderate level. It is advised to wait until 20% to control the pest risk level.",
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF167339),
-                height: 1.4,
-              ),
-            ),
-          ),
+              const SizedBox(height: 16),
+           ]
         ],
       ),
     );

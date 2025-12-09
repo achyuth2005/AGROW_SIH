@@ -4,6 +4,9 @@ import 'package:agroww_sih/widgets/heatmap_widget.dart';
 import 'package:agroww_sih/screens/soil_status_detail_screen.dart'; // For ForecastChartPainter
 import 'package:agroww_sih/widgets/analytics_fab_stack.dart';
 import 'package:agroww_sih/widgets/timeseries_chart_widget.dart';
+import 'package:agroww_sih/widgets/heatmap_detail_card.dart';
+
+import 'package:agroww_sih/widgets/custom_bottom_nav_bar.dart';
 
 class CropStatusDetailScreen extends StatelessWidget {
   final Map<String, dynamic>? s2Data;
@@ -14,88 +17,58 @@ class CropStatusDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE1EFEF),
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 2),
       body: Stack(
         children: [
-          SafeArea(
-            top: false, // Handle top safe area in header
-            child: Column(
-              children: [
-                _buildHeader(context),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        _buildDetailSection(
-                          "Greenness",
-                          "84",
-                          "High",
-                          true,
-                          "12% in the past week",
-                          [0.4, 0.5, 0.45, 0.6, 0.84, 0.75, 0.8],
-                          [0.8, 0.82, 0.85, 0.83, 0.88, 0.85, 0.9],
-                          metric: 'greenness', // NDVI
-                          satelliteMetric: 'B08', // NIR band for vegetation
-                          subMetrics: [
-                            _buildSubMetric("Leaf Health", "Good", Colors.green),
-                            _buildSubMetric("Canopy Density", "Average", Colors.green),
-                            _buildSubMetric("Photosynthetic Activity", "Excellent", Colors.green),
-                            _buildSubMetric("Crop Stress", "Low", Colors.green),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailSection(
-                          "Biomass Growth",
-                          "1.2 dS/m",
-                          "High",
-                          true,
-                          "0.1 dS/m past week",
-                          [0.6, 0.58, 0.65, 0.7, 0.75, 0.72, 0.78],
-                          [0.78, 0.8, 0.82, 0.85, 0.83, 0.88, 0.9],
-                          metric: 'greenness', // EVI for biomass
-                          satelliteMetric: 'B8A', // Vegetation red edge
-                          subMetrics: [
-                             _buildSubMetric("Crop Vigor", "High", Colors.green),
-                             _buildSubMetric("Stem Count", "Detected", Colors.green),
-                             _buildSubMetric("Canopy Density", "Ok", Colors.green),
-                             _buildSubMetric("Field Drainage", "Mild", Colors.green),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailSection(
-                          "Nitrogen Level",
-                          "5.9",
-                          "Slightly Acidic",
-                          false,
-                          "0.2 in past week",
-                          [0.5, 0.55, 0.52, 0.58, 0.6, 0.55, 0.58],
-                          [0.58, 0.6, 0.62, 0.65, 0.63, 0.68, 0.7],
-                          metric: 'nitrogen_level', // NDRE
-                          satelliteMetric: 'B05', // Red edge for nitrogen
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailSection(
-                          "Photosynthesis Capacity",
-                          "32°C",
-                          "Mild",
-                          false,
-                          "2°C in the past week",
-                          [0.3, 0.35, 0.4, 0.38, 0.42, 0.45, 0.48],
-                          [0.48, 0.5, 0.52, 0.55, 0.5, 0.48, 0.52],
-                          subMetrics: [
-                            _buildSubMetric("Chlorophyll Efficiency", "Very", Colors.green),
-                            _buildSubMetric("Photochemical Activity", "Excellent", Colors.green),
-                            _buildSubMetric("Water-Energy Exchange", "Fair", Colors.green),
-                            _buildSubMetric("Canopy Light Absorption", "12%", Colors.green),
-                          ],
-                        ),
-                        const SizedBox(height: 200), // Space for FABs
-                      ],
-                    ),
+          // Background Image (Header)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/backsmall.png',
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.topCenter,
+            ),
+          ),
+          // Content
+          Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildHeatmapCard(
+                        "Greenness",
+                        'greenness',
+                        'NDVI',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildHeatmapCard(
+                        "Biomass Growth",
+                        'greenness', // Uses NDVI-based metric on backend
+                        'EVI',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildHeatmapCard(
+                        "Nitrogen Level",
+                        'nitrogen_level',
+                        'NDRE',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildHeatmapCard(
+                        "Photosynthesis Capacity",
+                        'photosynthetic_capacity',
+                        'PRI',
+                      ),
+                      const SizedBox(height: 200), // Space for FABs
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const Positioned(
             bottom: 24,
@@ -108,47 +81,50 @@ class CropStatusDetailScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Stack(
-      children: [
-        Image.asset(
-          'assets/backsmall.png',
-          width: double.infinity,
-          fit: BoxFit.fitWidth,
-          alignment: Alignment.topCenter,
-        ),
-        Positioned(
-          top: 50,
-          left: 16,
-          right: 16,
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 22),
+              onPressed: () => Navigator.pop(context),
+            ),
+            const Expanded(
+              child: Text(
+                "Crop Status",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const Expanded(
-                child: Text(
-                  "Crop Status",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 40), // Balance the back button
-            ],
-          ),
+            ),
+            const SizedBox(width: 48), // Balance the back button
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  // ============================================================================
+  // HEATMAP CARD BUILDER - Uses new HeatmapDetailCard widget
+  // ============================================================================
+  
+  Widget _buildHeatmapCard(String title, String metric, String satelliteMetric) {
+    final double lat = s2Data?['center_lat'] ?? 26.1885;
+    final double lon = s2Data?['center_lon'] ?? 91.6894;
+    final double fieldSize = s2Data?['field_size_hectares'] ?? 10.0;
+    
+    return HeatmapDetailCard(
+      title: title,
+      metric: metric,
+      satelliteMetric: satelliteMetric,
+      centerLat: lat,
+      centerLon: lon,
+      fieldSizeHectares: fieldSize,
     );
   }
 
@@ -196,10 +172,9 @@ class CropStatusDetailScreen extends StatelessWidget {
     String changeText,
     List<double> trendData,
     List<double> forecastData, {
-    List<Widget>? subMetrics,
-    String indexType = 'NDVI',
     String metric = 'greenness',
-    String? satelliteMetric,
+    String? satelliteMetric, // VV, VH, B04, B05 etc. for TimeSeries API
+    List<Widget> subMetrics = const [],
   }) {
     // Get coordinates from s2Data or use defaults
     final double lat = s2Data?['center_lat'] ?? 26.1885;
@@ -394,5 +369,52 @@ class CropStatusDetailScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _getDataValue(String key, String fallback) {
+    if (s2Data == null) return fallback;
+    
+    // Check specific keys first
+    if (s2Data!['health_summary'] != null) {
+      final summary = s2Data!['health_summary'];
+      // Try key_level as value if no numeric value exists
+      if (summary is Map && summary.containsKey('${key}_level')) {
+        return summary['${key}_level'].toString().toUpperCase();
+      }
+    }
+    
+    // Check top level
+    if (s2Data!.containsKey('${key}_level')) {
+        return s2Data!['${key}_level'].toString().toUpperCase();
+    }
+
+    return fallback;
+  }
+
+  String _getDataStatusText(String key, String fallback) {
+    if (s2Data == null) return fallback;
+
+    // Check health_summary
+    if (s2Data!['health_summary'] != null) {
+      final summary = s2Data!['health_summary'];
+      // Try key_status first
+      if (summary is Map && summary.containsKey('${key}_status')) {
+        return summary['${key}_status'].toString();
+      }
+      // Fallback to key_level if status not found
+      if (summary is Map && summary.containsKey('${key}_level')) {
+        return summary['${key}_level'].toString();
+      }
+    }
+    
+    // Check top level
+    if (s2Data!.containsKey('${key}_status')) {
+        return s2Data!['${key}_status'].toString();
+    }
+    if (s2Data!.containsKey('${key}_level')) {
+        return s2Data!['${key}_level'].toString();
+    }
+
+    return fallback;
   }
 }

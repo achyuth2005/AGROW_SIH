@@ -405,17 +405,33 @@ class _HeatmapDetailCardState extends State<HeatmapDetailCard> {
   }
 
   Widget _buildHeatmapPreview() {
-    return Container(
-      width: 100,
-      height: 80,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: Colors.grey.shade200,
-        border: Border.all(color: Colors.grey.shade300),
+    return GestureDetector(
+      onTap: _result != null ? _showFullScreenHeatmap : null,
+      child: Container(
+        width: 100,
+        height: 80,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey.shade200,
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: _buildHeatmapContent(),
+        ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: _buildHeatmapContent(),
+    );
+  }
+
+  void _showFullScreenHeatmap() {
+    if (_result == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => _FullScreenHeatmapDialog(
+        result: _result!,
+        title: widget.title,
+        metric: widget.metric,
       ),
     );
   }
@@ -438,17 +454,265 @@ class _HeatmapDetailCardState extends State<HeatmapDetailCard> {
     }
 
     if (_result != null && _result!.imageBase64.isNotEmpty) {
-      return Image.memory(
-        Uint8List.fromList(_result!.imageBytes),
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const Center(
-          child: Icon(Icons.broken_image, color: Colors.grey),
-        ),
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.memory(
+            Uint8List.fromList(_result!.imageBytes),
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const Center(
+              child: Icon(Icons.broken_image, color: Colors.grey),
+            ),
+          ),
+          Positioned(
+            bottom: 2,
+            right: 2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'Tap to expand',
+                style: TextStyle(color: Colors.white, fontSize: 7),
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     return const Center(
       child: Icon(Icons.map, color: Colors.grey),
+    );
+  }
+}
+
+/// Full screen dialog to display heatmap with details
+class _FullScreenHeatmapDialog extends StatelessWidget {
+  final HeatmapResult result;
+  final String title;
+  final String metric;
+
+  const _FullScreenHeatmapDialog({
+    required this.result,
+    required this.title,
+    required this.metric,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isLlmResult = result.isLlmResult;
+    
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF167339),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Index: ${result.indexUsed}',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // LLM Analysis (if available)
+              if (isLlmResult && result.level != null) ...[
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _getLevelColor(result.level!).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _getLevelColor(result.level!)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _getLevelColor(result.level!),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              result.level!.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (result.stressScore != null)
+                            Text(
+                              'Stress: ${(result.stressScore! * 100).toInt()}%',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                        ],
+                      ),
+                      if (result.analysis != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          result.analysis!,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                      if (result.recommendations != null && 
+                          result.recommendations!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        const Text('Recommendations:', 
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                        ...result.recommendations!.map((r) => 
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8, top: 4),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('• ', style: TextStyle(fontSize: 12)),
+                                Expanded(child: Text(r, style: const TextStyle(fontSize: 12))),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+              
+              // Heatmap image
+              Container(
+                constraints: const BoxConstraints(maxHeight: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.memory(
+                    Uint8List.fromList(result.imageBytes),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              
+              // Statistics
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildStatItem('Min', result.minValue.toStringAsFixed(2), Colors.red),
+                    _buildStatItem('Mean', result.meanValue.toStringAsFixed(2), Colors.orange),
+                    _buildStatItem('Max', result.maxValue.toStringAsFixed(2), Colors.green),
+                  ],
+                ),
+              ),
+              
+              // Footer
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  'Based on Sentinel-2 satellite data${result.imageDate != null ? ' (${result.imageDate})' : ''}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade600,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getLevelColor(String level) {
+    switch (level.toLowerCase()) {
+      case 'low':
+        return Colors.green;
+      case 'moderate':
+        return Colors.orange;
+      case 'high':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildStatItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }

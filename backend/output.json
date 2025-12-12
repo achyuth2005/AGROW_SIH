@@ -1,0 +1,406 @@
+Starting SAR Prediction Pipeline for Maize on 2024-01-15...
+[OK] Nearest SAR data found: 2024-01-13
+[OK] Data extracted: 624 pixels
+[DEBUG] Image dimensions: Height=33, Width=19
+[DEBUG] Patch Size: 2, Stride: 1
+[DEBUG] Generated 568 patches with shape (2, 2, 3)
+[OK] Generated 568 patches
+Computing SAR statistical features...
+[OK] Computed features for 568 patches
+Performing K-Means clustering (k=3)...
+[OK] Cluster distribution:
+  Cluster 0: 215 patches (37.9%)
+  Cluster 1: 140 patches (24.6%)
+  Cluster 2: 213 patches (37.5%)
+Detecting anomalies (contamination=0.1)...
+[OK] Detected 57 anomalies (10.0%)
+[OK] Anomaly score range: [0.000, 1.000]
+Fetching weather data...
+Calling Gemini LLM...
+\n================================================================================
+FINAL OUTPUT FOR BACKEND
+================================================================================
+{
+  "date": "2024-01-13",
+  "stressed_patches": [
+    {
+      "lat": 30.908590909090908,
+      "lon": 75.83642105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.908590909090908,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.9085,
+      "lon": 75.83642105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.9085,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.9085,
+      "lon": 75.83663157894738,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.9085,
+      "lon": 75.83673684210527,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90840909090909,
+      "lon": 75.836,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90840909090909,
+      "lon": 75.83610526315789,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90840909090909,
+      "lon": 75.8362105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90840909090909,
+      "lon": 75.83642105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90840909090909,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90831818181818,
+      "lon": 75.8358947368421,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90831818181818,
+      "lon": 75.836,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90831818181818,
+      "lon": 75.83610526315789,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90831818181818,
+      "lon": 75.8362105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90831818181818,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90822727272727,
+      "lon": 75.836,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90822727272727,
+      "lon": 75.83610526315789,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90822727272727,
+      "lon": 75.83663157894738,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.83515789473684,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.83526315789473,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.83536842105262,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.8358947368421,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.836,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.83663157894738,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907863636363636,
+      "lon": 75.83610526315789,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907772727272725,
+      "lon": 75.83526315789473,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907772727272725,
+      "lon": 75.83536842105262,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907772727272725,
+      "lon": 75.83547368421053,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907681818181818,
+      "lon": 75.83515789473684,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907681818181818,
+      "lon": 75.83526315789473,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907681818181818,
+      "lon": 75.83536842105262,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907681818181818,
+      "lon": 75.83547368421053,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907681818181818,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907590909090906,
+      "lon": 75.83536842105262,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907227272727273,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90713636363636,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90713636363636,
+      "lon": 75.83663157894738,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907045454545454,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906863636363635,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906772727272728,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906772727272728,
+      "lon": 75.83568421052631,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90640909090909,
+      "lon": 75.83547368421053,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90640909090909,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90631818181818,
+      "lon": 75.83547368421053,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90631818181818,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90622727272727,
+      "lon": 75.83631578947369,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90622727272727,
+      "lon": 75.83642105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906136363636364,
+      "lon": 75.8357894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906136363636364,
+      "lon": 75.8362105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906136363636364,
+      "lon": 75.83631578947369,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906045454545453,
+      "lon": 75.83526315789473,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906045454545453,
+      "lon": 75.83568421052631,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906045454545453,
+      "lon": 75.8357894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906045454545453,
+      "lon": 75.836,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906045454545453,
+      "lon": 75.83631578947369,
+      "status": "High Stress"
+    }
+  ],
+  "health_summary": {
+    "greenness_status": "Stress zones show a 0.50 dB reduction in VH backscatter. This indicates reduced vegetation vigor and canopy moisture levels. The majority of the field maintains adequate vigor. Overall field greenness appears moderate to high.",
+    "greenness_level": "moderate",
+    "nitrogen_status": "The observed reduction in VV backscatter and VV/VH ratio suggests lower overall biomass accumulation. This pattern is consistent with potential nutrient deficiencies, such as nitrogen limitations. Direct assessment requires supplementary data.",
+    "nitrogen_level": "moderate",
+    "biomass_status": "Stress zones exhibit a significant 0.82 dB reduction in VV backscatter, confirming lower structural biomass. The reduced VV/VH ratio indicates less dense or less mature canopy growth in 10% of the area. Field-wide biomass remains robust.",
+    "biomass_level": "moderate",
+    "heat_stress_status": "Direct heat stress assessment is not possible without temperature data. Reduced VH backscatter in stress zones suggests decreased moisture content or vigor. This reduction is symptomatic of potential drought or heat-related stress.",
+    "heat_stress_level": "moderate",
+    "overall_crop_health": "Ten percent of the field is measurably stressed across all SAR metrics (VV, VH, and Ratio). The overall field average suggests good health and maturity. Targeted scouting is required to determine the specific cause of reduced biomass and vigor in the stress zones.",
+    "crop_phenology_state": "Maturing"
+  },
+  "weather_data": [
+    {
+      "date": "2024-01-06",
+      "temp_max": 15.4,
+      "temp_min": 4.2,
+      "temp_mean": 8.4,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 10.7,
+      "evapotranspiration": 1.48
+    },
+    {
+      "date": "2024-01-07",
+      "temp_max": 14.5,
+      "temp_min": 4.7,
+      "temp_mean": 7.8,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 7.0,
+      "evapotranspiration": 1.26
+    },
+    {
+      "date": "2024-01-08",
+      "temp_max": 15.4,
+      "temp_min": 4.5,
+      "temp_mean": 8.1,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 7.2,
+      "evapotranspiration": 1.48
+    },
+    {
+      "date": "2024-01-09",
+      "temp_max": 13.3,
+      "temp_min": 3.9,
+      "temp_mean": 7.3,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 9.5,
+      "evapotranspiration": 1.3
+    },
+    {
+      "date": "2024-01-10",
+      "temp_max": 14.7,
+      "temp_min": 3.8,
+      "temp_mean": 7.8,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 13.6,
+      "evapotranspiration": 1.38
+    },
+    {
+      "date": "2024-01-11",
+      "temp_max": 13.7,
+      "temp_min": 4.8,
+      "temp_mean": 7.6,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 9.6,
+      "evapotranspiration": 1.13
+    },
+    {
+      "date": "2024-01-12",
+      "temp_max": 14.9,
+      "temp_min": 3.9,
+      "temp_mean": 7.9,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 10.7,
+      "evapotranspiration": 1.33
+    },
+    {
+      "date": "2024-01-13",
+      "temp_max": 15.8,
+      "temp_min": 4.6,
+      "temp_mean": 8.9,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 8.7,
+      "evapotranspiration": 1.51
+    }
+  ]
+}

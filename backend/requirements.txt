@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sentinelhub
+rasterio
+pandas
+numpy
+scikit-learn
+groq
+python-dotenv
+requests

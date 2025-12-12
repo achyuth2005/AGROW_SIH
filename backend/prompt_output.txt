@@ -1,0 +1,458 @@
+Starting SAR Prediction Pipeline for Maize on 2024-01-15...
+[OK] Nearest SAR data found: 2024-01-13
+[OK] Data extracted: 624 pixels
+[DEBUG] Image dimensions: Height=33, Width=19
+[DEBUG] Patch Size: 2, Stride: 1
+[DEBUG] Generated 568 patches with shape (2, 2, 3)
+[OK] Generated 568 patches
+Computing SAR statistical features...
+[OK] Computed features for 568 patches
+Performing K-Means clustering (k=3)...
+[OK] Cluster distribution:
+  Cluster 0: 215 patches (37.9%)
+  Cluster 1: 140 patches (24.6%)
+  Cluster 2: 213 patches (37.5%)
+Detecting anomalies (contamination=0.1)...
+[OK] Detected 57 anomalies (10.0%)
+[OK] Anomaly score range: [0.000, 1.000]
+Fetching weather data...
+Calling Gemini LLM...
+
+================================================================================
+LLM INPUT PROMPT
+================================================================================
+
+You are an expert agricultural AI analyzing SAR (Synthetic Aperture Radar) satellite data for crop health assessment.
+
+FIELD-WIDE STATISTICS (All 568 patches):
+- VV Backscatter Mean: -6.12 dB (Std: 3.28)
+- VH Backscatter Mean: -14.55 dB (Std: 3.95)
+- VV/VH Ratio Mean: 8.43 dB (Std: 3.64)
+- Patch Size: 20m x 20m each
+
+STRESS ZONE STATISTICS (57 stressed patches = 10.0% of field):
+- VV Backscatter Mean: -6.94 dB (Std: 5.67)
+- VH Backscatter Mean: -15.05 dB (Std: 7.39)
+- VV/VH Ratio Mean: 8.11 dB (Std: 5.68)
+
+INTERPRETATION GUIDE FOR SAR DATA:
+- VV Backscatter: Sensitive to crop structure and biomass (higher = more biomass)
+- VH Backscatter: Sensitive to vegetation volume and moisture (higher = healthier vegetation)
+- VV/VH Ratio: Indicator of crop type and growth stage (higher = more mature/dense vegetation)
+
+TASK:
+Based on the SAR data, weather conditions, and comparison between field-wide and stress-zone statistics, provide a structured crop health assessment.
+
+CRITICAL: You MUST respond with ONLY a valid JSON object (no markdown, no code blocks, no extra text) in this EXACT format:
+
+{
+  "greenness_status": "one to five phrases about field greenness with respect to available data",
+  "greenness_level": "high" or "moderate" or "low",
+  "nitrogen_status": "one to five phrases about nitrogen level in soil with respect to available data",
+  "nitrogen_level": "high" or "moderate" or "low",
+  "biomass_status": "one to five phrases about biomass with respect to available data",
+  "biomass_level": "high" or "moderate" or "low",
+  "heat_stress_status": "one to five phrases about heat stress with respect to available data",
+  "heat_stress_level": "high" or "moderate" or "low",
+  "overall_crop_health": "one to five phrases about overall crop health with respect to available data",
+  "crop_phenology_state": "the current phenological state of crop in a single word by analysing all the data given"
+}
+
+IMPORTANT REASONING GUIDELINES:
+1. Compare stress zone stats vs field-wide stats to identify deficiencies
+2. Lower VH backscatter in stress zones indicates reduced vegetation vigor (greenness)
+3. Lower VV/VH ratio suggests reduced biomass/nitrogen
+4. Consider weather data (temperature, precipitation) for heat stress assessment
+5. Use farmer's irrigation method and experience level in your assessment
+
+Respond with ONLY the JSON object, nothing else.
+
+================================================================================
+
+\n================================================================================
+FINAL OUTPUT FOR BACKEND
+================================================================================
+{
+  "date": "2024-01-13",
+  "stressed_patches": [
+    {
+      "lat": 30.908590909090908,
+      "lon": 75.83642105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.908590909090908,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.9085,
+      "lon": 75.83642105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.9085,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.9085,
+      "lon": 75.83663157894738,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.9085,
+      "lon": 75.83673684210527,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90840909090909,
+      "lon": 75.836,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90840909090909,
+      "lon": 75.83610526315789,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90840909090909,
+      "lon": 75.8362105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90840909090909,
+      "lon": 75.83642105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90840909090909,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90831818181818,
+      "lon": 75.8358947368421,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90831818181818,
+      "lon": 75.836,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90831818181818,
+      "lon": 75.83610526315789,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90831818181818,
+      "lon": 75.8362105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90831818181818,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90822727272727,
+      "lon": 75.836,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90822727272727,
+      "lon": 75.83610526315789,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90822727272727,
+      "lon": 75.83663157894738,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.83515789473684,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.83526315789473,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.83536842105262,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.8358947368421,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.836,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907954545454544,
+      "lon": 75.83663157894738,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907863636363636,
+      "lon": 75.83610526315789,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907772727272725,
+      "lon": 75.83526315789473,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907772727272725,
+      "lon": 75.83536842105262,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907772727272725,
+      "lon": 75.83547368421053,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907681818181818,
+      "lon": 75.83515789473684,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907681818181818,
+      "lon": 75.83526315789473,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907681818181818,
+      "lon": 75.83536842105262,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907681818181818,
+      "lon": 75.83547368421053,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907681818181818,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907590909090906,
+      "lon": 75.83536842105262,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907227272727273,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90713636363636,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90713636363636,
+      "lon": 75.83663157894738,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.907045454545454,
+      "lon": 75.83652631578947,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906863636363635,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906772727272728,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906772727272728,
+      "lon": 75.83568421052631,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90640909090909,
+      "lon": 75.83547368421053,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90640909090909,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90631818181818,
+      "lon": 75.83547368421053,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90631818181818,
+      "lon": 75.83557894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90622727272727,
+      "lon": 75.83631578947369,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.90622727272727,
+      "lon": 75.83642105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906136363636364,
+      "lon": 75.8357894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906136363636364,
+      "lon": 75.8362105263158,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906136363636364,
+      "lon": 75.83631578947369,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906045454545453,
+      "lon": 75.83526315789473,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906045454545453,
+      "lon": 75.83568421052631,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906045454545453,
+      "lon": 75.8357894736842,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906045454545453,
+      "lon": 75.836,
+      "status": "High Stress"
+    },
+    {
+      "lat": 30.906045454545453,
+      "lon": 75.83631578947369,
+      "status": "High Stress"
+    }
+  ],
+  "health_summary": {
+    "greenness_status": "Stressed patches show reduced vegetation volume and vigor. Lower VH backscatter (-15.05 dB) suggests reduced moisture content in localized areas. Overall field vigor appears stable but requires monitoring. The 0.5 dB drop confirms localized reduction in photosynthetic activity.",
+    "greenness_level": "moderate",
+    "nitrogen_status": "The reduction in VV/VH ratio (8.11 dB vs 8.43 dB) suggests reduced canopy density in stressed zones. Lower structural biomass (VV backscatter) is consistent with potential localized nutrient deficiency. Nitrogen deficiency is a possible contributing factor to the observed biomass reduction.",
+    "nitrogen_level": "moderate",
+    "biomass_status": "Stressed areas exhibit measurably lower structural biomass compared to the field average. The 0.82 dB reduction in VV backscatter confirms diminished crop structure. Overall field biomass is substantial, but 10% of the area is underperforming structurally.",
+    "biomass_level": "moderate",
+    "heat_stress_status": "The reduced VH backscatter indicates lower crop moisture content and vigor in the stress zone. High standard deviations in the stress zone suggest extreme variability in moisture retention. Localized drought effects or high heat exposure are likely causes for the observed moisture deficit.",
+    "heat_stress_level": "moderate",
+    "overall_crop_health": "10% of the field is experiencing stress characterized by reduced biomass and vigor. Primary indicators point toward localized reductions in moisture retention and structural development. Overall field health remains fair, but the stressed areas require immediate localized intervention.",
+    "crop_phenology_state": "Mature"
+  },
+  "weather_data": [
+    {
+      "date": "2024-01-06",
+      "temp_max": 15.4,
+      "temp_min": 4.2,
+      "temp_mean": 8.4,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 10.7,
+      "evapotranspiration": 1.48
+    },
+    {
+      "date": "2024-01-07",
+      "temp_max": 14.5,
+      "temp_min": 4.7,
+      "temp_mean": 7.8,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 7.0,
+      "evapotranspiration": 1.26
+    },
+    {
+      "date": "2024-01-08",
+      "temp_max": 15.4,
+      "temp_min": 4.5,
+      "temp_mean": 8.1,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 7.2,
+      "evapotranspiration": 1.48
+    },
+    {
+      "date": "2024-01-09",
+      "temp_max": 13.3,
+      "temp_min": 3.9,
+      "temp_mean": 7.3,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 9.5,
+      "evapotranspiration": 1.3
+    },
+    {
+      "date": "2024-01-10",
+      "temp_max": 14.7,
+      "temp_min": 3.8,
+      "temp_mean": 7.8,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 13.6,
+      "evapotranspiration": 1.38
+    },
+    {
+      "date": "2024-01-11",
+      "temp_max": 13.7,
+      "temp_min": 4.8,
+      "temp_mean": 7.6,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 9.6,
+      "evapotranspiration": 1.13
+    },
+    {
+      "date": "2024-01-12",
+      "temp_max": 14.9,
+      "temp_min": 3.9,
+      "temp_mean": 7.9,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 10.7,
+      "evapotranspiration": 1.33
+    },
+    {
+      "date": "2024-01-13",
+      "temp_max": 15.8,
+      "temp_min": 4.6,
+      "temp_mean": 8.9,
+      "precipitation": 0.0,
+      "rain": 0.0,
+      "wind_speed": 8.7,
+      "evapotranspiration": 1.51
+    }
+  ]
+}

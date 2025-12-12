@@ -18,6 +18,7 @@ COPY vegetation_indices.py .
 COPY stress_detection_model.py .
 COPY stress_detection_preprocessing.py .
 COPY llm_analysis.py .
+COPY groq_client.py .
 
 # Expose port
 EXPOSE 7860

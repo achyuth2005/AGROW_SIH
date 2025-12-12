@@ -310,7 +310,7 @@ flutter run -d <device_id>
 | **Sentinel-2 Analysis** | Python, Sentinel Hub | Hugging Face Spaces |
 | **Heatmap Generator** | Python, NumPy | Hugging Face Spaces |
 | **Time Series** | Python, Prophet | Hugging Face Spaces |
-| **SAR Analysis** | Python, FastAPI | Local/Cloud |
+| **SAR Analysis** | Python, FastAPI | Hugging Face Spaces |
 
 ### 🤗 Hugging Face Space Repositories
 

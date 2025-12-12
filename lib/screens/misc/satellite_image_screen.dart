@@ -408,8 +408,17 @@ class _SatelliteImageScreenState extends State<SatelliteImageScreen> {
           ),
           ElevatedButton(
             onPressed: () {
+              String url = urlController.text.trim();
+              if (url.isNotEmpty && !url.endsWith('/api/satellite')) {
+                if (url.endsWith('/')) {
+                   url = '${url}api/satellite';
+                } else {
+                   url = '$url/api/satellite';
+                }
+              }
+              
               setState(() {
-                _serverUrl = urlController.text.trim();
+                _serverUrl = url;
                 _isLoading = true;
                 _errorMessage = null;
               });

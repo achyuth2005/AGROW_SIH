@@ -250,8 +250,8 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setString('guest_session_start', DateTime.now().toIso8601String());
       
       if (mounted) {
-        // Navigate to language selection for guests
-        Navigator.pushReplacementNamed(context, '/guest-language');
+        // Navigate directly to Locate Farmland for guests
+        Navigator.pushReplacementNamed(context, '/locate-farmland');
       }
     } catch (e) {
       if (mounted) {

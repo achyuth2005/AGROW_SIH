@@ -268,22 +268,13 @@ class _FarmersHomeScreenState extends State<FarmersHomeScreen> {
     });
 
     try {
-      // Extract coords list [lat, lon]
-      List<double> center = [20.5937, 78.9629];
-      final coords = field['coordinates'];
-       if (coords is List && coords.isNotEmpty) {
-           final first = coords[0];
-           if (first is Map) {
-              center = [(first['lat'] ?? 20.5).toDouble(), (first['lng'] ?? first['lon'] ?? 78.9).toDouble()];
-           } else if (first is List) {
-             center = [(first as List)[1].toDouble(), first[0].toDouble()];
-           }
-      }
+      // Extract bounding box from lat1/lon1 format (same as home_screen.dart)
+      List<double> bbox = _parseCoordinatesToBbox(field);
       
       String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
       
       final result = await _sarService.analyzeField(
-        coordinates: center,
+        coordinates: bbox,
         date: today,
         cropType: field['crop_type'] ?? 'Farming',
         context: {},
@@ -1118,5 +1109,58 @@ class _FarmersHomeScreenState extends State<FarmersHomeScreen> {
         ),
       ),
     );
+  }
+
+  /// Parse coordinates from field data (lat1/lon1 format from Supabase) to bounding box
+  /// Returns [minLon, minLat, maxLon, maxLat] format expected by SAR service
+  List<double> _parseCoordinatesToBbox(Map<String, dynamic> data) {
+    List<double> lats = [];
+    List<double> lons = [];
+
+    // Check for flat structure (lat1, lon1, etc.) - this is how Supabase stores it
+    for (int i = 1; i <= 4; i++) {
+      if (data.containsKey('lat$i') && data.containsKey('lon$i')) {
+        final lat = data['lat$i'];
+        final lon = data['lon$i'];
+        if (lat != null && lon != null) {
+          lats.add((lat as num).toDouble());
+          lons.add((lon as num).toDouble());
+        }
+      }
+    }
+
+    // Fallback: if lat/lon columns not found, try 'coordinates' array format
+    if (lats.isEmpty || lons.isEmpty) {
+      final coords = data['coordinates'];
+      if (coords is List && coords.isNotEmpty) {
+        for (var point in coords) {
+          if (point is Map) {
+            final lat = point['lat'] ?? point['latitude'];
+            final lon = point['lng'] ?? point['lon'] ?? point['longitude'];
+            if (lat != null && lon != null) {
+              lats.add((lat as num).toDouble());
+              lons.add((lon as num).toDouble());
+            }
+          } else if (point is List && point.length >= 2) {
+            lats.add((point[1] as num).toDouble());
+            lons.add((point[0] as num).toDouble());
+          }
+        }
+      }
+    }
+
+    // If still empty, use default India coordinates
+    if (lats.isEmpty || lons.isEmpty) {
+      debugPrint("Warning: No valid coordinates found, using defaults");
+      return [78.95, 20.58, 78.97, 20.60]; // Default near India
+    }
+
+    double minLat = lats.reduce((curr, next) => curr < next ? curr : next);
+    double maxLat = lats.reduce((curr, next) => curr > next ? curr : next);
+    double minLon = lons.reduce((curr, next) => curr < next ? curr : next);
+    double maxLon = lons.reduce((curr, next) => curr > next ? curr : next);
+
+    // Return bounding box: [minLon, minLat, maxLon, maxLat]
+    return [minLon, minLat, maxLon, maxLat];
   }
 }

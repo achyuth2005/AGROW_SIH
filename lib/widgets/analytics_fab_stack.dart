@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/mapped_analytics_home_screen.dart';
+import '../screens/take_action_screen.dart';
 
 class AnalyticsFabStack extends StatelessWidget {
   const AnalyticsFabStack({super.key});
@@ -25,7 +26,9 @@ class AnalyticsFabStack extends StatelessWidget {
         children: [
           _buildFloatingButton(context, "Visual Analytics", null),
           const SizedBox(height: 6),
-          _buildFloatingButton(context, "Take Action Now", null),
+          _buildFloatingButton(context, "Take Action Now", () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const TakeActionScreen()));
+          }),
           const SizedBox(height: 6),
           _buildFloatingButton(context, "Mapped Analytics", () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const MappedAnalyticsHomeScreen()));

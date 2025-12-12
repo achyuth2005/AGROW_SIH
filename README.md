@@ -89,8 +89,6 @@ Real-time overview of your farmland with AI-analyzed status cards:
 
 ## 📸 Screenshots
 
-> **Note**: Add your screenshots to a `screenshots/` folder and update the paths below.
-
 ### Onboarding & Authentication
 
 | Landing Screen | Login | Registration |

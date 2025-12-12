@@ -476,42 +476,15 @@ def generate_heatmap_image(data: np.ndarray, index_type: str, gaussian_sigma: fl
 # LLM ANALYSIS (for risk metrics)
 # ============================================================================
 
-# Groq API keys with cascading fallback (21 keys total)
-GROQ_API_KEYS = [
-    # Original keys
-    "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",
-    "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",
-    "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",
-    "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",
-    "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",
-    "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",
-    "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",
-    "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",
-    "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",
-    # Keys added 2025-12-09 (batch 1)
-    "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",
-    "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",
-    "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",
-    "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",
-    "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",
-    "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",
-    "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",
-    "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",
-    "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",
-    # Keys added 2025-12-09 (batch 2)
-    "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",
-    "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",
-    "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",
-]
+# Import API keys from centralized module (loaded from environment)
+from groq_client import GROQ_API_KEYS, GROQ_MODEL
 
 def run_llm_analysis(metric: str, stress_context: dict, indices_data: dict, 
                      time_series_data: dict = None, weather_data: dict = None) -> dict:
     """Call Groq LLM with full context from stress detection, timeseries, and weather.
-    Uses cascading fallback through 4 API keys if one fails."""
+    Uses cascading fallback through API keys."""
     from groq import Groq
     import json
-    
-    GROQ_MODEL = "llama-3.3-70b-versatile"
     
     # Format stress context
     stress_text = format_stress_context(stress_context)

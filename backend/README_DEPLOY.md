@@ -29,7 +29,7 @@ Go to **Settings -> Variables and secrets** and add these 3 secrets.
 |------|-------|
 | `SH_CLIENT_ID` | `sh-709c1173-fc33-4a0e-90e4-b84161ed5b9d` |
 | `SH_CLIENT_SECRET` | `IdopxGFFr3NKFJ4Y2ywJRVfmM5eBB9b4` |
-| `GEMINI_API_KEY` | `AIzaSyDwQlpXuX2aybY7448RM_dovXrb7tBpQ4g` |
+| `GEMINI_API_KEY` | `your_gemini_api_key_here` |
 
 ## 4. Update App
 Once the Space is "Running", copy the **Direct URL** (click the 3 dots > Embed this space > Direct URL).

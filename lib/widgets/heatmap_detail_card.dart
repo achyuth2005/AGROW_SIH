@@ -1,3 +1,36 @@
+/// ============================================================================
+/// FILE: heatmap_detail_card.dart
+/// ============================================================================
+/// PURPOSE: Rich card widget combining heatmap visualization with time series
+///          and AI analysis. Used on soil/crop detail screens.
+/// 
+/// FEATURES:
+///   - Shows average value with trend indicator
+///   - Displays mini heatmap preview (tap to expand)
+///   - Integrates TimeSeriesChartWidget for temporal data
+///   - AI-generated analysis in description box
+///   - CACHING: Uses HeatmapCacheService for instant display
+///   - Refresh button to force fresh data
+/// 
+/// LAYOUT:
+///   ┌──────────────────────────────────────────────────────┐
+///   │ Title                           📦 2h ago   🔄      │
+///   ├────────────────────────────────────────────┬─────────┤
+///   │ 0.453                                       │ [MAP]  │
+///   │ ▲ Healthy levels                           │        │
+///   │ Good                                        │        │
+///   ├────────────────────────────────────────────┴─────────┤
+///   │             [TIME SERIES CHART]                      │
+///   ├──────────────────────────────────────────────────────┤
+///   │ Based on satellite analysis, the soil moisture...    │
+///   └──────────────────────────────────────────────────────┘
+/// 
+/// DEPENDENCIES:
+///   - heatmap_service.dart: Fetch heatmap images
+///   - heatmap_cache_service.dart: Local caching
+///   - timeseries_chart_widget.dart: Time series graphs
+/// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 import 'dart:convert';
@@ -5,9 +38,9 @@ import '../services/heatmap_service.dart';
 import '../services/heatmap_cache_service.dart';
 import 'timeseries_chart_widget.dart';
 
-/// A card widget that displays heatmap with average value, trend, and analysis
-/// Fetches data from API and shows results in the specified layout
-/// Caches results per field+metric for instant display
+/// A card widget that displays heatmap with average value, trend, and analysis.
+/// Fetches data from API and shows results in the specified layout.
+/// Caches results per field+metric for instant display.
 class HeatmapDetailCard extends StatefulWidget {
   final String title;
   final String metric;

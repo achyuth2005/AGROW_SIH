@@ -1,13 +1,33 @@
+/// ============================================================================
+/// FILE: farmers_bottom_nav_bar.dart
+/// ============================================================================
+/// PURPOSE: Simplified 4-item bottom navigation bar for farmers.
+///          Designed with fewer options for easier navigation.
+/// 
+/// NAVIGATION ITEMS:
+///   0: Home    - Main farmer dashboard
+///   1: Tools   - Take Action recommendations
+///   2: Fields  - Field management and mapping
+///   3: Chatbot - AI assistant
+/// 
+/// DESIGN FEATURES:
+///   - Background image (assets/backdown.png)
+///   - Rounded top corners (borderRadius: 28)
+///   - Animated selection state (lime green background)
+///   - Material icons (simpler than custom assets)
+///   - Fade transition between screens
+/// ============================================================================
+
 import 'package:flutter/material.dart';
-import 'package:agroww_sih/screens/farmers_home_screen.dart';
-import 'package:agroww_sih/screens/take_action_screen.dart';
-import 'package:agroww_sih/screens/farmland_map_screen.dart';
-import 'package:agroww_sih/screens/chatbot_screen.dart';
+import 'package:agroww_sih/screens/home/farmers_home_screen.dart';
+import 'package:agroww_sih/screens/features/take_action_screen.dart';
+import 'package:agroww_sih/screens/field/farmland_map_screen.dart';
+import 'package:agroww_sih/screens/features/chatbot_screen.dart';
 
 /// Simplified bottom navigation bar for farmers with 4 items
 class FarmersBottomNavBar extends StatelessWidget {
-  /// The currently selected navigation index (0-3)
-  /// 0: Home, 1: Tools, 2: Fields, 3: Profile
+  /// Currently selected index (0-3)
+  /// 0: Home, 1: Tools, 2: Fields, 3: Chatbot
   /// Set to -1 if no item should be highlighted
   final int selectedIndex;
 
@@ -28,13 +48,14 @@ class FarmersBottomNavBar extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // Background image
+          // Background image layer
           Positioned.fill(
             child: Image.asset(
               'assets/backdown.png',
               fit: BoxFit.cover,
             ),
           ),
+          // Navigation items container
           Container(
             height: 80,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -80,8 +101,9 @@ class FarmersBottomNavBar extends StatelessWidget {
     );
   }
   
+  /// Navigate to the appropriate screen with fade transition
   void _navigateTo(BuildContext context, int index) {
-    if (index == selectedIndex) return;
+    if (index == selectedIndex) return; // Already on this screen
     
     Widget destination;
     switch (index) {
@@ -113,6 +135,7 @@ class FarmersBottomNavBar extends StatelessWidget {
     );
   }
 
+  /// Build individual navigation item with Material icon
   Widget _buildNavItem({
     required BuildContext context,
     required IconData icon,
@@ -131,7 +154,7 @@ class FarmersBottomNavBar extends StatelessWidget {
         height: 56,
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFC6F68D) // Bright lime green for selected
+              ? const Color(0xFFC6F68D) // Lime green when selected
               : Colors.white.withOpacity(0.15),
           borderRadius: BorderRadius.circular(14),
         ),

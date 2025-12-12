@@ -1,13 +1,34 @@
-import 'package:flutter/material.dart';
-import 'package:agroww_sih/screens/analytics_screen.dart';
-import 'package:agroww_sih/screens/take_action_screen.dart';
-import 'package:agroww_sih/screens/home_screen.dart';
-import 'package:agroww_sih/screens/chatbot_screen.dart';
-import 'package:agroww_sih/screens/farmland_map_screen.dart';
+/// ============================================================================
+/// FILE: custom_bottom_nav_bar.dart
+/// ============================================================================
+/// PURPOSE: Premium-styled bottom navigation bar for agronomists/power users.
+///          Features 5 navigation items with custom icons and animations.
+/// 
+/// NAVIGATION ITEMS:
+///   0: Analytics  - Charts and data visualization
+///   1: Take Action - Actionable recommendations
+///   2: Home       - Main dashboard (center, slightly larger)
+///   3: Chatbot    - AI assistant
+///   4: Your Fields - Field management and mapping
+/// 
+/// DESIGN FEATURES:
+///   - Background image (assets/backdown.png)
+///   - Rounded top corners (borderRadius: 28)
+///   - Animated selection state (lime green background)
+///   - Custom icon assets for each item
+///   - Fade transition between screens
+/// ============================================================================
 
-/// Custom bottom navigation bar matching the app's design language.
+import 'package:flutter/material.dart';
+import 'package:agroww_sih/screens/analytics/analytics_screen.dart';
+import 'package:agroww_sih/screens/features/take_action_screen.dart';
+import 'package:agroww_sih/screens/home/home_screen.dart';
+import 'package:agroww_sih/screens/features/chatbot_screen.dart';
+import 'package:agroww_sih/screens/field/farmland_map_screen.dart';
+
+/// Custom bottom navigation bar for agronomists with 5 items
 class CustomBottomNavBar extends StatelessWidget {
-  /// The currently selected navigation index (0-4)
+  /// Currently selected index (0-4)
   /// 0: Analytics, 1: Take Action, 2: Home, 3: Chatbot, 4: Your Fields
   final int selectedIndex;
 
@@ -25,13 +46,14 @@ class CustomBottomNavBar extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Background image
+          // Background image layer
           Positioned.fill(
             child: Image.asset(
               'assets/backdown.png',
               fit: BoxFit.cover,
             ),
           ),
+          // Navigation items container
           Container(
             height: 95,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -40,29 +62,34 @@ class CustomBottomNavBar extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                  // Analytics
                   _buildNavItem(
                     context: context,
                     iconPath: 'assets/icons/Anlaytics icon.png',
                     index: 0,
                     destination: const AnalyticsScreen(),
                   ),
+                  // Take Action
                   _buildNavItem(
                     context: context,
                     iconPath: 'assets/icons/Take Action Icon.png',
                     index: 1,
                     destination: const TakeActionScreen(),
                   ),
+                  // Home (center, larger)
                   _buildHomeNavItem(
                     context: context,
                     index: 2,
                     destination: const HomeScreen(),
                   ),
+                  // Chatbot
                   _buildNavItem(
                     context: context,
                     iconPath: 'assets/icons/Chatbot.png',
                     index: 3,
                     destination: const ChatbotScreen(),
                   ),
+                  // Your Fields
                   _buildNavItem(
                     context: context,
                     iconPath: 'assets/icons/Your fields.png',
@@ -78,6 +105,7 @@ class CustomBottomNavBar extends StatelessWidget {
     );
   }
 
+  /// Build standard navigation item with custom icon
   Widget _buildNavItem({
     required BuildContext context,
     required String iconPath,
@@ -89,6 +117,7 @@ class CustomBottomNavBar extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (index != selectedIndex) {
+          // Use pushReplacement with fade transition
           Navigator.pushReplacement(
             context,
             PageRouteBuilder(
@@ -107,8 +136,8 @@ class CustomBottomNavBar extends StatelessWidget {
         height: 60,
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFC6F68D) // Bright lime green for selected
-              : Colors.white.withValues(alpha: 0.12), // Subtle white box for unselected
+              ? const Color(0xFFC6F68D) // Lime green when selected
+              : Colors.white.withValues(alpha: 0.12), // Subtle white when not
           borderRadius: BorderRadius.circular(16),
           border: isSelected 
               ? null 
@@ -121,13 +150,14 @@ class CustomBottomNavBar extends StatelessWidget {
             height: 34,
             color: isSelected 
                 ? const Color(0xFF0F2420) // Dark when selected
-                : Colors.white, // White when not selected
+                : Colors.white, // White when not
           ),
         ),
       ),
     );
   }
 
+  /// Build home navigation item (center, slightly larger)
   Widget _buildHomeNavItem({
     required BuildContext context,
     required int index,
@@ -152,12 +182,12 @@ class CustomBottomNavBar extends StatelessWidget {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 65,
+        width: 65, // Slightly larger
         height: 65,
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFC6F68D) // Bright lime green for selected
-              : Colors.white.withValues(alpha: 0.12), // Subtle white box for unselected
+              ? const Color(0xFFC6F68D)
+              : Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(18),
           border: isSelected 
               ? null 
@@ -168,12 +198,11 @@ class CustomBottomNavBar extends StatelessWidget {
             Icons.home_rounded,
             size: 38,
             color: isSelected 
-                ? const Color(0xFF0F2420) // Dark when selected
-                : Colors.white, // White when not selected
+                ? const Color(0xFF0F2420)
+                : Colors.white,
           ),
         ),
       ),
     );
   }
 }
-

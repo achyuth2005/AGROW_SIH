@@ -1,3 +1,35 @@
+/// ============================================================================
+/// FILE: heatmap_widget.dart
+/// ============================================================================
+/// PURPOSE: Displays a mini heatmap preview with tap-to-expand functionality.
+///          Shows spatial variation of soil/crop metrics across the field.
+/// 
+/// FEATURES:
+///   - Fetches heatmap from HeatmapService on init
+///   - Shows loading/error states
+///   - Tap to show full-screen dialog with:
+///     - LLM analysis (if available)
+///     - Min/Mean/Max statistics
+///     - Full-size heatmap image
+/// 
+/// SUPPORTED METRICS:
+///   Pixelwise: soil_moisture, soil_fertility, greenness, nitrogen_level
+///   LLM: pest_risk, disease_risk, nutrient_stress, stress_zones
+/// 
+/// USAGE:
+///   HeatmapWidget(
+///     centerLat: 19.0760,
+///     centerLon: 72.8777,
+///     metric: 'soil_moisture',
+///     title: 'Soil Moisture',
+///   )
+/// 
+/// DEPENDENCIES:
+///   - flutter/material.dart: UI framework
+///   - heatmap_service.dart: API calls
+///   - dart:typed_data: For image bytes
+/// ============================================================================
+
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../services/heatmap_service.dart';

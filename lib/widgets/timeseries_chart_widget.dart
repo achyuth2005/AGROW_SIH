@@ -1,10 +1,51 @@
+/// ============================================================================
+/// FILE: timeseries_chart_widget.dart
+/// ============================================================================
+/// PURPOSE: Interactive line chart showing historical data and AI predictions
+///          for vegetation/soil indices over time.
+/// 
+/// FEATURES:
+///   - Historical data (solid line) + Forecast (dashed line)
+///   - Cache-first strategy: Show cached data instantly, refresh in background
+///   - Touch interaction: Tap points to see details
+///   - Timespan toggle: 30-day view vs full history
+///   - Trend indicator: Rising, Falling, Stable
+///   - Smart Y-axis scaling for vegetation indices (small value ranges)
+///   - Animated loading state with progress indicator
+/// 
+/// CACHING FLOW:
+///   1. Check TimeSeriesCacheService for cached data
+///   2. If found: Display immediately, show "📦 Cached" indicator
+///   3. If stale (>5 days): Fetch fresh in background
+///   4. When fresh data arrives: Update display, hide refresh indicator
+/// 
+/// SUPPORTED METRICS:
+///   Vegetation: NDVI, EVI, NDRE, PRI
+///   Soil: SMI, SOMI, SFI, SASI
+///   SAR: VV, VH
+/// 
+/// USAGE:
+///   TimeSeriesChartWidget(
+///     centerLat: 19.0760,
+///     centerLon: 72.8777,
+///     metric: 'NDVI',
+///     title: 'Vegetation Health',
+///     height: 200,
+///   )
+/// 
+/// DEPENDENCIES:
+///   - fl_chart: Charting library
+///   - timeseries_service.dart: Fetch/compute indices
+///   - timeseries_cache_service.dart: File-based caching
+/// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/timeseries_service.dart';
 import '../services/timeseries_cache_service.dart';
 
-/// Interactive Time Series Chart Widget
-/// Shows cached data immediately while fetching fresh predictions in background
+/// Interactive Time Series Chart Widget.
+/// Shows cached data immediately while fetching fresh predictions in background.
 class TimeSeriesChartWidget extends StatefulWidget {
   final double centerLat;
   final double centerLon;

@@ -356,11 +356,11 @@ agroww_sih/
 │       ├── heatmap_widget.dart   # Heatmap visualization
 │       ├── timeseries_chart_widget.dart
 │       └── ...
-├── backend/                      # Local backend services
-│   ├── app.py                    # FastAPI server
-│   ├── SAR_prediction.py         # SAR analysis pipeline
-│   └── gemini_llm_integration.py # LLM integration
 ├── hf_deploy/                    # Hugging Face deployments
+│   ├── SAR-Analysis/             # SAR analysis service (Core Backend)
+│   │   ├── app.py                # FastAPI server
+│   │   ├── SAR_prediction.py     # SAR analysis pipeline
+│   │   └── gemini_llm_integration.py
 │   ├── Chatbot/                  # AI chatbot service
 │   ├── AGROW-Sentinel2/          # Sentinel-2 analysis
 │   ├── Heatmap/                  # Heatmap generation

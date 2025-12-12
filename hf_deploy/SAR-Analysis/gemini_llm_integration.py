@@ -28,6 +28,7 @@ OUTPUT FORMAT:
     - greenness_status/level: Vegetation color health
     - nitrogen_status/level: Nutrient content
     - biomass_status/level: Plant mass/growth
+"""
 
 # =============================================================================
 # MAIN LLM FUNCTION

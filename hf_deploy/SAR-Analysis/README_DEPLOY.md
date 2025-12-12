@@ -10,7 +10,7 @@ Follow these steps EXACTLY to deploy your backend from scratch.
 5. Click **Create Space**.
 
 ## 2. Upload Files
-Upload ONLY these files from your `backend` folder to the "Files" tab of your new Space:
+Upload ONLY these files from your `hf_deploy/SAR-Analysis` folder to the "Files" tab of your new Space:
 - `app.py`
 - `SAR_prediction.py`
 - `feature_engineering.py`

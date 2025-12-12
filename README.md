@@ -312,6 +312,17 @@ flutter run -d <device_id>
 | **Time Series** | Python, Prophet | Hugging Face Spaces |
 | **SAR Analysis** | Python, FastAPI | Local/Cloud |
 
+### 🤗 Hugging Face Space Repositories
+
+| Service | Repository (Files) |
+|---------|-------------------|
+| **Chatbot** | [Aniket2006/Chatbot](https://huggingface.co/spaces/Aniket2006/Chatbot/tree/main) |
+| **Sentinel-2 Analysis** | [aniket2006/agrow-sentinel2](https://huggingface.co/spaces/aniket2006/agrow-sentinel2/tree/main) |
+| **Heatmap Generator** | [aniket2006/heatmap](https://huggingface.co/spaces/aniket2006/heatmap/tree/main) |
+| **Time Series** | [Aniket2006/TimeSeries](https://huggingface.co/spaces/Aniket2006/TimeSeries/tree/main) |
+| **Voice Transcription** | [aniket2006/agrow-voice](https://huggingface.co/spaces/aniket2006/agrow-voice/tree/main) |
+| **SAR Backend** | [aniket2006/agrow-backend-v2](https://huggingface.co/spaces/aniket2006/agrow-backend-v2/tree/main) |
+
 ### Data & Infrastructure
 
 | Component | Technology |
@@ -417,14 +428,14 @@ flutter analyze
 
 **Team WhatTheHack (ID: 86238)**
 
-| Name | Role | GitHub |
-|------|------|--------|
-| Member 1 | Team Lead / ML Engineer | [@github](https://github.com) |
-| Member 2 | Flutter Developer | [@github](https://github.com) |
-| Member 3 | Backend Developer | [@github](https://github.com) |
-| Member 4 | UI/UX Designer | [@github](https://github.com) |
-| Member 5 | Data Engineer | [@github](https://github.com) |
-| Member 6 | DevOps | [@github](https://github.com) |
+| Name | Role |
+|------|------|
+| Aniket Mandal | Team Lead / App Developer |
+| Adith Jayakrishnan | AI/ML Engineer |
+| Achyuth A | AI/ML Engineer |
+| Aditya Chauhan | UI/UX Designer and Product Researcher |
+| Dhyan Shah | UI/UX Designer and Product Researcher |
+| Priti Nag | Operations & Strategy |
 
 ---
 

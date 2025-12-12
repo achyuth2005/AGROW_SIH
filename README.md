@@ -374,6 +374,36 @@ agroww_sih/
 
 ---
 
+## 👨‍💻 Developer Guide
+
+### 📱 Accessing the App Source Code (Flutter/Dart)
+All application logic, UI screens, and widgets are located in the `lib/` directory.
+- **Entry Point**: `lib/main.dart` - Start here to trace the app execution.
+- **UI Screens**: `lib/screens/` - Contains all pages (Home, Chatbot, Analytics, etc.).
+- **Widgets**: `lib/widgets/` - Reusable UI components.
+- **Business Logic**: `lib/services/` - API calls, caching, and state management.
+- **Data Models**: `lib/models/` - JSON serialization and data structures.
+
+### 🧠 Accessing Machine Learning Models
+All ML models and backend services are deployed via **Hugging Face Spaces**. Their source code is located in the `hf_deploy/` directory.
+
+- **SAR Analysis (Core Backend)**: `hf_deploy/SAR-Analysis/`
+  - Handles SAR satellite data processing and Gemini LLM integration.
+- **Chatbot (LLM)**: `hf_deploy/Chatbot/`
+  - Logic for the agricultural AI assistant using Groq/Llama.
+- **Sentinel-2 Analysis**: `hf_deploy/AGROW-Sentinel2/`
+  - Processes optical satellite imagery for vegetation indices.
+- **Heatmap Generation**: `hf_deploy/Heatmap/`
+  - Generates color-coded overlays for field variability.
+- **Time Series Prediction**: `hf_deploy/TimeSeries/`
+  - Prophet models for forecasting crop health trends.
+- **Voice Transcription**: `hf_deploy/Voice/`
+  - Whisper-based model for voice-to-text features.
+
+Each folder contains the Python code (`app.py`), `Dockerfile`, and `requirements.txt` needed to deploy that specific microservice.
+
+---
+
 ## 🔧 Configuration
 
 ### Firebase Setup
@@ -430,8 +460,8 @@ flutter analyze
 
 | Name | Role |
 |------|------|
-| Aniket Mandal | Team Lead / App Developer |
-| Adith Jayakrishnan | AI/ML Engineer |
+| [Aniket Mandal](https://github.com/Aniket2006) | Team Lead / App Developer |
+| [Adith Jayakrishnan](https://github.com/adithjayakrishnan) | AI/ML Engineer |
 | Achyuth A | AI/ML Engineer |
 | Aditya Chauhan | UI/UX Designer and Product Researcher |
 | Dhyan Shah | UI/UX Designer and Product Researcher |

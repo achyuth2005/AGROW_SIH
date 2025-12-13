@@ -30,6 +30,10 @@ OUTPUT FORMAT:
     - biomass_status/level: Plant mass/growth
 """
 
+import json
+from groq import Groq
+from groq_client import GROQ_API_KEYS, GROQ_MODEL
+
 # =============================================================================
 # MAIN LLM FUNCTION
 # =============================================================================

@@ -14,6 +14,48 @@
 ///   - Farmers see simplified dashboards with actionable advice
 ///   - Agronomists/Researchers see detailed technical data and tools
 /// 
+/// ROLE LOADING FLOW:
+///   ┌─────────────────────────────────────────────────────────────────────────┐
+///   │                         APP STARTUP                                     │
+///   │                             │                                           │
+///   │                             ▼                                           │
+///   │                     loadRole() called                                   │
+///   │                             │                                           │
+///   │          ┌──────────────────┴──────────────────┐                        │
+///   │          ▼                                     ▼                        │
+///   │   Check SharedPrefs                    Check Supabase DB                │
+///   │   (fast, offline)                      (requires internet)              │
+///   │          │                                     │                        │
+///   │          ▼                                     ▼                        │
+///   │   ┌─────────────┐                      ┌─────────────────┐              │
+///   │   │ Found role? │──YES──► Use it      │ Found profile?  │──YES──► Use  │
+///   │   └─────────────┘                      └─────────────────┘              │
+///   │          │ NO                                  │ NO                     │
+///   │          └─────────────────┬───────────────────┘                        │
+///   │                            ▼                                            │
+///   │                  role = UserRole.unknown                                │
+///   │                            │                                            │
+///   │                            ▼                                            │
+///   │                   notifyListeners()                                     │
+///   │                   (rebuild all UI)                                      │
+///   └─────────────────────────────────────────────────────────────────────────┘
+/// 
+/// ROLE CHANGE FLOW (after questionnaire):
+///   ┌──────────────────────────────────────────────────────────────────────┐
+///   │  User completes questionnaire                                        │
+///   │            │                                                         │
+///   │            ▼                                                         │
+///   │     setRole("farmer")                                                │
+///   │            │                                                         │
+///   │    ┌───────┴───────┐                                                 │
+///   │    ▼               ▼                                                 │
+///   │ Update _role   Save to SharedPrefs                                   │
+///   │    │               │                                                 │
+///   │    └───────┬───────┘                                                 │
+///   │            ▼                                                         │
+///   │   notifyListeners() ──► UI rebuilds ──► Farmer/Researcher screen     │
+///   └──────────────────────────────────────────────────────────────────────┘
+/// 
 /// USAGE EXAMPLE:
 ///   // In any widget:
 ///   final roleProvider = context.watch<UserRoleProvider>();

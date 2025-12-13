@@ -6,6 +6,39 @@
 ///   2. Reduce API calls and save bandwidth/battery
 ///   3. Work offline with previously fetched data
 /// 
+/// CACHE-FIRST ARCHITECTURE:
+///   ┌─────────────────────────────────────────────────────────────────────────┐
+///   │  User opens field dashboard                                             │
+///   │           │                                                             │
+///   │           ▼                                                             │
+///   │  ┌─────────────────┐                                                    │
+///   │  │ Check cache for │                                                    │
+///   │  │ this field ID   │                                                    │
+///   │  └────────┬────────┘                                                    │
+///   │           │                                                             │
+///   │     ┌─────┴─────┐                                                       │
+///   │     ▼           ▼                                                       │
+///   │  CACHE HIT   CACHE MISS                                                 │
+///   │     │           │                                                       │
+///   │     ▼           │                                                       │
+///   │  Show cached    │                                                       │
+///   │  data instantly  │                                                       │
+///   │     │           │                                                       │
+///   │     ▼           ▼                                                       │
+///   │  ┌───────────────────────────┐                                          │
+///   │  │ Check: needsRefresh()?   │                                          │
+///   │  │ (new satellite image?)   │                                          │
+///   │  └────────────┬──────────────┘                                          │
+///   │        YES    │    NO                                                   │
+///   │     ┌─────────┴────────┐                                                │
+///   │     ▼                  ▼                                                │
+///   │  Fetch fresh      Use cached                                            │
+///   │  data (async)     data as-is                                            │
+///   │     │                                                                   │
+///   │     ▼                                                                   │
+///   │  saveCache() ──► Update UI                                              │
+///   └─────────────────────────────────────────────────────────────────────────┘
+/// 
 /// WHAT THIS FILE DOES:
 ///   - Saves SAR and Sentinel-2 analysis results to SharedPreferences
 ///   - Tracks which satellite image date the cached data is based on

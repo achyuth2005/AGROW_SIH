@@ -2,6 +2,46 @@
 /// FILE: prediction_service.dart
 /// ============================================================================
 /// PURPOSE: Manages prediction pipeline jobs for satellite time series.
+///          Coordinates async ML predictions running on Hugging Face backend.
+/// 
+/// PREDICTION PIPELINE FLOW:
+///   ┌──────────────────────────────────────────────────────────────────────────┐
+///   │  FLUTTER APP                          HF BACKEND                         │
+///   │      │                                    │                              │
+///   │      │  1. startPrediction(polygonCoords) │                              │
+///   │      │ ──────────────────────────────────►│ Starts async job             │
+///   │      │                                    │      │                       │
+///   │      │  2. Returns { job_id, field_hash } │◄─────┘                       │
+///   │      │ ◄───────────────────────────────── │                              │
+///   │      │                                    │                              │
+///   │      │  3. pollStatus(field_hash)         │                              │
+///   │      │ ──────────────────────────────────►│ Check progress               │
+///   │      │                                    │      │                       │
+///   │      │  { status: "processing", 45% }     │◄─────┘                       │
+///   │      │ ◄───────────────────────────────── │                              │
+///   │      │         ... (repeat every 5s) ...  │                              │
+///   │      │                                    │                              │
+///   │      │  { status: "complete", 100% }      │                              │
+///   │      │ ◄───────────────────────────────── │                              │
+///   │      │                                    │                              │
+///   │      │  4. getData(field_hash)            │                              │
+///   │      │ ──────────────────────────────────►│ Get predictions              │
+///   │      │                                    │      │                       │
+///   │      │  { sar_predictions, sentinel2_... }│◄─────┘                       │
+///   │      │ ◄───────────────────────────────── │                              │
+///   │      ▼                                    │                              │
+///   │  Display time series charts               │                              │
+///   └──────────────────────────────────────────────────────────────────────────┘
+/// 
+/// JOB STATUS STATES:
+///   ┌────────────┐     ┌────────────┐     ┌────────────┐
+///   │  pending   │ ──► │ processing │ ──► │  complete  │
+///   └────────────┘     └────────────┘     └────────────┘
+///                            │
+///                            ▼
+///                      ┌────────────┐
+///                      │   error    │
+///                      └────────────┘
 /// 
 /// DEPENDENCIES: http, dart:convert, dart:async
 /// ============================================================================

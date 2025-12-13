@@ -11,12 +11,55 @@
 ///   - Files allow better organization (one file per field+metric)
 ///   - Easier to manage individually (clear old data, inspect for debugging)
 /// 
+/// VERSION FALLBACK SYSTEM (3 iterations):
+///   When saving new data, old versions are rotated to provide fallback
+///   in case the latest cache is corrupted.
+/// 
+///   SAVE FLOW (version rotation):
+///   ┌────────────────────────────────────────────────────────────────────────┐
+///   │  saveToCache() called with fresh data                                  │
+///   │              │                                                         │
+///   │              ▼                                                         │
+///   │  ┌─────────────────────────────────────┐                               │
+///   │  │         ROTATE VERSIONS             │                               │
+///   │  │  v3 (oldest) ──► DELETE             │                               │
+///   │  │  v2 ──► becomes v3                  │                               │
+///   │  │  v1 ──► becomes v2                  │                               │
+///   │  │  current ──► becomes v1             │                               │
+///   │  └─────────────────────────────────────┘                               │
+///   │              │                                                         │
+///   │              ▼                                                         │
+///   │  Write fresh data as new current (v0)                                  │
+///   └────────────────────────────────────────────────────────────────────────┘
+/// 
+///   LOAD FLOW (version fallback):
+///   ┌────────────────────────────────────────────────────────────────────────┐
+///   │  getCached() called                                                    │
+///   │              │                                                         │
+///   │              ▼                                                         │
+///   │  Try current (v0) ───► Success? ──YES──► Return data                   │
+///   │              │ FAIL                                                    │
+///   │              ▼                                                         │
+///   │  Try backup v1 ───────► Success? ──YES──► Return data                  │
+///   │              │ FAIL                                                    │
+///   │              ▼                                                         │
+///   │  Try backup v2 ───────► Success? ──YES──► Return data                  │
+///   │              │ FAIL                                                    │
+///   │              ▼                                                         │
+///   │  Try backup v3 ───────► Success? ──YES──► Return data                  │
+///   │              │ FAIL                                                    │
+///   │              ▼                                                         │
+///   │  Return null (no valid cache)                                          │
+///   └────────────────────────────────────────────────────────────────────────┘
+/// 
 /// CACHE STRUCTURE:
 ///   App Documents Directory/
 ///   └── timeseries_cache/
-///       ├── 19_0760_72_8777_NDVI.json  ← Field at (19.076, 72.8777), NDVI
-///       ├── 19_0760_72_8777_SMI.json   ← Same field, Soil Moisture
-///       └── 20_5937_78_9629_NDVI.json  ← Different field
+///       ├── 19_0760_72_8777_NDVI.json       ← Current version (v0)
+///       ├── 19_0760_72_8777_NDVI_v1.json    ← Backup v1
+///       ├── 19_0760_72_8777_NDVI_v2.json    ← Backup v2
+///       ├── 19_0760_72_8777_NDVI_v3.json    ← Backup v3 (oldest)
+///       └── 19_0760_72_8777_SMI.json        ← Different metric
 /// 
 /// FUZZY MATCHING:
 ///   GPS coordinates have floating-point precision issues. A location might

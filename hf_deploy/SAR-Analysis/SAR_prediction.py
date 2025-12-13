@@ -36,11 +36,11 @@ try:
 except ImportError:
     print("Warning: Custom modules not found. Ensure feature_engineering.py and clustering.py are present.")
 
-# Import Gemini Integration
+# Import Groq LLM Integration
 try:
-    from gemini_llm_integration import prepare_llm_input
+    from groq_llm_integration import prepare_llm_input
 except ImportError:
-    print("Warning: gemini_llm_integration.py not found. LLM features will be disabled.")
+    print("Warning: groq_llm_integration.py not found. LLM features will be disabled.")
 
 # ============================================================================
 # USER INPUTS (DEFAULTS)

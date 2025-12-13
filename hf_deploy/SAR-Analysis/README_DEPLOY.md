@@ -15,22 +15,24 @@ Upload ONLY these files from your `hf_deploy/SAR-Analysis` folder to the "Files"
 - `SAR_prediction.py`
 - `feature_engineering.py`
 - `clustering.py`
-- `gemini_llm_integration.py`
+- `groq_llm_integration.py`
+- `groq_client.py`
 - `requirements.txt`
 - `Dockerfile`
 
 > **Note:** Do NOT upload `.env` or `__pycache__`.
 
 ## 3. Set Secrets (Crucial Step!)
-Go to **Settings -> Variables and secrets** and add these 3 secrets.
+Go to **Settings -> Variables and secrets** and add these secrets.
 **Copy the values EXACTLY. Do not add any spaces.**
 
 | Name | Value |
 |------|-------|
 | `SH_CLIENT_ID` | `sh-709c1173-fc33-4a0e-90e4-b84161ed5b9d` |
 | `SH_CLIENT_SECRET` | `IdopxGFFr3NKFJ4Y2ywJRVfmM5eBB9b4` |
-| `GEMINI_API_KEY` | `your_gemini_api_key_here` |
+| `GROQ_API_KEYS` | `your_groq_api_keys_comma_separated` |
 
 ## 4. Update App
 Once the Space is "Running", copy the **Direct URL** (click the 3 dots > Embed this space > Direct URL).
 Update `lib/services/sar_analysis_service.dart` with this new URL.
+

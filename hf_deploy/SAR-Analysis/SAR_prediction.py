@@ -118,10 +118,15 @@ def find_nearest_date(catalog, collection, bbox, target_date_str, max_days_diff=
     TECH: Sentinel Hub Catalog API, STAC metadata search.
     RETURNS: Date string (YYYY-MM-DD) of nearest available scene.
     """
+    # Convert target date string to datetime for comparison
     target_date = datetime.datetime.strptime(target_date_str, "%Y-%m-%d")
+    
+    # Create search window: +/- max_days_diff around target
     start_date = (target_date - timedelta(days=max_days_diff)).strftime("%Y-%m-%d")
     end_date = (target_date + timedelta(days=max_days_diff)).strftime("%Y-%m-%d")
     
+    # Query Sentinel Hub catalog for available scenes in this window
+    # Filter: IW = Interferometric Wide swath mode (standard for land)
     results = catalog.search(
         collection=collection,
         bbox=bbox,
@@ -131,8 +136,9 @@ def find_nearest_date(catalog, collection, bbox, target_date_str, max_days_diff=
     
     scenes = list(results)
     if not scenes:
-        return None
-        
+        return None  # No imagery available in this time window
+    
+    # Extract unique dates and find the one closest to target
     available_dates = sorted(list(set([scene['properties']['datetime'].split('T')[0] for scene in scenes])))
     nearest_date = min(available_dates, key=lambda x: abs(datetime.datetime.strptime(x, "%Y-%m-%d") - target_date))
     return nearest_date
@@ -145,9 +151,16 @@ def fetch_sar_data(config, S1, date_str, aoi_coords, resolution, out_dir):
     PROCESSING: Linear→dB (10*log10), Gamma0 terrain correction, orthorectification.
     RETURNS: Paths to VV and VH GeoTIFF files.
     """
+    # Create bounding box in WGS84 coordinate system
     AOI_BBOX = BBox(bbox=aoi_coords, crs=CRS.WGS84)
+    
+    # Calculate pixel dimensions based on resolution (10m = ~10m per pixel)
     size = bbox_to_dimensions(AOI_BBOX, resolution=resolution)
     
+    # Evalscript: JavaScript code that runs on Sentinel Hub servers
+    # Converts raw linear backscatter to decibels (dB) for easier interpretation
+    # VV = Vertical-Vertical polarization (good for structure/roughness)
+    # VH = Vertical-Horizontal polarization (good for vegetation volume)
     evalscript = """
     //VERSION=3
     function setup() {
@@ -161,6 +174,8 @@ def fetch_sar_data(config, S1, date_str, aoi_coords, resolution, out_dir):
     }
     
     function evaluatePixel(sample) {
+      // Convert linear to dB: 10 * log10(value)
+      // -9999 is used as nodata flag for invalid pixels
       let vv_db = (sample.VV > 0) ? 10 * Math.log(sample.VV) / Math.LN10 : -9999;
       let vh_db = (sample.VH > 0) ? 10 * Math.log(sample.VH) / Math.LN10 : -9999;
       return { VV: [vv_db], VH: [vh_db] };
@@ -218,34 +233,41 @@ def process_to_dataframe(vv_path, vh_path, date_str):
     TECH: Rasterio spatial transforms, coordinate extraction.
     FEATURES: VV_dB, VH_dB, VV/VH ratio (soil moisture indicator).
     """
+    # Validate input file exists
     if not vv_path or not os.path.exists(vv_path):
         return pd.DataFrame()
-        
+    
+    # Read VV band data (vertical-vertical polarization)
     with rasterio.open(vv_path) as src:
-        vv_data = src.read(1)
-        transform = src.transform
-        
+        vv_data = src.read(1)  # Read first (only) band
+        transform = src.transform  # Affine transform for coordinate conversion
+    
+    # Read VH band data (vertical-horizontal polarization)
     with rasterio.open(vh_path) as src:
         vh_data = src.read(1)
-        
+    
+    # Create coordinate grids for each pixel
     height, width = vv_data.shape
     rows, cols = np.meshgrid(np.arange(height), np.arange(width), indexing='ij')
+    
+    # Convert pixel coordinates to geographic coordinates (lon/lat)
     xs, ys = rasterio.transform.xy(transform, rows.flatten(), cols.flatten())
     
+    # Build records for DataFrame, skipping nodata pixels (-9999)
     records = []
     for i in range(len(xs)):
         vv = vv_data.flatten()[i]
         vh = vh_data.flatten()[i]
-        if vv > -9999 and vh > -9999:
+        if vv > -9999 and vh > -9999:  # Filter out nodata values
             records.append({
                 'timestamp': pd.to_datetime(date_str),
                 'row': rows.flatten()[i],
                 'col': cols.flatten()[i],
                 'lon': xs[i],
                 'lat': ys[i],
-                'VV_dB': vv,
-                'VH_dB': vh,
-                'VV_VH_ratio_dB': vv - vh
+                'VV_dB': vv,  # Vertical-vertical backscatter in dB
+                'VH_dB': vh,  # Vertical-horizontal backscatter in dB
+                'VV_VH_ratio_dB': vv - vh  # Ratio indicates soil moisture
             })
             
     return pd.DataFrame(records)

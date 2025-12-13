@@ -55,6 +55,9 @@ class TimeSeriesCacheService {
   /// Name of the cache subdirectory
   static const String _cacheDir = 'timeseries_cache';
   
+  /// Maximum number of backup versions to keep (for fallback)
+  static const int _maxVersions = 3;
+  
   // ===========================================================================
   // CACHE KEY GENERATION
   // ===========================================================================
@@ -62,11 +65,13 @@ class TimeSeriesCacheService {
   /// Generate a unique filename for a field+metric combination.
   /// Converts coordinates to safe filename format by replacing . with _
   /// Example: (19.0760, 72.8777, "NDVI") → "19_0760_72_8777_NDVI.json"
-  static String _getCacheKey(double lat, double lon, String metric) {
+  /// Version 0 = current, 1-3 = backup versions
+  static String _getCacheKey(double lat, double lon, String metric, {int version = 0}) {
     // Round to 4 decimal places for consistency (~11m precision)
     final latKey = lat.toStringAsFixed(4).replaceAll('.', '_');
     final lonKey = lon.toStringAsFixed(4).replaceAll('.', '_');
-    return '${latKey}_${lonKey}_$metric.json';
+    final versionSuffix = version == 0 ? '' : '_v$version';
+    return '${latKey}_${lonKey}_$metric$versionSuffix.json';
   }
   
   // ===========================================================================
@@ -84,10 +89,46 @@ class TimeSeriesCacheService {
     return cacheDir;
   }
   
-  /// Get the cache file path for a specific field+metric.
-  static Future<File> _getCacheFile(double lat, double lon, String metric) async {
+  /// Get the cache file path for a specific field+metric and version.
+  static Future<File> _getCacheFile(double lat, double lon, String metric, {int version = 0}) async {
     final dir = await _getCacheDirectory();
-    return File('${dir.path}/${_getCacheKey(lat, lon, metric)}');
+    return File('${dir.path}/${_getCacheKey(lat, lon, metric, version: version)}');
+  }
+  
+  /// Rotate cache versions before saving new data.
+  /// Current → v1 → v2 → v3 → deleted
+  static Future<void> _rotateVersions(double lat, double lon, String metric) async {
+    try {
+      final dir = await _getCacheDirectory();
+      
+      // Delete oldest version (v3 if exists)
+      final v3File = File('${dir.path}/${_getCacheKey(lat, lon, metric, version: 3)}');
+      if (await v3File.exists()) {
+        await v3File.delete();
+        print('[Cache] Deleted oldest backup v3 for $metric');
+      }
+      
+      // Rotate v2 → v3
+      final v2File = File('${dir.path}/${_getCacheKey(lat, lon, metric, version: 2)}');
+      if (await v2File.exists()) {
+        await v2File.rename(v3File.path);
+      }
+      
+      // Rotate v1 → v2
+      final v1File = File('${dir.path}/${_getCacheKey(lat, lon, metric, version: 1)}');
+      if (await v1File.exists()) {
+        await v1File.rename(v2File.path);
+      }
+      
+      // Rotate current → v1
+      final currentFile = await _getCacheFile(lat, lon, metric);
+      if (await currentFile.exists()) {
+        await currentFile.rename(v1File.path);
+        print('[Cache] Rotated current cache to v1 for $metric');
+      }
+    } catch (e) {
+      print('[Cache] Version rotation error: $e');
+    }
   }
   
   // ===========================================================================
@@ -119,17 +160,24 @@ class TimeSeriesCacheService {
   ) async {
     try {
       // -----------------------------------------------------------------------
-      // Step 1: Try exact filename match
+      // Step 1: Try all versions (current, v1, v2, v3) until one works
       // -----------------------------------------------------------------------
-      final file = await _getCacheFile(lat, lon, metric);
-      if (await file.exists()) {
-        try {
-          final contents = await file.readAsString();
-          final json = jsonDecode(contents) as Map<String, dynamic>;
-          print('[Cache] Found exact match for $metric at $lat, $lon');
-          return CachedTimeSeriesResult.fromJson(json);
-        } catch (e) {
-          print('[Cache] Error reading exact match: $e');
+      for (int version = 0; version <= _maxVersions; version++) {
+        final file = await _getCacheFile(lat, lon, metric, version: version);
+        if (await file.exists()) {
+          try {
+            final contents = await file.readAsString();
+            final json = jsonDecode(contents) as Map<String, dynamic>;
+            if (version == 0) {
+              print('[Cache] Found current cache for $metric at $lat, $lon');
+            } else {
+              print('[Cache] Using fallback v$version for $metric (current was corrupt)');
+            }
+            return CachedTimeSeriesResult.fromJson(json);
+          } catch (e) {
+            print('[Cache] Version $version corrupt for $metric: $e');
+            continue; // Try next version
+          }
         }
       }
       
@@ -199,6 +247,9 @@ class TimeSeriesCacheService {
     TimeSeriesResult result,
   ) async {
     try {
+      // Rotate existing versions before saving new data
+      await _rotateVersions(lat, lon, metric);
+      
       final file = await _getCacheFile(lat, lon, metric);
       final cached = CachedTimeSeriesResult(
         result: result,
@@ -208,8 +259,9 @@ class TimeSeriesCacheService {
         metric: metric,
       );
       await file.writeAsString(jsonEncode(cached.toJson()));
+      print('[Cache] Saved new version for $metric (kept ${_maxVersions} backups)');
     } catch (e) {
-      print('Cache write error: $e');
+      print('[Cache] Write error: $e');
     }
   }
   

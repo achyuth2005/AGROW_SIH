@@ -98,6 +98,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 // UUID - generates unique IDs (like a fingerprint for each user/session)
 import 'package:uuid/uuid.dart';
 
+// Background refresh service for time series cache
+import 'services/background_refresh_service.dart';
+
 // =============================================================================
 // MAIN FUNCTION - The app starts here!
 // =============================================================================
@@ -171,9 +174,17 @@ Future<void> main() async {
   
   // Handle notifications that arrive when the app is closed/background
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
+  // ---------------------------------------------------------------------------
+  // STEP 7: Initialize Background Refresh Service
+  // ---------------------------------------------------------------------------
+  // This refreshes stale time series cache for ALL fields every 5 days.
+  // Runs in background, doesn't block app startup.
+  // Existing cache is preserved until new data is fully fetched.
+  BackgroundRefreshService.init(); // Don't await - runs in background
 
   // ---------------------------------------------------------------------------
-  // STEP 7: Launch the App!
+  // STEP 8: Launch the App!
   // ---------------------------------------------------------------------------
   // runApp() takes our root widget and displays it on screen.
   // 

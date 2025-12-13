@@ -1,7 +1,20 @@
 """
 SAR Prediction Pipeline
------------------------
-Fetches nearest SAR data, processes it, runs stress analysis, and queries LLM.
+=======================
+Core ML pipeline for Sentinel-1 SAR (Synthetic Aperture Radar) soil analysis.
+
+TECHNOLOGIES:
+- Sentinel Hub API: Real-time satellite data acquisition
+- Rasterio/GDAL: GeoTIFF processing and spatial transformations
+- Scikit-learn: K-means clustering for stress zone detection
+- Groq LLM (Llama 3.3 70B): AI-powered agricultural recommendations
+
+PIPELINE:
+1. Fetch nearest SAR imagery from Sentinel-1 satellite
+2. Process VV/VH polarization bands to dB scale
+3. Extract soil features (moisture index, surface roughness)
+4. Cluster-based stress zone detection
+5. LLM generates actionable insights
 """
 
 import os
@@ -76,7 +89,12 @@ OUT_DIR = os.path.join(os.getcwd(), 'sar_prediction_output')
 # ============================================================================
 
 def setup_sentinelhub():
-    """Configure Sentinel Hub credentials and data collection."""
+    """
+    Initialize Sentinel Hub API with Copernicus Data Space credentials.
+    
+    TECH: OAuth2 authentication, Sentinel-1 GRD data collection config.
+    RETURNS: (config, S1_collection) tuple for API requests.
+    """
     config = SHConfig()
     
     config.sh_client_id = "sh-709c1173-fc33-4a0e-90e4-b84161ed5b9d"
@@ -94,7 +112,12 @@ def setup_sentinelhub():
     return config, S1
 
 def find_nearest_date(catalog, collection, bbox, target_date_str, max_days_diff=10):
-    """Find the nearest available date to the target date."""
+    """
+    Search satellite catalog for closest available imagery to target date.
+    
+    TECH: Sentinel Hub Catalog API, STAC metadata search.
+    RETURNS: Date string (YYYY-MM-DD) of nearest available scene.
+    """
     target_date = datetime.datetime.strptime(target_date_str, "%Y-%m-%d")
     start_date = (target_date - timedelta(days=max_days_diff)).strftime("%Y-%m-%d")
     end_date = (target_date + timedelta(days=max_days_diff)).strftime("%Y-%m-%d")
@@ -115,7 +138,13 @@ def find_nearest_date(catalog, collection, bbox, target_date_str, max_days_diff=
     return nearest_date
 
 def fetch_sar_data(config, S1, date_str, aoi_coords, resolution, out_dir):
-    """Download SAR data for a specific date."""
+    """
+    Download and process Sentinel-1 radar imagery.
+    
+    TECH: Evalscript (JavaScript), VV/VH polarization, dB conversion.
+    PROCESSING: Linear→dB (10*log10), Gamma0 terrain correction, orthorectification.
+    RETURNS: Paths to VV and VH GeoTIFF files.
+    """
     AOI_BBOX = BBox(bbox=aoi_coords, crs=CRS.WGS84)
     size = bbox_to_dimensions(AOI_BBOX, resolution=resolution)
     
@@ -183,7 +212,12 @@ def fetch_sar_data(config, S1, date_str, aoi_coords, resolution, out_dir):
     return None, None
 
 def process_to_dataframe(vv_path, vh_path, date_str):
-    """Convert GeoTIFFs to DataFrame."""
+    """
+    Convert raster GeoTIFFs to pandas DataFrame for ML processing.
+    
+    TECH: Rasterio spatial transforms, coordinate extraction.
+    FEATURES: VV_dB, VH_dB, VV/VH ratio (soil moisture indicator).
+    """
     if not vv_path or not os.path.exists(vv_path):
         return pd.DataFrame()
         
@@ -218,8 +252,10 @@ def process_to_dataframe(vv_path, vh_path, date_str):
 
 def fetch_weather_data(lat, lon, start_date, end_date):
     """
-    Fetch weather data from Open-Meteo API (FREE, no API key needed).
-    Returns daily weather data for the specified period.
+    Fetch historical weather data from Open-Meteo API.
+    
+    TECH: REST API, no key required, WMO weather codes.
+    RETURNS: DataFrame with temperature, humidity, precipitation, wind.
     """
     url = "https://archive-api.open-meteo.com/v1/archive"
     

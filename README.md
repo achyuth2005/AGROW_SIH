@@ -460,7 +460,7 @@ flutter analyze
 |------|------|
 | [Aniket Mandal](https://github.com/Aniket2006) | Team Lead / App Developer |
 | [Adith Jayakrishnan](https://github.com/adithjayakrishnan) | AI/ML Engineer |
-| Achyuth A | AI/ML Engineer |
+| [Achyuth A](https://github.com/achyuth2005) | AI/ML Engineer |
 | Aditya Chauhan | UI/UX Designer and Product Researcher |
 | Dhyan Shah | UI/UX Designer and Product Researcher |
 | Priti Nag | Operations & Strategy |

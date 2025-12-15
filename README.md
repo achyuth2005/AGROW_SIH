@@ -352,36 +352,71 @@ The architecture synthesizes vegetation indices, spectral signatures, and SAR ba
 ![Processing Pipeline](assets/diagrams/processing_pipeline.png)
 
 #### 3.1 Sentinel-1 SAR Processing
-Microwave backscatter ($\sigma^0$) is processed to determine structure and wetness.
-- **Backscatter Equation**: $\sigma^0 = \frac{P_r R^4}{P_t G_t G_r \lambda^2}$
-- **dB Conversion**: $\sigma^0_{dB} = 10 \cdot \log_{10}(\sigma^0)$
-- **Radar Vegetation Index (RVI)**: Proxy for biomass density.
-  $$ RVI = \frac{4 \cdot \sigma^0_{VH}}{\sigma^0_{VV} + \sigma^0_{VH}} $$
+Microwave backscatter (σ⁰) is processed to determine structure and wetness.
+
+**Backscatter Equation**:
+```math
+σ⁰ = (Pr * R⁴) / (Pt * Gt * Gr * λ²)
+```
+
+**dB Conversion**:
+```math
+σ⁰_dB = 10 * log10(σ⁰)
+```
+
+**Radar Vegetation Index (RVI)** (Proxy for biomass density):
+```math
+RVI = (4 * σ⁰_VH) / (σ⁰_VV + σ⁰_VH)
+```
 
 #### 3.2 Sentinel-2 Optical Cloud Removal (DSen2-CR)
 Cloud pixels are reconstructed using a ResNet-like encoder-decoder fused with SAR data.
-- **Input Tensor**: $X = [S2_{cloudy}, SAR_{VV}, SAR_{VH}, mask]$
-- **Reconstruction**: $\hat{S2}_{clean} = f_{DSen2}(X)$
+
+**Input Tensor**: `X = [S2_cloudy, SAR_VV, SAR_VH, mask]`
+**Reconstruction**: `S2_clean = f_DSen2(X)`
 
 #### 3.3 Vegetation Indices
 We compute a spectral signature vector for each spatial patch:
-- **NDVI**: $\frac{NIR - Red}{NIR + Red}$ (General Health)
-- **EVI**: $2.5 \cdot \frac{NIR - Red}{NIR + 6\cdot Red - 7.5\cdot Blue + 1}$ (Biomass)
-- **NDRE**: $\frac{NIR - RedEdge}{NIR + RedEdge}$ (Chlorophyll/Nitrogen)
-- **MSI**: $\frac{SWIR}{NIR}$ (Moisture Stress)
+
+- **NDVI** (General Health):
+  ```math
+  NDVI = (NIR - Red) / (NIR + Red)
+  ```
+- **EVI** (Biomass):
+  ```math
+  EVI = 2.5 * ((NIR - Red) / (NIR + 6*Red - 7.5*Blue + 1))
+  ```
+- **NDRE** (Chlorophyll/Nitrogen):
+  ```math
+  NDRE = (NIR - RedEdge) / (NIR + RedEdge)
+  ```
+- **MSI** (Moisture Stress):
+  ```math
+  MSI = SWIR / NIR
+  ```
 
 #### 3.4 Deep Learning Spatio-Temporal Encoder
-The core engine processes 4D tensors ($Batch, Time, Height, Width, Channels$).
+The core engine processes 4D tensors (`Batch`, `Time`, `Height`, `Width`, `Channels`).
 
 **A. 3D CNN Spatial Encoder**
 Extracts local spatio-temporal features using asymmetric pooling to preserve time resolution.
-$$ Y_{t,i,j,k} = \sum_{\omega,u,v,c} W_{\omega,u,v,c,k} \cdot X_{t-\omega, i-u, j-v, c} $$
-Filter depth increases hierarchically ($32 \to 64 \to 128$).
+```math
+Y[t,i,j,k] = Σ (W[ω,u,v,c,k] * X[t-ω, i-u, j-v, c])
+```
+Filter depth increases hierarchically (32 → 64 → 128).
 
 **B. Temporal Encoder (BiLSTM / Transformer)**
-- **Transformer**: Uses self-attention ($Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_k}})V$) for long-range dependencies.
+
+- **Transformer**: Uses self-attention mechanism for long-range dependencies.
+  ```math
+  Attention(Q,K,V) = softmax((Q * K_T) / √d_k) * V
+  ```
+
 - **BiLSTM**: Captures sequential dependencies efficiently for shorter windows (10 timestamps).
-  $$ h_t = LSTM(x_t, h_{t-1}) \leftrightarrow h'_t = LSTM(x_t, h'_{t+1}) $$
+  ```math
+  h_t = LSTM(x_t, h_{t-1})
+  h'_t = LSTM(x_t, h'_{t+1})
+  ```
   Final embedding is the concatenation of forward and backward states.
 
 ### 4. Unsupervised Classification & Anomaly Detection
@@ -390,12 +425,18 @@ Post-encoding, the system categorizes crop health without labeled training data.
 
 #### 4.1 Stress Clustering (K-Means)
 Groups temporal embeddings into 4 stress levels (Low, Moderate, High, Severe).
-- **Objective**: $\arg \min_{C_1,...C_k} \sum_{i=1}^k \sum_{x \in C_i} ||x - \mu_i||^2$
+**Objective**: Minimize the within-cluster sum of squares.
+```math
+arg min Σ ||x - μ_i||²
+```
 
 #### 4.2 Anomaly Isolation (Isolation Forest)
 Detects outliers (e.g., sudden pest attacks).
-- **Anomaly Score**: $s(x) = 2^{-\frac{E(h(x))}{c(n)}}$
-- Low path length $h(x)$ indicates an anomaly ($s \approx 1$).
+**Anomaly Score**:
+```math
+s(x) = 2^(-E(h(x)) / c(n))
+```
+- Low path length `h(x)` indicates an anomaly (`s ≈ 1`).
 
 ### 5. Intelligent Inference Engine (LLM Logic)
 

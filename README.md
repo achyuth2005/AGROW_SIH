@@ -214,6 +214,203 @@ sequenceDiagram
 
 ---
 
+## �️ AI/ML Pipeline: Orbital Intelligence
+
+### Executive Summary
+
+The modern landscape of environmental monitoring is characterized by a data deluge, where the challenge lies not in acquisition but in the extraction of actionable intelligence from raw satellite substrates. This report details a sophisticated "Orbital Intelligence" pipeline designed to forecast agricultural states. The system integrates a geospatial ingestion layer, a multi-modal sensor fusion mechanism (Optical and Radar), and a specialized deep learning architecture known as N-HITS (Neural Hierarchical Interpolation for Time Series). Unlike generic Transformer-based models, this pipeline utilizes signal processing principles to achieve biological plausibility and computational efficiency.
+
+![Pipeline Workflow](assets/diagrams/pipeline_workflow.png)
+
+### 1. The Geospatial Ingestion Layer: From Coordinates to Data Cubes
+
+The pipeline’s entry point converts a simple coordinate pair (latitude/longitude) into a four-dimensional historical archive. This process involves complex geometric transformations to align user inputs with satellite reference systems.
+
+- **Grid Projection**: User coordinates (typically WGS84/EPSG:4326) are projected onto the Military Grid Reference System (MGRS) used by missions like Sentinel-2. The system identifies specific 100x100 km tiles (granules) intersecting the Region of Interest (ROI).
+- **Spatial Intersection**: To ensure data density, the pipeline calculates a bounding box around the coordinate to query all intersecting granules, capturing observations from overlapping orbital tracks.
+- **Temporal Resolution**: The system manages the stochastic nature of satellite revisit times (approx. 5 days for Sentinel-2) by creating a "Target Time Grid," resampling irregular acquisitions into a regular interval using quality flags to mitigate atmospheric noise.
+- **The Mixed Pixel Problem**: To address spatial resolution limitations (10m for Sentinel-2), the pipeline fetches a "patch" (e.g., 3x3 pixels) rather than a single point, utilizing spatial aggregation (median values) to reduce geolocation errors and noise.
+
+### 2. The Sensorium: Multi-Modal Data Fusion
+
+To overcome the limitations of single-source sensing, the pipeline orchestrates a fusion of passive Optical radiometry and active Synthetic Aperture Radar (SAR).
+
+![Data Preprocessing](assets/diagrams/data_preprocessing.png)
+
+#### 2.1 Optical Radiometry (Sentinel-2)
+This stream captures solar reflectance across 13 spectral bands, serving as the "chemical signature" of the crop.
+- **Spectral Physics**: The pipeline prioritizes "Red Edge" bands (B5, B6, B7), which measure the transition between red absorption and Near-Infrared (NIR) reflectance—a critical proxy for chlorophyll content.
+- **Vegetation Indices**: The system computes indices such as the Normalized Difference Vegetation Index (NDVI) to track phenological cycles.
+- **The Atmospheric Barrier**: A major limitation is cloud cover, which renders optical pixels as "Missing Data" (NaN). In tropical regions, up to 60% of time series data may be lost to cloud occlusion.
+
+#### 2.2 Synthetic Aperture Radar (Sentinel-1)
+To mitigate optical data loss, the pipeline employs C-band microwave pulses (~5.6 cm wavelength) which penetrate clouds, fog, and smoke.
+- **Backscatter Physics**: The system analyzes backscatter (σ⁰) to determine physical structure (roughness) and dielectric properties (moisture content).
+- **Polarisation Channels**:
+  - **VV (Vertical-Vertical)**: Interacts strongly with vertical structures like wheat stalks.
+  - **VH (Vertical-Horizontal)**: Captures volume scattering within the canopy, serving as a proxy for biomass density.
+
+#### 2.3 Feature-Level Fusion
+The fusion module aligns the timestamps of Radar and Optical data into a unified tensor. The deep learning model implicitly learns the correlation between Radar backscatter and Optical indices, allowing it to infer vegetation states from Radar data alone when Optical data is missing.
+
+### 3. The Predictive Engine: N-HITS Architecture
+
+The core of the pipeline is the N-HITS (Neural Hierarchical Interpolation for Time Series) model. It is selected over Transformer architectures due to the latter's computational cost (O(L²)) and lack of inductive bias for smoothness.
+
+#### 3.1 Hierarchical Decomposition
+N-HITS operates on the principle of "Divide and Conquer via Frequency," premised on the understanding that agricultural time series are composites of distinct signal frequencies. The architecture decomposes the forecasting problem into three specialized components:
+- **Trend Component (Low Frequency)**: Captures gradual, monotonic changes such as crop maturation over a season.
+- **Seasonality Component (Medium Frequency)**: Captures recurring cyclic patterns, such as annual wet/dry cycles.
+- **Detail Component (High Frequency)**: Captures stochastic fluctuations and immediate noise, often driven by wind or sensor artifacts.
+
+#### 3.2 Multi-Rate Data Sampling
+To isolate these components, the model employs Multi-Rate Data Sampling, effectively analyzing the input tensor at varying resolutions.
+- **The Trend Specialist (Block 1)**: Ingests a highly subsampled input (e.g., 1 point every 10 days). By viewing a coarse-grained representation, this block becomes "blind" to high-frequency noise, allowing it to model the macroscopic growth trajectory exclusively.
+- **The Seasonal Specialist (Block 2)**: Processes data at medium resolution to extract monthly or weekly periodicities.
+- **The Detail Specialist (Block 3)**: Processes high-resolution, daily data to model immediate variations.
+
+#### 3.3 Neural Basis Expansion
+Unlike standard Multi-Layer Perceptrons (MLPs) that output independent point-wise predictions, N-HITS utilizes Neural Basis Expansion to enforce continuity. The network predicts a small set of coefficients which are then projected onto mathematical basis functions (such as polynomials or Fourier series).
+- **Mathematical Constraint**: By limiting the number of coefficients (e.g., using 5 coefficients to define a 100-day curve), the model is mathematically constrained to produce a smooth output. This interpolation prevents the generation of jagged, erratic forecasts, ensuring the output respects the physical inertia of biological systems.
+
+### 4. Automated Adaptation Strategy
+
+The `auto_tuning_predictor` (specifically the `AutoNHITS` class) addresses the challenge of spatial heterogeneity. Because crop phenology and environmental response functions vary drastically across the globe—from wheat fields in France to soy plantations in Brazil—a static model architecture is insufficient.
+
+![Automated Adaptation](assets/diagrams/automated_adaptation.png)
+
+#### 4.1 The High-Dimensional Search Space
+To optimize performance for a specific geospatial coordinate, the pipeline must navigate a complex hyper-parameter space. Key structural parameters include:
+- **Input Horizon**: The length of historical context required (Lookback Window).
+- **Kernel Size**: The aggressiveness of the subsampling pooling layers.
+- **Network Depth**: The number of layers required to capture signal complexity.
+
+#### 4.2 Bayesian Optimization via Tree-Structured Parzen Estimators (TPE)
+The pipeline automates the role of the data scientist by executing an optimization loop utilizing efficient search algorithms like Tree-structured Parzen Estimators (TPE).
+1. **Trial Generation**: The system spawns multiple model instances ("trials") with varying architectural configurations.
+2. **Adaptive Pruning**: Unlike Grid Search (which exhaustively tests all combinations) or Random Search, TPE learns from the history of trials. If the algorithm detects that large kernel sizes yield high error metrics (e.g., MAE or CRPS) on the validation set, it effectively prunes that region of the search space.
+3. **Convergence**: This adaptive learning allows the `auto_tuning_predictor` to converge on an optimal, location-specific architecture in a fraction of the computational time required by traditional methods, ensuring scalability across millions of coordinates.
+
+### 5. Qualitative Superiority: Beyond Numerical Error Metrics
+
+While numerical accuracy (RMSE/MAE) is standard, we emphasize qualitative superiority, defining the "behavioral" quality of the forecast which determines user trust and operational utility.
+
+- **Biological Plausibility**: Unlike Transformers that may latch onto noise and produce jagged predictions, N-HITS' hierarchical interpolation produces smooth, continuous curves that mimic organic growth. The model captures the physical inertia of vegetation.
+- **Interpretability**: The architecture inherently decomposes the forecast into Trend, Seasonality, and Detail stacks, effectively allowing "Visual Debugging" of the model's reasoning.
+- **Long-Horizon Stability**: By using Direct Multi-Step Forecasting (predicting all future points simultaneously), we avoid the error propagation typical of autoregressive models (RNNs/LSTMs), ensuring stability for 90-day harvest forecasts.
+- **Computational Efficiency ("Green AI")**: N-HITS trains up to 50x faster than Transformers, reducing carbon footprint and allowing compute budget to be reallocated to the detailed `auto_tuning_predictor` loops.
+
+### 🤖 Prompt Engineering & Context-Awareness
+
+The AGROW Assistant goes beyond standard RAG (Retrieval Augmented Generation) by constructing dynamically engineered prompts that act as a "Contextual Container" for the LLM.
+
+#### The Context Injection Protocol
+Instead of generic system prompts, every user query is wrapped in a high-fidelity context block containing live telemetry:
+- **Satellite Telemetry**: The prompt includes the latest computed NDVI, NDRE, and Moisture values (e.g., *"NDVI is 0.42, trending down 10% from last week"*).
+- **Agronomic Grounding**: We inject specific crop parameters (e.g., *"Current crop is Wheat at Vegetative Stage 3"*).
+- **Location Specificity**: Coordinates and local weather forecasts are embedded to ground the advice in physical reality.
+
+#### System Instructions & Guardrails
+The LLM is strictly instructed via system prompts to:
+1. **Prioritize Data**: "Answer based STRICTLY on the provided telemetry values. Do not give generic advice if data contradicts it."
+2. **Cite Evidence**: "When recommending irrigation, cite the current Soil Moisture Index (0.3) as the reason."
+3. **Avoid Hallucination**: "If satellite data is cloudy/missing, state that explicitly rather than inventing values."
+
+This tailored prompt engineering turns the LLM from a generic chatbot into a data-driven agronomic consultant.
+
+---
+
+## 🧬 Deep Multi-Modal Fusion: Stress Detection & Logic
+
+### Executive Summary
+
+Remote sensing has revolutionized agricultural monitoring by enabling the observation of crop health at unprecedented spatial and temporal scales. However, optical sensors like Sentinel-2 frequently suffer from cloud occlusion, which severely disrupts temporal continuity and data reliability. To address this, we developed a robust, multi-modal machine learning pipeline that integrates optical imagery with Synthetic Aperture Radar (SAR) data from Sentinel-1. Unlike optical sensors, SAR penetrates cloud cover and operates independently of weather and illumination, making it an ideal complementary modality.
+
+The architecture synthesizes vegetation indices, spectral signatures, and SAR backscatter patterns. The workflow progresses from raw data acquisition through extensive preprocessing—including SAR speckle filtering and **Deep Sentinel-2 Cloud Removal (DSen2-CR)**—to a deep learning framework capable of spatio-temporal encoding. By utilizing **3D Convolutional Neural Networks (CNNs)** for spatial features and **BiLSTM/Transformer** models for temporal sequences, the system effectively identifies moisture deficits, pest onset, and soil nutrient stress through unsupervised K-Means clustering and anomaly detection.
+
+![Fusion Architecture](assets/diagrams/fusion_architecture.png)
+
+### 1. Objectives
+
+1. **Fuse** Sentinel-1 SAR and Sentinel-2 optical data for all-weather stress detection.
+2. **Perform Cloud Removal** using DSen2-CR.
+3. **Compute Indices** tailored to crop stress (Vegetation & Soil).
+4. **Train Deep Learning Models** on spatial–temporal satellite sequences.
+5. **Cluster & Detect Anomalies** to identify stress intensities.
+6. **Generate Agronomic Insights** using logic-driven LLM reasoning.
+
+### 2. Data Sources
+
+| Source | Sensor | Details |
+|--------|--------|---------|
+| **Sentinel-2 MSI** | Optical | Level-2A (Atmospherically Corrected). 13 spectral bands (Visible, Red Edge, NIR, SWIR). |
+| **Sentinel-1 SAR** | Radar | IW GRD Mode. C-band dual-polarization (VV + VH). Critical for cloud penetration. |
+| **OpenMeteo** | Weather | Meteorological context (temperature, precipitation) for the LLM reasoning engine. |
+
+### 3. Mathematical Framework & Algorithmic Formulations
+
+![Processing Pipeline](assets/diagrams/processing_pipeline.png)
+
+#### 3.1 Sentinel-1 SAR Processing
+Microwave backscatter ($\sigma^0$) is processed to determine structure and wetness.
+- **Backscatter Equation**: $\sigma^0 = \frac{P_r R^4}{P_t G_t G_r \lambda^2}$
+- **dB Conversion**: $\sigma^0_{dB} = 10 \cdot \log_{10}(\sigma^0)$
+- **Radar Vegetation Index (RVI)**: Proxy for biomass density.
+  $$ RVI = \frac{4 \cdot \sigma^0_{VH}}{\sigma^0_{VV} + \sigma^0_{VH}} $$
+
+#### 3.2 Sentinel-2 Optical Cloud Removal (DSen2-CR)
+Cloud pixels are reconstructed using a ResNet-like encoder-decoder fused with SAR data.
+- **Input Tensor**: $X = [S2_{cloudy}, SAR_{VV}, SAR_{VH}, mask]$
+- **Reconstruction**: $\hat{S2}_{clean} = f_{DSen2}(X)$
+
+#### 3.3 Vegetation Indices
+We compute a spectral signature vector for each spatial patch:
+- **NDVI**: $\frac{NIR - Red}{NIR + Red}$ (General Health)
+- **EVI**: $2.5 \cdot \frac{NIR - Red}{NIR + 6\cdot Red - 7.5\cdot Blue + 1}$ (Biomass)
+- **NDRE**: $\frac{NIR - RedEdge}{NIR + RedEdge}$ (Chlorophyll/Nitrogen)
+- **MSI**: $\frac{SWIR}{NIR}$ (Moisture Stress)
+
+#### 3.4 Deep Learning Spatio-Temporal Encoder
+The core engine processes 4D tensors ($Batch, Time, Height, Width, Channels$).
+
+**A. 3D CNN Spatial Encoder**
+Extracts local spatio-temporal features using asymmetric pooling to preserve time resolution.
+$$ Y_{t,i,j,k} = \sum_{\omega,u,v,c} W_{\omega,u,v,c,k} \cdot X_{t-\omega, i-u, j-v, c} $$
+Filter depth increases hierarchically ($32 \to 64 \to 128$).
+
+**B. Temporal Encoder (BiLSTM / Transformer)**
+- **Transformer**: Uses self-attention ($Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_k}})V$) for long-range dependencies.
+- **BiLSTM**: Captures sequential dependencies efficiently for shorter windows (10 timestamps).
+  $$ h_t = LSTM(x_t, h_{t-1}) \leftrightarrow h'_t = LSTM(x_t, h'_{t+1}) $$
+  Final embedding is the concatenation of forward and backward states.
+
+### 4. Unsupervised Classification & Anomaly Detection
+
+Post-encoding, the system categorizes crop health without labeled training data.
+
+#### 4.1 Stress Clustering (K-Means)
+Groups temporal embeddings into 4 stress levels (Low, Moderate, High, Severe).
+- **Objective**: $\arg \min_{C_1,...C_k} \sum_{i=1}^k \sum_{x \in C_i} ||x - \mu_i||^2$
+
+#### 4.2 Anomaly Isolation (Isolation Forest)
+Detects outliers (e.g., sudden pest attacks).
+- **Anomaly Score**: $s(x) = 2^{-\frac{E(h(x))}{c(n)}}$
+- Low path length $h(x)$ indicates an anomaly ($s \approx 1$).
+
+### 5. Intelligent Inference Engine (LLM Logic)
+
+To translate complex metrics into plain language, the chatbot employs a 4-stage **"Claim-Validate-Contradict-Confirm"** logic flow powered by Gemini.
+
+1. **Claim**: Formulate hypothesis based on primary evidence (e.g., *"Low NDVI detected"*).
+2. **Validate**: Check supporting evidence (e.g., *"Is it corroborated by the High Stress Cluster?"*).
+3. **Contradict**: Search for alternative causes (e.g., *"Could this be cloud noise or harvest seasoning?"*).
+4. **Confirm**: Finalize diagnosis using validation context (e.g., *"Confirmed Water Stress due to low SAR backscatter"*).
+
+**Priority Context Selection**:
+Intents are classified (e.g., `vegetation_health` vs `water_stress`) to prioritise data injection. A water stress query forces the LLM to focus on **SMI** and **SAR VV** data over generic greenness indices.
+
+---
+
 ## 🚀 Installation
 
 ### Prerequisites
@@ -461,9 +658,9 @@ flutter analyze
 | [Aniket Mandal (Team Leader)](https://github.com/Aniket2006) |
 | [Adith Jayakrishnan](https://github.com/adithjayakrishnan) |
 | [Achyuth A](https://github.com/achyuth2005) |
-| Aditya Chauhan |
+| [Aditya Chauhan](https://github.com/adityac03007) |
 | Dhyan Shah |
-| Priti Nag |
+| [Priti Nag](https://github.com/priti140305) |
 
 ---
 

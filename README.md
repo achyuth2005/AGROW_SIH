@@ -2,7 +2,9 @@
   <img src="assets/AGROWH.png" alt="AGROW Logo" width="300"/>
 </p>
 
-<h1 align="center">AGROW - Smart India Hackathon 2025</h1>
+<h1 align="center">AGROW</h1>
+
+<h2 align="center">🏆 WINNER - Smart India Hackathon 2025 🏆</h2>
 
 <p align="center">
   <strong>Multimodal AI-ML System for Proactive Crop Health and Stress Detection</strong>

@@ -53,3 +53,13 @@ emulator_cache_backup/
 timeseries_cache_backup.zip
 cache_backup.zip
 temp_cache_transfer/
+
+# Python
+__pycache__/
+venv/
+env/
+
+# Temporary Analysis Files
+grep_results_*.txt
+
+

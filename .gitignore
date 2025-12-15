@@ -47,3 +47,9 @@ app.*.map.json
 # Environment Variables
 .env
 
+
+# Cache and backup files
+emulator_cache_backup/
+timeseries_cache_backup.zip
+cache_backup.zip
+temp_cache_transfer/

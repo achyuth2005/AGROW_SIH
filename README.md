@@ -456,14 +456,14 @@ flutter analyze
 
 **Team WhatTheHack (ID: 86238)**
 
-| Name | Role |
-|------|------|
-| [Aniket Mandal](https://github.com/Aniket2006) | Team Lead / App Developer |
-| [Adith Jayakrishnan](https://github.com/adithjayakrishnan) | AI/ML Engineer |
-| [Achyuth A](https://github.com/achyuth2005) | AI/ML Engineer |
-| Aditya Chauhan | UI/UX Designer and Product Researcher |
-| Dhyan Shah | UI/UX Designer and Product Researcher |
-| Priti Nag | Operations & Strategy |
+| Name |
+|------|
+| [Aniket Mandal (Team Leader)](https://github.com/Aniket2006) |
+| [Adith Jayakrishnan](https://github.com/adithjayakrishnan) |
+| [Achyuth A](https://github.com/achyuth2005) |
+| Aditya Chauhan |
+| Dhyan Shah |
+| Priti Nag |
 
 ---
 

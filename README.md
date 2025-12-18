@@ -95,43 +95,49 @@ Real-time overview of your farmland with AI-analyzed status cards:
 
 | Landing Screen | Login | Registration |
 |:-------------:|:-----:|:------------:|
-| ![Landing](screenshots/landing_screen.png) | ![Login](screenshots/login_screen.png) | ![Register](screenshots/registration_screen.png) |
+| ![Landing](screenshots/01_landing_screen.png) | ![Login](screenshots/02_login_screen.png) | ![Register](screenshots/03_registration_screen.png) |
 
 ### Main Dashboard
 
-| Home Screen (Light) | Home Screen (Dark) | Field Selector |
+| Home Screen | Soil Status Dashboard | Crop Status Dashboard |
 |:------------------:|:------------------:|:--------------:|
-| ![Home](screenshots/home_screen.png) | ![Home Dark](screenshots/home_screen_dark.png) | ![Fields](screenshots/field_selector.png) |
+| ![Home](screenshots/04_home_screen.png) | ![Soil Dashboard](screenshots/05_dashboard_soil_status.png) | ![Crop Dashboard](screenshots/06_dashboard_crop_status.png) |
 
 ### Status Cards
 
-| Soil Status | Crop Status | Weather | Pest Risk |
+| Soil Status Detail | Crop Status Detail | Weather Status | Analytics Heatmap |
 |:-----------:|:-----------:|:-------:|:---------:|
-| ![Soil](screenshots/soil_status.png) | ![Crop](screenshots/crop_status.png) | ![Weather](screenshots/weather_status.png) | ![Pest](screenshots/pest_risk.png) |
+| ![Soil](screenshots/07_soil_status_detail.png) | ![Crop](screenshots/08_crop_status_detail.png) | ![Weather](screenshots/09_weather_status.png) | ![Analytics](screenshots/10_analytics_heatmap.png) |
 
 ### Field Mapping
 
-| Locate Farmland | Coordinate Entry | Field Preview |
-|:---------------:|:----------------:|:-------------:|
-| ![Locate](screenshots/locate_farmland.png) | ![Coords](screenshots/coordinate_entry.png) | ![Preview](screenshots/field_preview.png) |
+| Field Mapping | Coordinate Entry |
+|:---------------:|:----------------:|
+| ![Mapping](screenshots/20_field_mapping.png) | ![Coords](screenshots/21_coordinate_entry.png) |
 
 ### Analytics & Visualization
 
-| Analytics Dashboard | Heatmap View | Time Series |
-|:-------------------:|:------------:|:-----------:|
-| ![Analytics](screenshots/analytics.png) | ![Heatmap](screenshots/heatmap.png) | ![Timeseries](screenshots/timeseries.png) |
+| Heatmap View | Time Series Chart | Vegetation Indices |
+|:------------:|:-----------:|:--------------:|
+| ![Heatmap](screenshots/11_heatmap_view.png) | ![Timeseries](screenshots/12_timeseries_chart.png) | ![Indices](screenshots/13_vegetation_indices.png) |
 
 ### AI Chatbot
 
-| Chat Interface | Voice Input | Chat History |
-|:--------------:|:-----------:|:------------:|
-| ![Chat](screenshots/chatbot.png) | ![Voice](screenshots/voice_input.png) | ![History](screenshots/chat_history.png) |
+| Chat Interface | Voice Input | Chat Response |
+|:--------------:|:-----------:|:-------------:|
+| ![Chat](screenshots/14_chatbot_interface.png) | ![Voice](screenshots/15_voice_input.png) | ![Response](screenshots/16_chat_response.png) |
 
-### Take Action
+### Take Action & Recommendations
 
-| Recommendations | Irrigation Schedule | Field Variability |
-|:---------------:|:-------------------:|:-----------------:|
-| ![Action](screenshots/take_action.png) | ![Irrigation](screenshots/irrigation.png) | ![Variability](screenshots/field_variability.png) |
+| Recommendations | Irrigation Schedule | Field Insights |
+|:---------------:|:-------------------:|:--------------:|
+| ![Action](screenshots/17_take_action.png) | ![Irrigation](screenshots/18_irrigation_schedule.png) | ![Insights](screenshots/19_field_insights.png) |
+
+### Settings & Profile
+
+| Settings Sidebar | Profile | Notifications | Language Selection |
+|:----------------:|:-------:|:-------------:|:------------------:|
+| ![Settings](screenshots/22_settings_sidebar.png) | ![Profile](screenshots/25_profile_screen.png) | ![Notifications](screenshots/23_notifications.png) | ![Language](screenshots/24_language_selection.png) |
 
 ---
 

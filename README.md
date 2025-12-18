@@ -95,55 +95,55 @@ Real-time overview of your farmland with AI-analyzed status cards:
 
 | First Screen | Login | Registration |
 |:------------:|:-----:|:------------:|
-| ![First](screenshots/20_first_screen.png) | ![Login](screenshots/01_login_page.png) | ![Register](screenshots/21_registration.png) |
+| <img src="screenshots/20_first_screen.png" width="200"/> | <img src="screenshots/01_login_page.png" width="200"/> | <img src="screenshots/21_registration.png" width="200"/> |
 
 ### Permissions & Intro
 
 | Location Permission | Notification Permission | Intro Page |
 |:-------------------:|:-----------------------:|:----------:|
-| ![Location](screenshots/02_location_permission.png) | ![Notification](screenshots/03_notification_permission.png) | ![Intro](screenshots/04_intro_page.png) |
+| <img src="screenshots/02_location_permission.png" width="200"/> | <img src="screenshots/03_notification_permission.png" width="200"/> | <img src="screenshots/04_intro_page.png" width="200"/> |
 
 ### Status Dashboard
 
 | Weather Status | Crop Status | Pest Risk | Soil Status |
 |:--------------:|:-----------:|:---------:|:-----------:|
-| ![Weather](screenshots/05_weather_status.png) | ![Crop](screenshots/06_crop_status.png) | ![Pest](screenshots/07_pest_risk.png) | ![Soil](screenshots/08_soil_status.png) |
+| <img src="screenshots/05_weather_status.png" width="200"/> | <img src="screenshots/06_crop_status.png" width="200"/> | <img src="screenshots/07_pest_risk.png" width="200"/> | <img src="screenshots/08_soil_status.png" width="200"/> |
 
 ### AI Chatbot
 
 | Chatbot |
 |:-------:|
-| ![Chatbot](screenshots/09_chatbot.png) |
+| <img src="screenshots/09_chatbot.png" width="200"/> |
 
 ### Field Management
 
 | Add Field |
 |:---------:|
-| ![Add Field](screenshots/10_add_field.png) |
+| <img src="screenshots/10_add_field.png" width="200"/> |
 
 ### Take Action
 
 | Irrigation Scheduling | Vegetation Health |
 |:---------------------:|:-----------------:|
-| ![Irrigation](screenshots/11_irrigation_scheduling.png) | ![Vegetation](screenshots/12_vegetation_health.png) |
+| <img src="screenshots/11_irrigation_scheduling.png" width="200"/> | <img src="screenshots/12_vegetation_health.png" width="200"/> |
 
 ### Analytics & Visualization
 
 | Soil Time Series | Export Analytics | Heatmap |
 |:----------------:|:----------------:|:-------:|
-| ![Timeseries](screenshots/13_soil_timeseries.png) | ![Export](screenshots/18_export_analytics.png) | ![Heatmap](screenshots/19_heatmap.png) |
+| <img src="screenshots/13_soil_timeseries.png" width="200"/> | <img src="screenshots/18_export_analytics.png" width="200"/> | <img src="screenshots/19_heatmap.png" width="200"/> |
 
 ### Notes
 
 | Notes Page | Notes Page 2 |
 |:----------:|:------------:|
-| ![Notes](screenshots/15_notes_page.png) | ![Notes2](screenshots/16_notes_page_2.png) |
+| <img src="screenshots/15_notes_page.png" width="200"/> | <img src="screenshots/16_notes_page_2.png" width="200"/> |
 
 ### Settings & Profile
 
 | Settings Sidebar | Profile | Notifications | Language |
 |:----------------:|:-------:|:-------------:|:--------:|
-| ![Settings](screenshots/17_settings_sidebar.png) | ![Profile](screenshots/25_profile.png) | ![Notifications](screenshots/23_notifications.png) | ![Language](screenshots/24_language.png) |
+| <img src="screenshots/17_settings_sidebar.png" width="200"/> | <img src="screenshots/25_profile.png" width="200"/> | <img src="screenshots/23_notifications.png" width="200"/> | <img src="screenshots/24_language.png" width="200"/> |
 
 ---
 

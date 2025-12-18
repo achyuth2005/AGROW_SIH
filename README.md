@@ -93,51 +93,57 @@ Real-time overview of your farmland with AI-analyzed status cards:
 
 ### Onboarding & Authentication
 
-| Landing Screen | Login | Registration |
-|:-------------:|:-----:|:------------:|
-| ![Landing](screenshots/01_landing_screen.png) | ![Login](screenshots/02_login_screen.png) | ![Register](screenshots/03_registration_screen.png) |
+| First Screen | Login | Registration |
+|:------------:|:-----:|:------------:|
+| ![First](screenshots/20_first_screen.png) | ![Login](screenshots/01_login_page.png) | ![Register](screenshots/21_registration.png) |
 
-### Main Dashboard
+### Permissions & Intro
 
-| Home Screen | Soil Status Dashboard | Crop Status Dashboard |
-|:------------------:|:------------------:|:--------------:|
-| ![Home](screenshots/04_home_screen.png) | ![Soil Dashboard](screenshots/05_dashboard_soil_status.png) | ![Crop Dashboard](screenshots/06_dashboard_crop_status.png) |
+| Location Permission | Notification Permission | Intro Page |
+|:-------------------:|:-----------------------:|:----------:|
+| ![Location](screenshots/02_location_permission.png) | ![Notification](screenshots/03_notification_permission.png) | ![Intro](screenshots/04_intro_page.png) |
 
-### Status Cards
+### Status Dashboard
 
-| Soil Status Detail | Crop Status Detail | Weather Status | Analytics Heatmap |
-|:-----------:|:-----------:|:-------:|:---------:|
-| ![Soil](screenshots/07_soil_status_detail.png) | ![Crop](screenshots/08_crop_status_detail.png) | ![Weather](screenshots/09_weather_status.png) | ![Analytics](screenshots/10_analytics_heatmap.png) |
-
-### Field Mapping
-
-| Field Mapping | Coordinate Entry |
-|:---------------:|:----------------:|
-| ![Mapping](screenshots/20_field_mapping.png) | ![Coords](screenshots/21_coordinate_entry.png) |
-
-### Analytics & Visualization
-
-| Heatmap View | Time Series Chart | Vegetation Indices |
-|:------------:|:-----------:|:--------------:|
-| ![Heatmap](screenshots/11_heatmap_view.png) | ![Timeseries](screenshots/12_timeseries_chart.png) | ![Indices](screenshots/13_vegetation_indices.png) |
+| Weather Status | Crop Status | Pest Risk | Soil Status |
+|:--------------:|:-----------:|:---------:|:-----------:|
+| ![Weather](screenshots/05_weather_status.png) | ![Crop](screenshots/06_crop_status.png) | ![Pest](screenshots/07_pest_risk.png) | ![Soil](screenshots/08_soil_status.png) |
 
 ### AI Chatbot
 
-| Chat Interface | Voice Input | Chat Response |
-|:--------------:|:-----------:|:-------------:|
-| ![Chat](screenshots/14_chatbot_interface.png) | ![Voice](screenshots/15_voice_input.png) | ![Response](screenshots/16_chat_response.png) |
+| Chatbot |
+|:-------:|
+| ![Chatbot](screenshots/09_chatbot.png) |
 
-### Take Action & Recommendations
+### Field Management
 
-| Recommendations | Irrigation Schedule | Field Insights |
-|:---------------:|:-------------------:|:--------------:|
-| ![Action](screenshots/17_take_action.png) | ![Irrigation](screenshots/18_irrigation_schedule.png) | ![Insights](screenshots/19_field_insights.png) |
+| Add Field |
+|:---------:|
+| ![Add Field](screenshots/10_add_field.png) |
+
+### Take Action
+
+| Irrigation Scheduling | Vegetation Health |
+|:---------------------:|:-----------------:|
+| ![Irrigation](screenshots/11_irrigation_scheduling.png) | ![Vegetation](screenshots/12_vegetation_health.png) |
+
+### Analytics & Visualization
+
+| Soil Time Series | Export Analytics | Heatmap |
+|:----------------:|:----------------:|:-------:|
+| ![Timeseries](screenshots/13_soil_timeseries.png) | ![Export](screenshots/18_export_analytics.png) | ![Heatmap](screenshots/19_heatmap.png) |
+
+### Notes
+
+| Notes Page | Notes Page 2 |
+|:----------:|:------------:|
+| ![Notes](screenshots/15_notes_page.png) | ![Notes2](screenshots/16_notes_page_2.png) |
 
 ### Settings & Profile
 
-| Settings Sidebar | Profile | Notifications | Language Selection |
-|:----------------:|:-------:|:-------------:|:------------------:|
-| ![Settings](screenshots/22_settings_sidebar.png) | ![Profile](screenshots/25_profile_screen.png) | ![Notifications](screenshots/23_notifications.png) | ![Language](screenshots/24_language_selection.png) |
+| Settings Sidebar | Profile | Notifications | Language |
+|:----------------:|:-------:|:-------------:|:--------:|
+| ![Settings](screenshots/17_settings_sidebar.png) | ![Profile](screenshots/25_profile.png) | ![Notifications](screenshots/23_notifications.png) | ![Language](screenshots/24_language.png) |
 
 ---
 
